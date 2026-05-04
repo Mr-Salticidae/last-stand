@@ -109,6 +109,10 @@ func _ready() -> void:
 	_init_keepalive()
 	_init_bgm()
 	_warmup()
+	# music/master 音量变化时同步 keepalive 状态（玩家把 BGM 调到 0 → 重新启 keepalive 防挂起）
+	Settings.settings_changed.connect(_update_keepalive_state)
+	# 启动初值：BGM 还没起，先 play keepalive 防 main_menu 加载期间 WASAPI 挂起
+	_update_keepalive_state()
 
 # 按 SFX_FILE_MAP 把 assets/audio/sfx/<name>.mp3 加载到对应 export 字段
 # 找不到的文件保持 null，play_xxx 函数会走 _fallback 兜底
@@ -155,6 +159,8 @@ func _init_pools() -> void:
 # 当前方案：30Hz 次低音 sin + ±5000 振幅（-16dBFS digital，OS 充分识别）+ volume_db -36
 # 输出 ~-52dBFS @ 30Hz，但因等响曲线在 30Hz 处 SPL 比 1kHz 低 25-30dB，
 # 加上消费级耳机普遍 30Hz 几乎不再现 → 听感等效 ~-78dBFS @ 1kHz（人耳门槛之下）
+# v0.2：好耳机仍能听到 30Hz 嗡嗡。改成"按需启动"——BGM 在播且音量 > 0 时停 keepalive
+# （BGM 本身就是足够强的信号防 WASAPI 挂起），仅在 BGM 静音时启动 keepalive 兜底。
 func _init_keepalive() -> void:
 	_keepalive = AudioStreamPlayer.new()
 	_keepalive.bus = KEEPALIVE_BUS
@@ -162,7 +168,27 @@ func _init_keepalive() -> void:
 	var stream: AudioStreamWAV = _gen_keepalive_loop(30.0)
 	_keepalive.stream = stream
 	add_child(_keepalive)
-	_keepalive.play()
+	# 不在此处 play()：等 _init_bgm 完成 + _update_keepalive_state 决定是否启动
+	# （主菜单进入立即调 play_main_bgm，绝大多数情况 BGM 在播，keepalive 不会启动）
+
+# 按 BGM 实际是否有声决定 keepalive 启停。BGM 在播且 music/master 都 > 0 时停 keepalive
+# （BGM stream 本身已让 WASAPI session 保持活跃）；否则启动 keepalive 防挂起
+# 触发点：_ready 末尾、play_main_bgm 末尾、stop_bgm、Settings.settings_changed
+func _update_keepalive_state() -> void:
+	if _keepalive == null:
+		return
+	var bgm_audible: bool = (
+		_bgm_player != null
+		and _bgm_player.playing
+		and Settings.music_volume > 0.001
+		and Settings.master_volume > 0.001
+	)
+	if bgm_audible:
+		if _keepalive.playing:
+			_keepalive.stop()
+	else:
+		if not _keepalive.playing:
+			_keepalive.play()
 
 # 次低音 sin loop：30Hz 给足 buffer 信号能量保持会话活跃，但耳机听感极弱
 # 比白噪声更适合做 keepalive：能量集中在单频且远离人耳敏感带（2-4kHz）
@@ -301,11 +327,16 @@ func play_main_bgm() -> void:
 	_bgm_player.volume_db = -80.0
 	_bgm_player.play()
 	_bgm_fade_to(BGM_BASE_VOLUME_DB, BGM_FADE_IN)
+	# BGM 起来了，停 keepalive（避免好耳机听到 30Hz 嗡嗡）
+	_update_keepalive_state()
 
 func stop_bgm() -> void:
 	if _bgm_player == null or not _bgm_player.playing:
 		return
 	_bgm_fade_to(-80.0, BGM_FADE_OUT, true)
+	# stop_bgm 是退出场景，立即启 keepalive 兜底 WASAPI（fade 0.6s 重叠期可接受）
+	if _keepalive and not _keepalive.playing:
+		_keepalive.play()
 
 func _bgm_fade_to(target_db: float, duration: float, stop_after: bool = false) -> void:
 	if _bgm_tween and _bgm_tween.is_valid():
