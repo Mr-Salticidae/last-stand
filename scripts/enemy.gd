@@ -754,13 +754,19 @@ func _die() -> void:
 	_is_dead = true
 	collision.disabled = true
 	# 禁用 hitbox 避免 weapon 打到尸体触发额外 kill/hit 反馈
-	# collision_layer = 0 让 weapon raycast (collide_with_areas=true) 直接穿透尸体；
+	# 双保险让 weapon raycast (collide_with_areas=true) 真正穿透尸体：
+	# (1) area.collision_layer=0 让 raycast.mask=1 不再命中此 area
+	# (2) area 内 CollisionShape3D 也 disabled（layer 直接赋值到物理空间同步可能延迟，
+	#     CollisionShape3D 用 set_deferred("disabled") 是 Godot 推荐的最稳方式）
 	# 仅关 monitorable 不够（那只影响 area↔area 信号，不挡 raycast）
 	for child in get_children():
 		if child is Area3D:
 			var area: Area3D = child
 			area.monitorable = false
 			area.collision_layer = 0
+			for shape_child in area.get_children():
+				if shape_child is CollisionShape3D:
+					(shape_child as CollisionShape3D).set_deferred("disabled", true)
 	_release_attack_lock()
 	if _flash_timer <= 0.0:
 		_restore_colors()
