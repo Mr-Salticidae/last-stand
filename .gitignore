@@ -1,0 +1,23 @@
+# Godot 4+ specific ignores
+.godot/
+/android/
+
+# Build artifacts (Godot export outputs at project root)
+*.exe
+*.pck
+
+# Private / 运营素材 / 设计稿原始资料
+# 后续转公开仓库前请确认这些目录不会被推送
+private/
+
+# Claude Code 本地配置
+.claude/
+
+# OS junk
+Thumbs.db
+.DS_Store
+desktop.ini
+
+# Editor temp
+*.swp
+*~

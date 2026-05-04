@@ -1,0 +1,612 @@
+[gd_scene format=3 uid="uid://bq5maefut307j"]
+
+[ext_resource type="Texture2D" uid="uid://c7w8nw5qqallm" path="res://assets/hdris/kloofendal_48d_partly_cloudy_puresky_2k.hdr" id="1_nnsk1"]
+[ext_resource type="Texture2D" path="res://assets/textures/warehouse/wall_albedo.jpg" id="30_wall_a"]
+[ext_resource type="Texture2D" path="res://assets/textures/warehouse/wall_normal.jpg" id="31_wall_n"]
+[ext_resource type="Texture2D" path="res://assets/textures/warehouse/wall_roughness.jpg" id="32_wall_r"]
+[ext_resource type="Texture2D" path="res://assets/textures/warehouse/floor_albedo.jpg" id="33_floor_a"]
+[ext_resource type="Texture2D" path="res://assets/textures/warehouse/floor_normal.jpg" id="34_floor_n"]
+[ext_resource type="Texture2D" path="res://assets/textures/warehouse/floor_roughness.jpg" id="35_floor_r"]
+[ext_resource type="Script" uid="uid://do2rbjyakc031" path="res://scripts/player.gd" id="3_4wyf3"]
+[ext_resource type="Script" uid="uid://y35y74rj4pcb" path="res://scripts/weapon.gd" id="4_weapon"]
+[ext_resource type="Script" uid="uid://cqi7fum11m2j4" path="res://scripts/weapon_manager.gd" id="5_wmgr"]
+[ext_resource type="PackedScene" path="res://scenes/hud.tscn" id="6_hud"]
+[ext_resource type="PackedScene" path="res://scenes/enemy_grunt.tscn" id="7_enemy"]
+[ext_resource type="PackedScene" path="res://scenes/enemy_runner.tscn" id="7_runner"]
+[ext_resource type="PackedScene" path="res://scenes/enemy_brute.tscn" id="7_brute"]
+[ext_resource type="PackedScene" path="res://scenes/enemy_elite.tscn" id="7_elite"]
+[ext_resource type="PackedScene" path="res://scenes/enemy_boss.tscn" id="7_boss"]
+[ext_resource type="PackedScene" path="res://scenes/death_screen.tscn" id="8_death"]
+[ext_resource type="Script" path="res://scripts/wave_manager.gd" id="9_wave"]
+[ext_resource type="Script" path="res://scripts/spawn_point.gd" id="10_sp"]
+[ext_resource type="Script" path="res://scripts/nav_region_baker.gd" id="11_navbake"]
+[ext_resource type="PackedScene" path="res://scenes/pause_menu.tscn" id="12_pause"]
+[ext_resource type="PackedScene" path="res://scenes/upgrade_panel.tscn" id="13_upgrade"]
+[ext_resource type="PackedScene" path="res://scenes/weapons/rifle.tscn" id="14_rifle"]
+[ext_resource type="PackedScene" path="res://scenes/weapons/shotgun.tscn" id="15_shotgun"]
+[ext_resource type="PackedScene" path="res://scenes/weapons/revolver.tscn" id="16_revolver"]
+[ext_resource type="PackedScene" path="res://scenes/weapons/pistol.tscn" id="17_pistol_scene"]
+[ext_resource type="Script" path="res://scripts/lamp_flicker.gd" id="18_flicker"]
+
+[sub_resource type="PanoramaSkyMaterial" id="PanoramaSkyMaterial_rwgxs"]
+panorama = ExtResource("1_nnsk1")
+
+[sub_resource type="Sky" id="Sky_4wyf3"]
+sky_material = SubResource("PanoramaSkyMaterial_rwgxs")
+
+[sub_resource type="Environment" id="Environment_k0juu"]
+background_mode = 2
+sky = SubResource("Sky_4wyf3")
+tonemap_mode = 2
+glow_enabled = true
+
+[sub_resource type="CapsuleShape3D" id="CapsuleShape3D_rwgxs"]
+
+[sub_resource type="CapsuleShape3D" id="CapsuleShape3D_4wyf3"]
+height = 1.2
+
+[sub_resource type="Animation" id="Animation_4wyf3"]
+length = 0.001
+tracks/0/type = "value"
+tracks/0/imported = false
+tracks/0/enabled = true
+tracks/0/path = NodePath("Camera3D:position")
+tracks/0/interp = 1
+tracks/0/loop_wrap = true
+tracks/0/keys = {
+"times": PackedFloat32Array(0),
+"transitions": PackedFloat32Array(1),
+"update": 0,
+"values": [Vector3(0, 0, 0)]
+}
+tracks/1/type = "value"
+tracks/1/imported = false
+tracks/1/enabled = true
+tracks/1/path = NodePath("Camera3D:rotation")
+tracks/1/interp = 1
+tracks/1/loop_wrap = true
+tracks/1/keys = {
+"times": PackedFloat32Array(0),
+"transitions": PackedFloat32Array(1),
+"update": 0,
+"values": [Vector3(0, 0, 0)]
+}
+
+[sub_resource type="Animation" id="Animation_k0juu"]
+resource_name = "jump"
+length = 0.3
+tracks/0/type = "value"
+tracks/0/imported = false
+tracks/0/enabled = true
+tracks/0/path = NodePath("Camera3D:position")
+tracks/0/interp = 2
+tracks/0/loop_wrap = true
+tracks/0/keys = {
+"times": PackedFloat32Array(0, 0.06, 0.3),
+"transitions": PackedFloat32Array(1, 1, 1),
+"update": 0,
+"values": [Vector3(0, 0, 0), Vector3(0, 0.04, 0), Vector3(0, 0, 0)]
+}
+tracks/1/type = "value"
+tracks/1/imported = false
+tracks/1/enabled = true
+tracks/1/path = NodePath("Camera3D:rotation")
+tracks/1/interp = 2
+tracks/1/loop_wrap = true
+tracks/1/keys = {
+"times": PackedFloat32Array(0, 0.06, 0.3),
+"transitions": PackedFloat32Array(1, 1, 1),
+"update": 0,
+"values": [Vector3(0, 0, 0), Vector3(-0.017453292, 0, 0.017453292), Vector3(0, 0, 0)]
+}
+
+[sub_resource type="Animation" id="Animation_71j4m"]
+resource_name = "landing"
+length = 0.35
+tracks/0/type = "value"
+tracks/0/imported = false
+tracks/0/enabled = true
+tracks/0/path = NodePath("Camera3D:position")
+tracks/0/interp = 2
+tracks/0/loop_wrap = true
+tracks/0/keys = {
+"times": PackedFloat32Array(0, 0.07, 0.35),
+"transitions": PackedFloat32Array(1, 1, 1),
+"update": 0,
+"values": [Vector3(0, 0, 0), Vector3(0, -0.12, 0), Vector3(0, 0, 0)]
+}
+tracks/1/type = "value"
+tracks/1/imported = false
+tracks/1/enabled = true
+tracks/1/path = NodePath("Camera3D:rotation")
+tracks/1/interp = 2
+tracks/1/loop_wrap = true
+tracks/1/keys = {
+"times": PackedFloat32Array(0, 0.07, 0.35),
+"transitions": PackedFloat32Array(1, 1, 1),
+"update": 0,
+"values": [Vector3(0, 0, 0), Vector3(-0.05235988, 0, 0.034906585), Vector3(0, 0, 0)]
+}
+
+[sub_resource type="AnimationLibrary" id="AnimationLibrary_71j4m"]
+_data = {
+&"RESET": SubResource("Animation_4wyf3"),
+&"jump": SubResource("Animation_k0juu"),
+&"landing": SubResource("Animation_71j4m")
+}
+
+[sub_resource type="NavigationMesh" id="NavMesh_stage"]
+cell_size = 0.5
+cell_height = 0.2
+agent_height = 1.6
+agent_radius = 0.4
+agent_max_climb = 0.5
+agent_max_slope = 45.0
+geometry_parsed_geometry_type = 0
+geometry_collision_mask = 1
+geometry_source_geometry_mode = 0
+filter_baking_aabb = AABB(-35, -3, -35, 70, 10, 70)
+
+[sub_resource type="BoxMesh" id="BoxMesh_floor"]
+size = Vector3(40, 0.5, 40)
+
+[sub_resource type="BoxMesh" id="BoxMesh_wall_ns"]
+size = Vector3(40, 12, 0.5)
+
+[sub_resource type="BoxMesh" id="BoxMesh_wall_ew"]
+size = Vector3(0.5, 12, 40)
+
+[sub_resource type="BoxMesh" id="BoxMesh_shelf"]
+size = Vector3(1, 8, 8)
+
+[sub_resource type="BoxMesh" id="BoxMesh_hazard_ns"]
+size = Vector3(40, 0.1, 0.05)
+
+[sub_resource type="BoxMesh" id="BoxMesh_hazard_ew"]
+size = Vector3(0.05, 0.1, 40)
+
+[sub_resource type="StandardMaterial3D" id="Mat_floor"]
+albedo_texture = ExtResource("30_wall_a")
+normal_enabled = true
+normal_texture = ExtResource("31_wall_n")
+roughness_texture = ExtResource("32_wall_r")
+uv1_scale = Vector3(0.25, 0.25, 0.25)
+uv1_triplanar = true
+
+[sub_resource type="StandardMaterial3D" id="Mat_wall"]
+albedo_texture = ExtResource("30_wall_a")
+normal_enabled = true
+normal_texture = ExtResource("31_wall_n")
+roughness_texture = ExtResource("32_wall_r")
+uv1_scale = Vector3(0.4, 0.4, 0.4)
+uv1_triplanar = true
+
+[sub_resource type="StandardMaterial3D" id="Mat_shelf"]
+albedo_color = Color(0.55, 0.42, 0.32, 1)
+albedo_texture = ExtResource("30_wall_a")
+normal_enabled = true
+normal_texture = ExtResource("31_wall_n")
+roughness_texture = ExtResource("32_wall_r")
+metallic = 0.3
+roughness = 0.7
+uv1_scale = Vector3(0.6, 0.6, 0.6)
+uv1_triplanar = true
+
+[sub_resource type="StandardMaterial3D" id="Mat_hazard"]
+albedo_color = Color(0.949, 0.7608, 0.2, 1)
+roughness = 0.7
+
+[sub_resource type="CylinderMesh" id="CylinderMesh_barrel"]
+top_radius = 0.45
+bottom_radius = 0.45
+height = 1.1
+
+[sub_resource type="BoxMesh" id="BoxMesh_crate"]
+size = Vector3(1, 1, 1)
+
+[sub_resource type="StandardMaterial3D" id="Mat_barrel"]
+albedo_color = Color(0.25, 0.32, 0.18, 1)
+albedo_texture = ExtResource("30_wall_a")
+normal_enabled = true
+normal_texture = ExtResource("31_wall_n")
+roughness_texture = ExtResource("32_wall_r")
+metallic = 0.6
+roughness = 0.55
+uv1_scale = Vector3(1.5, 1.5, 1.5)
+uv1_triplanar = true
+
+[sub_resource type="StandardMaterial3D" id="Mat_crate"]
+albedo_color = Color(0.45, 0.3, 0.16, 1)
+albedo_texture = ExtResource("30_wall_a")
+normal_enabled = true
+normal_texture = ExtResource("31_wall_n")
+roughness_texture = ExtResource("32_wall_r")
+metallic = 0.0
+roughness = 0.85
+uv1_scale = Vector3(1.2, 1.2, 1.2)
+uv1_triplanar = true
+
+[sub_resource type="BoxMesh" id="BoxMesh_ceiling"]
+size = Vector3(40, 0.4, 40)
+
+[sub_resource type="CylinderMesh" id="CylinderMesh_lampshade"]
+top_radius = 0.35
+bottom_radius = 0.6
+height = 0.4
+
+[sub_resource type="StandardMaterial3D" id="Mat_ceiling"]
+albedo_color = Color(0.32, 0.34, 0.36, 1)
+albedo_texture = ExtResource("30_wall_a")
+normal_enabled = true
+normal_texture = ExtResource("31_wall_n")
+roughness_texture = ExtResource("32_wall_r")
+metallic = 0.5
+roughness = 0.7
+uv1_scale = Vector3(0.3, 0.3, 0.3)
+uv1_triplanar = true
+
+[sub_resource type="StandardMaterial3D" id="Mat_lampshade"]
+albedo_color = Color(0.85, 0.78, 0.6, 1)
+metallic = 0.4
+roughness = 0.6
+emission_enabled = true
+emission = Color(1, 0.85, 0.55, 1)
+emission_energy_multiplier = 1.6
+
+[sub_resource type="Environment" id="Environment_indoor"]
+background_mode = 2
+sky = SubResource("Sky_4wyf3")
+ambient_light_source = 2
+ambient_light_color = Color(0.18, 0.16, 0.13, 1)
+ambient_light_energy = 0.35
+tonemap_mode = 2
+glow_enabled = true
+
+[node name="world" type="Node3D" unique_id=354887705]
+
+[node name="stage" type="NavigationRegion3D" parent="." unique_id=1787808641]
+navigation_mesh = SubResource("NavMesh_stage")
+script = ExtResource("11_navbake")
+
+[node name="ground" type="MeshInstance3D" parent="stage"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.25, 0)
+mesh = SubResource("BoxMesh_floor")
+material_override = SubResource("Mat_floor")
+
+[node name="wall_n" type="MeshInstance3D" parent="stage"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 6, -19.75)
+mesh = SubResource("BoxMesh_wall_ns")
+material_override = SubResource("Mat_wall")
+
+[node name="wall_s" type="MeshInstance3D" parent="stage"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 6, 19.75)
+mesh = SubResource("BoxMesh_wall_ns")
+material_override = SubResource("Mat_wall")
+
+[node name="wall_e" type="MeshInstance3D" parent="stage"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 19.75, 6, 0)
+mesh = SubResource("BoxMesh_wall_ew")
+material_override = SubResource("Mat_wall")
+
+[node name="wall_w" type="MeshInstance3D" parent="stage"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -19.75, 6, 0)
+mesh = SubResource("BoxMesh_wall_ew")
+material_override = SubResource("Mat_wall")
+
+[node name="shelf_1n" type="MeshInstance3D" parent="stage"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -12, 4, -6)
+mesh = SubResource("BoxMesh_shelf")
+material_override = SubResource("Mat_shelf")
+
+[node name="shelf_1s" type="MeshInstance3D" parent="stage"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -12, 4, 6)
+mesh = SubResource("BoxMesh_shelf")
+material_override = SubResource("Mat_shelf")
+
+[node name="shelf_2n" type="MeshInstance3D" parent="stage"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -4, 4, -6)
+mesh = SubResource("BoxMesh_shelf")
+material_override = SubResource("Mat_shelf")
+
+[node name="shelf_2s" type="MeshInstance3D" parent="stage"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -4, 4, 6)
+mesh = SubResource("BoxMesh_shelf")
+material_override = SubResource("Mat_shelf")
+
+[node name="shelf_3n" type="MeshInstance3D" parent="stage"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 4, 4, -6)
+mesh = SubResource("BoxMesh_shelf")
+material_override = SubResource("Mat_shelf")
+
+[node name="shelf_3s" type="MeshInstance3D" parent="stage"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 4, 4, 6)
+mesh = SubResource("BoxMesh_shelf")
+material_override = SubResource("Mat_shelf")
+
+[node name="shelf_4n" type="MeshInstance3D" parent="stage"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 12, 4, -6)
+mesh = SubResource("BoxMesh_shelf")
+material_override = SubResource("Mat_shelf")
+
+[node name="shelf_4s" type="MeshInstance3D" parent="stage"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 12, 4, 6)
+mesh = SubResource("BoxMesh_shelf")
+material_override = SubResource("Mat_shelf")
+
+[node name="hazard_n" type="MeshInstance3D" parent="stage"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.05, -19.45)
+mesh = SubResource("BoxMesh_hazard_ns")
+material_override = SubResource("Mat_hazard")
+
+[node name="hazard_s" type="MeshInstance3D" parent="stage"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.05, 19.45)
+mesh = SubResource("BoxMesh_hazard_ns")
+material_override = SubResource("Mat_hazard")
+
+[node name="hazard_e" type="MeshInstance3D" parent="stage"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 19.45, 0.05, 0)
+mesh = SubResource("BoxMesh_hazard_ew")
+material_override = SubResource("Mat_hazard")
+
+[node name="hazard_w" type="MeshInstance3D" parent="stage"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -19.45, 0.05, 0)
+mesh = SubResource("BoxMesh_hazard_ew")
+material_override = SubResource("Mat_hazard")
+
+[node name="env" type="Node3D" parent="." unique_id=1995890651]
+
+[node name="WorldEnvironment" type="WorldEnvironment" parent="env" unique_id=661310170]
+environment = SubResource("Environment_indoor")
+
+[node name="DirectionalLight3D" type="DirectionalLight3D" parent="env" unique_id=1658686535]
+transform = Transform3D(-0.8660254, -0.43301278, 0.25, 0, 0.49999997, 0.86602545, -0.50000006, 0.75, -0.43301266, 0, 0, 0)
+shadow_enabled = true
+
+[node name="player" type="CharacterBody3D" parent="." unique_id=252459011 groups=["player"]]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.6, 0)
+script = ExtResource("3_4wyf3")
+
+[node name="standing_collision_shape" type="CollisionShape3D" parent="player" unique_id=920472357]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1, 0)
+shape = SubResource("CapsuleShape3D_rwgxs")
+
+[node name="crouching_collision_shape" type="CollisionShape3D" parent="player" unique_id=1607194456]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.5987277, 0)
+shape = SubResource("CapsuleShape3D_4wyf3")
+disabled = true
+
+[node name="RayCast3D" type="RayCast3D" parent="player" unique_id=315731427]
+target_position = Vector3(0, 2, 0)
+
+[node name="neck" type="Node3D" parent="player" unique_id=469468104]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.8, 0)
+
+[node name="head" type="Node3D" parent="player/neck" unique_id=372955053]
+
+[node name="eyes" type="Node3D" parent="player/neck/head" unique_id=328210324]
+
+[node name="Camera3D" type="Camera3D" parent="player/neck/head/eyes" unique_id=2054508128]
+
+[node name="shoot_raycast" type="RayCast3D" parent="player/neck/head/eyes/Camera3D" unique_id=253954902]
+target_position = Vector3(0, 0, -100)
+
+[node name="weapon_holder" type="Node3D" parent="player/neck/head/eyes/Camera3D" unique_id=171240891 node_paths=PackedStringArray("shoot_raycast")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.3, -0.25, -0.6)
+script = ExtResource("5_wmgr")
+shoot_raycast = NodePath("../shoot_raycast")
+
+[node name="pistol" parent="player/neck/head/eyes/Camera3D/weapon_holder" instance=ExtResource("17_pistol_scene")]
+
+[node name="rifle" parent="player/neck/head/eyes/Camera3D/weapon_holder" instance=ExtResource("14_rifle")]
+
+[node name="shotgun" parent="player/neck/head/eyes/Camera3D/weapon_holder" instance=ExtResource("15_shotgun")]
+
+[node name="revolver" parent="player/neck/head/eyes/Camera3D/weapon_holder" instance=ExtResource("16_revolver")]
+
+[node name="AnimationPlayer" type="AnimationPlayer" parent="player/neck/head/eyes" unique_id=1772758950]
+libraries/ = SubResource("AnimationLibrary_71j4m")
+
+[node name="HUD" parent="." unique_id=909294115 instance=ExtResource("6_hud")]
+
+[node name="DeathScreen" parent="." unique_id=554905251 instance=ExtResource("8_death")]
+
+[node name="PauseMenu" parent="." instance=ExtResource("12_pause")]
+
+[node name="UpgradePanel" parent="." instance=ExtResource("13_upgrade")]
+
+[node name="WaveManager" type="Node" parent="." groups=["wave_manager"]]
+script = ExtResource("9_wave")
+enemy_scene = ExtResource("7_enemy")
+runner_scene = ExtResource("7_runner")
+brute_scene = ExtResource("7_brute")
+elite_scene = ExtResource("7_elite")
+boss_scene = ExtResource("7_boss")
+
+[node name="SpawnPoints" type="Node3D" parent="."]
+
+[node name="SpawnPoint_N" type="Marker3D" parent="SpawnPoints" groups=["spawn_point"]]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.1, -16)
+script = ExtResource("10_sp")
+
+[node name="SpawnPoint_S" type="Marker3D" parent="SpawnPoints" groups=["spawn_point"]]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.1, 16)
+script = ExtResource("10_sp")
+
+[node name="SpawnPoint_E" type="Marker3D" parent="SpawnPoints" groups=["spawn_point"]]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 17, 0.1, -4)
+script = ExtResource("10_sp")
+
+[node name="SpawnPoint_W" type="Marker3D" parent="SpawnPoints" groups=["spawn_point"]]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -17, 0.1, 4)
+script = ExtResource("10_sp")
+
+[node name="SpawnPoint_NE" type="Marker3D" parent="SpawnPoints" groups=["spawn_point"]]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 16, 0.1, -16)
+script = ExtResource("10_sp")
+
+[node name="SpawnPoint_SW" type="Marker3D" parent="SpawnPoints" groups=["spawn_point"]]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -16, 0.1, 16)
+script = ExtResource("10_sp")
+
+[node name="Decorations" type="Node3D" parent="."]
+
+[node name="barrel_nw_1" type="MeshInstance3D" parent="stage"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -18, 0.55, -18)
+mesh = SubResource("CylinderMesh_barrel")
+material_override = SubResource("Mat_barrel")
+
+[node name="barrel_nw_2" type="MeshInstance3D" parent="stage"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -18, 0.55, -17)
+mesh = SubResource("CylinderMesh_barrel")
+material_override = SubResource("Mat_barrel")
+
+[node name="barrel_ne_1" type="MeshInstance3D" parent="stage"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 18, 0.55, -18)
+mesh = SubResource("CylinderMesh_barrel")
+material_override = SubResource("Mat_barrel")
+
+[node name="barrel_ne_2" type="MeshInstance3D" parent="stage"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 18, 0.55, -17)
+mesh = SubResource("CylinderMesh_barrel")
+material_override = SubResource("Mat_barrel")
+
+[node name="barrel_sw_1" type="MeshInstance3D" parent="stage"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -18, 0.55, 18)
+mesh = SubResource("CylinderMesh_barrel")
+material_override = SubResource("Mat_barrel")
+
+[node name="barrel_sw_2" type="MeshInstance3D" parent="stage"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -18, 0.55, 17)
+mesh = SubResource("CylinderMesh_barrel")
+material_override = SubResource("Mat_barrel")
+
+[node name="barrel_se_1" type="MeshInstance3D" parent="stage"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 18, 0.55, 18)
+mesh = SubResource("CylinderMesh_barrel")
+material_override = SubResource("Mat_barrel")
+
+[node name="barrel_se_2" type="MeshInstance3D" parent="stage"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 18, 0.55, 17)
+mesh = SubResource("CylinderMesh_barrel")
+material_override = SubResource("Mat_barrel")
+
+[node name="crate_n1_bot" type="MeshInstance3D" parent="stage"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2, 0.5, -18.5)
+mesh = SubResource("BoxMesh_crate")
+material_override = SubResource("Mat_crate")
+
+[node name="crate_n1_top" type="MeshInstance3D" parent="stage"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2, 1.5, -18.5)
+mesh = SubResource("BoxMesh_crate")
+material_override = SubResource("Mat_crate")
+
+[node name="crate_n2" type="MeshInstance3D" parent="stage"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2, 0.5, -18.5)
+mesh = SubResource("BoxMesh_crate")
+material_override = SubResource("Mat_crate")
+
+[node name="crate_s1_bot" type="MeshInstance3D" parent="stage"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2, 0.5, 18.5)
+mesh = SubResource("BoxMesh_crate")
+material_override = SubResource("Mat_crate")
+
+[node name="crate_s1_top" type="MeshInstance3D" parent="stage"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2, 1.5, 18.5)
+mesh = SubResource("BoxMesh_crate")
+material_override = SubResource("Mat_crate")
+
+[node name="crate_s2" type="MeshInstance3D" parent="stage"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2, 0.5, 18.5)
+mesh = SubResource("BoxMesh_crate")
+material_override = SubResource("Mat_crate")
+
+[node name="crate_e1_bot" type="MeshInstance3D" parent="stage"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 18.5, 0.5, -2)
+mesh = SubResource("BoxMesh_crate")
+material_override = SubResource("Mat_crate")
+
+[node name="crate_e1_top" type="MeshInstance3D" parent="stage"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 18.5, 1.5, -2)
+mesh = SubResource("BoxMesh_crate")
+material_override = SubResource("Mat_crate")
+
+[node name="crate_e2" type="MeshInstance3D" parent="stage"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 18.5, 0.5, 2)
+mesh = SubResource("BoxMesh_crate")
+material_override = SubResource("Mat_crate")
+
+[node name="crate_w1_bot" type="MeshInstance3D" parent="stage"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -18.5, 0.5, -2)
+mesh = SubResource("BoxMesh_crate")
+material_override = SubResource("Mat_crate")
+
+[node name="crate_w1_top" type="MeshInstance3D" parent="stage"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -18.5, 1.5, -2)
+mesh = SubResource("BoxMesh_crate")
+material_override = SubResource("Mat_crate")
+
+[node name="crate_w2" type="MeshInstance3D" parent="stage"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -18.5, 0.5, 2)
+mesh = SubResource("BoxMesh_crate")
+material_override = SubResource("Mat_crate")
+
+[node name="ceiling" type="MeshInstance3D" parent="stage"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 12.2, 0)
+mesh = SubResource("BoxMesh_ceiling")
+material_override = SubResource("Mat_ceiling")
+
+[node name="lamp_nw" type="Node3D" parent="Decorations"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -12, 11.5, -12)
+
+[node name="shade" type="MeshInstance3D" parent="Decorations/lamp_nw"]
+mesh = SubResource("CylinderMesh_lampshade")
+material_override = SubResource("Mat_lampshade")
+
+[node name="OmniLight3D" type="OmniLight3D" parent="Decorations/lamp_nw"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.3, 0)
+light_color = Color(1, 0.92, 0.75, 1)
+light_energy = 2.6
+omni_range = 22.0
+script = ExtResource("18_flicker")
+
+[node name="lamp_ne" type="Node3D" parent="Decorations"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 12, 11.5, -12)
+
+[node name="shade" type="MeshInstance3D" parent="Decorations/lamp_ne"]
+mesh = SubResource("CylinderMesh_lampshade")
+material_override = SubResource("Mat_lampshade")
+
+[node name="OmniLight3D" type="OmniLight3D" parent="Decorations/lamp_ne"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.3, 0)
+light_color = Color(1, 0.92, 0.75, 1)
+light_energy = 2.6
+omni_range = 22.0
+script = ExtResource("18_flicker")
+
+[node name="lamp_sw" type="Node3D" parent="Decorations"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -12, 11.5, 12)
+
+[node name="shade" type="MeshInstance3D" parent="Decorations/lamp_sw"]
+mesh = SubResource("CylinderMesh_lampshade")
+material_override = SubResource("Mat_lampshade")
+
+[node name="OmniLight3D" type="OmniLight3D" parent="Decorations/lamp_sw"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.3, 0)
+light_color = Color(1, 0.92, 0.75, 1)
+light_energy = 2.6
+omni_range = 22.0
+script = ExtResource("18_flicker")
+
+[node name="lamp_se" type="Node3D" parent="Decorations"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 12, 11.5, 12)
+
+[node name="shade" type="MeshInstance3D" parent="Decorations/lamp_se"]
+mesh = SubResource("CylinderMesh_lampshade")
+material_override = SubResource("Mat_lampshade")
+
+[node name="OmniLight3D" type="OmniLight3D" parent="Decorations/lamp_se"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.3, 0)
+light_color = Color(1, 0.92, 0.75, 1)
+light_energy = 2.6
+omni_range = 22.0
+script = ExtResource("18_flicker")

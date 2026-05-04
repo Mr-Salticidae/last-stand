@@ -1,0 +1,30 @@
+[gd_scene load_steps=5 format=3]
+
+[ext_resource type="Script" path="res://scripts/health_pack.gd" id="1_hp"]
+
+[sub_resource type="SphereShape3D" id="Shape_pickup"]
+radius = 0.6
+
+[sub_resource type="SphereMesh" id="Mesh_core"]
+radius = 0.25
+height = 0.5
+
+[sub_resource type="StandardMaterial3D" id="Mat_core"]
+albedo_color = Color(0.2, 0.95, 0.35, 1)
+emission_enabled = true
+emission = Color(0.35, 1.0, 0.45, 1)
+emission_energy_multiplier = 3.0
+
+[node name="HealthPack" type="Area3D"]
+monitoring = true
+monitorable = false
+script = ExtResource("1_hp")
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.4, 0)
+shape = SubResource("Shape_pickup")
+
+[node name="Mesh" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.4, 0)
+mesh = SubResource("Mesh_core")
+material_override = SubResource("Mat_core")

@@ -1,0 +1,245 @@
+[gd_scene load_steps=15 format=3]
+
+[ext_resource type="Script" path="res://scripts/ui/atmosphere_background.gd" id="1_atmos"]
+[ext_resource type="Script" path="res://scripts/ui/corner_brackets.gd" id="3_cb"]
+[ext_resource type="Shader" path="res://assets/shaders/vignette.gdshader" id="4_vig"]
+[ext_resource type="FontVariation" path="res://assets/fonts/font_jbmono_400.tres" id="5_jb"]
+[ext_resource type="Shader" path="res://assets/shaders/hazard_stripes.gdshader" id="6_haz"]
+[ext_resource type="Script" path="res://scripts/ui/hud_dot.gd" id="7_dot"]
+[ext_resource type="Script" path="res://scripts/ui/searchlight.gd" id="8_sl"]
+[ext_resource type="Script" path="res://scripts/ui/radial_glow.gd" id="9_rg"]
+[ext_resource type="Script" path="res://scripts/ui/scanline_sweep.gd" id="10_sw"]
+[ext_resource type="Shader" path="res://assets/shaders/scanline_sweep.gdshader" id="11_swsh"]
+[ext_resource type="Shader" path="res://assets/shaders/grain.gdshader" id="12_gr"]
+
+[sub_resource type="ShaderMaterial" id="vmat"]
+shader = ExtResource("4_vig")
+
+[sub_resource type="ShaderMaterial" id="hmat"]
+shader = ExtResource("6_haz")
+
+[sub_resource type="ShaderMaterial" id="swmat"]
+shader = ExtResource("11_swsh")
+
+[sub_resource type="ShaderMaterial" id="grmat"]
+shader = ExtResource("12_gr")
+shader_parameter/strength = 0.18
+shader_parameter/step_rate = 2.5
+
+[sub_resource type="Gradient" id="dust_grad"]
+offsets = PackedFloat32Array(0, 0.1, 0.9, 1)
+colors = PackedColorArray(1, 0.918, 0.851, 0, 1, 0.918, 0.851, 0.7, 1, 0.918, 0.851, 0.5, 1, 0.918, 0.851, 0)
+
+[node name="AtmosphereBackground" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+script = ExtResource("1_atmos")
+
+[node name="Base" type="ColorRect" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+color = Color(0.0588, 0.0392, 0.0392, 1)
+
+[node name="Searchlight" type="Control" parent="."]
+layout_mode = 0
+offset_right = 1400.0
+offset_bottom = 1400.0
+mouse_filter = 2
+script = ExtResource("8_sl")
+
+[node name="Glow" type="Control" parent="Searchlight"]
+layout_mode = 0
+offset_right = 1400.0
+offset_bottom = 1400.0
+mouse_filter = 2
+script = ExtResource("9_rg")
+glow_color = Color(1.0, 0.86, 0.7, 1.0)
+diameter = 1400.0
+inner_alpha = 0.10
+mid_alpha = 0.04
+layers = 28
+
+[node name="Dust" type="CPUParticles2D" parent="."]
+position = Vector2(960, 540)
+amount = 55
+lifetime = 15.0
+preprocess = 15.0
+lifetime_randomness = 0.5
+emission_shape = 3
+emission_rect_extents = Vector2(960, 540)
+direction = Vector2(0, -1)
+spread = 30.0
+gravity = Vector2(0, -50)
+initial_velocity_min = 30.0
+initial_velocity_max = 90.0
+scale_amount_min = 1.0
+scale_amount_max = 3.0
+color = Color(1, 0.918, 0.851, 1)
+color_ramp = SubResource("dust_grad")
+
+[node name="HazardFrame" type="ColorRect" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+color = Color(1, 1, 1, 1)
+material = SubResource("hmat")
+
+[node name="CornerBrackets" type="Control" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+script = ExtResource("3_cb")
+
+[node name="HudTop" type="Control" parent="."]
+layout_mode = 1
+anchors_preset = 10
+anchor_right = 1.0
+offset_bottom = 110.0
+grow_horizontal = 2
+mouse_filter = 2
+
+[node name="LeftDot" type="Control" parent="HudTop"]
+layout_mode = 1
+offset_left = 86.0
+offset_top = 64.0
+offset_right = 110.0
+offset_bottom = 88.0
+mouse_filter = 2
+script = ExtResource("7_dot")
+
+[node name="Left" type="Label" parent="HudTop"]
+layout_mode = 1
+offset_left = 116.0
+offset_top = 64.0
+offset_right = 626.0
+offset_bottom = 88.0
+text = "SECTOR 07 · UNDER SIEGE"
+horizontal_alignment = 0
+vertical_alignment = 1
+theme_override_fonts/font = ExtResource("5_jb")
+theme_override_font_sizes/font_size = 13
+theme_override_colors/font_color = Color(0.788, 0.718, 0.643, 1)
+
+[node name="Center" type="Label" parent="HudTop"]
+layout_mode = 1
+anchor_left = 0.5
+anchor_right = 0.5
+offset_left = -300.0
+offset_top = 64.0
+offset_right = 300.0
+offset_bottom = 88.0
+text = "CLASSIFIED // FOR OPERATOR EYES ONLY"
+horizontal_alignment = 1
+vertical_alignment = 1
+theme_override_fonts/font = ExtResource("5_jb")
+theme_override_font_sizes/font_size = 13
+theme_override_colors/font_color = Color(0.478, 0.416, 0.361, 1)
+
+[node name="Right" type="Label" parent="HudTop"]
+layout_mode = 1
+anchor_left = 1.0
+anchor_right = 1.0
+offset_left = -340.0
+offset_top = 64.0
+offset_right = -90.0
+offset_bottom = 88.0
+text = "RED ALERT"
+horizontal_alignment = 2
+vertical_alignment = 1
+theme_override_fonts/font = ExtResource("5_jb")
+theme_override_font_sizes/font_size = 13
+theme_override_colors/font_color = Color(0.855, 0.18, 0.2, 1)
+
+[node name="HudBot" type="Control" parent="."]
+layout_mode = 1
+anchors_preset = 12
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_top = -110.0
+grow_horizontal = 2
+grow_vertical = 0
+mouse_filter = 2
+
+[node name="Left" type="RichTextLabel" parent="HudBot"]
+layout_mode = 1
+anchor_top = 1.0
+anchor_bottom = 1.0
+offset_left = 90.0
+offset_top = -78.0
+offset_right = 800.0
+offset_bottom = -58.0
+mouse_filter = 2
+bbcode_enabled = true
+text = "OPERATOR ID — [color=#8c1a1a]UNKNOWN[/color]  ·  COMMS LINK [color=#8c1a1a]OFFLINE[/color]"
+fit_content = true
+scroll_active = false
+theme_override_colors/default_color = Color(0.788, 0.718, 0.643, 1)
+theme_override_fonts/normal_font = ExtResource("5_jb")
+theme_override_font_sizes/normal_font_size = 13
+
+[node name="Right" type="Label" parent="HudBot"]
+layout_mode = 1
+anchor_left = 1.0
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = -340.0
+offset_top = -82.0
+offset_right = -90.0
+offset_bottom = -58.0
+text = "v0.1.1 DEMO BUILD"
+horizontal_alignment = 2
+vertical_alignment = 1
+theme_override_fonts/font = ExtResource("5_jb")
+theme_override_font_sizes/font_size = 13
+theme_override_colors/font_color = Color(0.478, 0.416, 0.361, 1)
+
+[node name="ScanlineSweep" type="ColorRect" parent="."]
+layout_mode = 0
+offset_right = 1920.0
+offset_bottom = 220.0
+mouse_filter = 2
+color = Color(1, 1, 1, 1)
+material = SubResource("swmat")
+script = ExtResource("10_sw")
+
+[node name="Grain" type="ColorRect" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+color = Color(1, 1, 1, 1)
+material = SubResource("grmat")
+
+[node name="Vignette" type="ColorRect" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+color = Color(1, 1, 1, 1)
+material = SubResource("vmat")

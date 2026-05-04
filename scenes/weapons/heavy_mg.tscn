@@ -1,0 +1,111 @@
+[gd_scene load_steps=9 format=3]
+
+[ext_resource type="Script" uid="uid://y35y74rj4pcb" path="res://scripts/weapon.gd" id="1_weapon"]
+[ext_resource type="ArrayMesh" path="res://assets/weapons/models/r2detta_Minigun_body.tres" id="2_body"]
+[ext_resource type="ArrayMesh" path="res://assets/weapons/models/r2detta_Minigun_barrel.tres" id="3_barrel"]
+[ext_resource type="Texture2D" path="res://assets/ui/weapons/heavy_mg.png" id="4_preview"]
+[ext_resource type="Script" path="res://scripts/barrel_spinner.gd" id="5_spinner"]
+
+[sub_resource type="StandardMaterial3D" id="Mat_minigun_dark"]
+albedo_color = Color(0.10, 0.10, 0.12, 1)
+metallic = 0.55
+roughness = 0.40
+
+[sub_resource type="Animation" id="Anim_mg_reset"]
+length = 0.001
+tracks/0/type = "value"
+tracks/0/imported = false
+tracks/0/enabled = true
+tracks/0/path = NodePath(".:position")
+tracks/0/interp = 1
+tracks/0/loop_wrap = true
+tracks/0/keys = {
+"times": PackedFloat32Array(0),
+"transitions": PackedFloat32Array(1),
+"update": 0,
+"values": [Vector3(0, 0, 0)]
+}
+tracks/1/type = "value"
+tracks/1/imported = false
+tracks/1/enabled = true
+tracks/1/path = NodePath(".:rotation")
+tracks/1/interp = 1
+tracks/1/loop_wrap = true
+tracks/1/keys = {
+"times": PackedFloat32Array(0),
+"transitions": PackedFloat32Array(1),
+"update": 0,
+"values": [Vector3(0, 0, 0)]
+}
+
+[sub_resource type="Animation" id="Anim_mg_recoil"]
+resource_name = "recoil"
+length = 0.08
+tracks/0/type = "value"
+tracks/0/imported = false
+tracks/0/enabled = true
+tracks/0/path = NodePath(".:position")
+tracks/0/interp = 2
+tracks/0/loop_wrap = true
+tracks/0/keys = {
+"times": PackedFloat32Array(0, 0.02, 0.04, 0.06, 0.08),
+"transitions": PackedFloat32Array(1, 1, 1, 1, 1),
+"update": 0,
+"values": [Vector3(0, 0, 0), Vector3(0.004, 0.002, 0.002), Vector3(-0.003, -0.001, 0.001), Vector3(0.002, -0.002, 0), Vector3(0, 0, 0)]
+}
+tracks/1/type = "value"
+tracks/1/imported = false
+tracks/1/enabled = true
+tracks/1/path = NodePath(".:rotation")
+tracks/1/interp = 2
+tracks/1/loop_wrap = true
+tracks/1/keys = {
+"times": PackedFloat32Array(0, 0.02, 0.04, 0.06, 0.08),
+"transitions": PackedFloat32Array(1, 1, 1, 1, 1),
+"update": 0,
+"values": [Vector3(0, 0, 0), Vector3(0.015, 0, 0.010), Vector3(-0.010, 0, -0.008), Vector3(0.008, 0, 0.005), Vector3(0, 0, 0)]
+}
+
+[sub_resource type="AnimationLibrary" id="AnimLib_mg"]
+_data = {
+&"RESET": SubResource("Anim_mg_reset"),
+&"recoil": SubResource("Anim_mg_recoil")
+}
+
+[node name="heavy_mg" type="Node3D" groups=["weapon"]]
+script = ExtResource("1_weapon")
+weapon_id = "heavy_mg"
+weapon_name = "重型机枪"
+damage = 18.0
+mag_size = 80
+reserve_max = 0
+fire_rate = 0.05
+reload_time = 0.0
+weapon_range = 80.0
+pellet_count = 1
+auto_fire = true
+unlocked = false
+recoil_pitch_deg = 0.1
+bullet_spread_deg = 0.90
+is_legendary = true
+discard_on_empty = true
+preview_texture = ExtResource("4_preview")
+
+[node name="mesh" type="Node3D" parent="."]
+transform = Transform3D(-0.40, 0, 0, 0, 0.40, 0, 0, 0, -0.40, 0, -0.10, 0)
+
+[node name="body" type="MeshInstance3D" parent="mesh"]
+mesh = ExtResource("2_body")
+material_override = SubResource("Mat_minigun_dark")
+
+[node name="barrel" type="MeshInstance3D" parent="mesh"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.002687, 0.129896, 0.925311)
+mesh = ExtResource("3_barrel")
+material_override = SubResource("Mat_minigun_dark")
+script = ExtResource("5_spinner")
+
+[node name="muzzle" type="Marker3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -0.72)
+
+[node name="AnimationPlayer" type="AnimationPlayer" parent="."]
+libraries/ = SubResource("AnimLib_mg")

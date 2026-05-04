@@ -1,0 +1,74 @@
+[gd_scene load_steps=9 format=3]
+
+[ext_resource type="Script" path="res://scripts/enemy.gd" id="1_enemy"]
+[ext_resource type="Script" path="res://scripts/hitbox.gd" id="2_hitbox"]
+
+[sub_resource type="CapsuleShape3D" id="CapsuleShape_enemy"]
+radius = 0.4
+height = 1.6
+
+[sub_resource type="CapsuleShape3D" id="CapsuleShape_body_hitbox"]
+radius = 0.4
+height = 1.6
+
+[sub_resource type="BoxShape3D" id="BoxShape_head_hitbox"]
+size = Vector3(0.55, 0.55, 0.55)
+
+[sub_resource type="CapsuleMesh" id="CapsuleMesh_enemy"]
+radius = 0.4
+height = 1.6
+
+[sub_resource type="BoxMesh" id="BoxMesh_enemy_head"]
+size = Vector3(0.55, 0.55, 0.55)
+
+[sub_resource type="StandardMaterial3D" id="Material_enemy_body"]
+albedo_color = Color(0.55, 0.12, 0.12, 1)
+roughness = 0.85
+
+[sub_resource type="StandardMaterial3D" id="Material_enemy_head"]
+albedo_color = Color(0.72, 0.55, 0.42, 1)
+roughness = 0.9
+
+[node name="Enemy" type="CharacterBody3D" groups=["enemy"]]
+collision_layer = 2
+collision_mask = 1
+floor_snap_length = 0.5
+script = ExtResource("1_enemy")
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.8, 0)
+shape = SubResource("CapsuleShape_enemy")
+
+[node name="body" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.8, 0)
+mesh = SubResource("CapsuleMesh_enemy")
+surface_material_override/0 = SubResource("Material_enemy_body")
+
+[node name="head" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.85, 0)
+mesh = SubResource("BoxMesh_enemy_head")
+surface_material_override/0 = SubResource("Material_enemy_head")
+
+[node name="BodyHitbox" type="Area3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.8, 0)
+monitoring = false
+script = ExtResource("2_hitbox")
+damage_multiplier = 1.0
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="BodyHitbox"]
+shape = SubResource("CapsuleShape_body_hitbox")
+
+[node name="HeadHitbox" type="Area3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.85, 0)
+monitoring = false
+script = ExtResource("2_hitbox")
+damage_multiplier = 2.5
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="HeadHitbox"]
+shape = SubResource("BoxShape_head_hitbox")
+
+[node name="NavigationAgent3D" type="NavigationAgent3D" parent="."]
+radius = 0.4
+height = 1.6
+path_desired_distance = 0.5
+target_desired_distance = 1.0

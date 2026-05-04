@@ -1,0 +1,133 @@
+[gd_scene format=3 uid="uid://pausemenu0xx0"]
+
+[ext_resource type="Script" path="res://scripts/pause_menu.gd" id="1_pause"]
+[ext_resource type="Script" path="res://scripts/ui/chamfer_panel.gd" id="2_panel"]
+[ext_resource type="Script" path="res://scripts/ui/chamfer_button.gd" id="3_btn"]
+[ext_resource type="FontVariation" path="res://assets/fonts/font_jbmono_500.tres" id="4_jb5"]
+[ext_resource type="FontVariation" path="res://assets/fonts/font_notosc_900.tres" id="5_n9"]
+[ext_resource type="FontVariation" path="res://assets/fonts/font_oswald_700.tres" id="6_o7"]
+
+[node name="PauseMenu" type="CanvasLayer"]
+layer = 50
+process_mode = 3
+script = ExtResource("1_pause")
+
+[node name="Dim" type="ColorRect" parent="."]
+anchor_right = 1.0
+anchor_bottom = 1.0
+mouse_filter = 1
+color = Color(0, 0, 0, 0.7)
+
+[node name="Center" type="Control" parent="Dim"]
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -270.0
+offset_top = -310.0
+offset_right = 270.0
+offset_bottom = 310.0
+mouse_filter = 1
+
+[node name="Panel" type="Control" parent="Dim/Center"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+mouse_filter = 1
+script = ExtResource("2_panel")
+bg_color = Color(0.0588, 0.0392, 0.0392, 0.94)
+border_color = Color(0.227, 0.125, 0.102, 1)
+border_width = 2.0
+chamfer_size = 18.0
+
+[node name="Eyebrow" type="Label" parent="Dim/Center/Panel"]
+layout_mode = 0
+offset_left = 40.0
+offset_top = 36.0
+offset_right = 500.0
+offset_bottom = 56.0
+theme_override_colors/font_color = Color(0.855, 0.18, 0.2, 1)
+theme_override_fonts/font = ExtResource("4_jb5")
+theme_override_font_sizes/font_size = 12
+text = "// MISSION PAUSED"
+vertical_alignment = 1
+
+[node name="TitleCN" type="Label" parent="Dim/Center/Panel"]
+layout_mode = 0
+offset_left = 40.0
+offset_top = 64.0
+offset_right = 500.0
+offset_bottom = 156.0
+theme_override_colors/font_color = Color(1, 0.918, 0.851, 1)
+theme_override_colors/font_outline_color = Color(0, 0, 0, 0.6)
+theme_override_constants/outline_size = 4
+theme_override_fonts/font = ExtResource("5_n9")
+theme_override_font_sizes/font_size = 72
+text = "暂  停"
+
+[node name="TitleEN" type="Label" parent="Dim/Center/Panel"]
+layout_mode = 0
+offset_left = 40.0
+offset_top = 168.0
+offset_right = 500.0
+offset_bottom = 196.0
+theme_override_colors/font_color = Color(0.478, 0.416, 0.361, 1)
+theme_override_fonts/font = ExtResource("6_o7")
+theme_override_font_sizes/font_size = 22
+text = "PAUSED · STAND BY FOR ORDERS"
+
+[node name="VBox" type="VBoxContainer" parent="Dim/Center/Panel"]
+layout_mode = 1
+anchors_preset = 12
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 40.0
+offset_top = -376.0
+offset_right = -40.0
+offset_bottom = -36.0
+theme_override_constants/separation = 14
+
+[node name="ContinueButton" type="Control" parent="Dim/Center/Panel/VBox"]
+custom_minimum_size = Vector2(460, 72)
+layout_mode = 2
+focus_mode = 2
+mouse_default_cursor_shape = 2
+script = ExtResource("3_btn")
+code = "01"
+cn_label = "继续"
+en_label = "RESUME · ESC"
+
+[node name="SettingsButton" type="Control" parent="Dim/Center/Panel/VBox"]
+custom_minimum_size = Vector2(460, 72)
+layout_mode = 2
+focus_mode = 2
+mouse_default_cursor_shape = 2
+script = ExtResource("3_btn")
+code = "02"
+cn_label = "设置"
+en_label = "SETTINGS"
+
+[node name="MenuButton" type="Control" parent="Dim/Center/Panel/VBox"]
+custom_minimum_size = Vector2(460, 72)
+layout_mode = 2
+focus_mode = 2
+mouse_default_cursor_shape = 2
+script = ExtResource("3_btn")
+code = "03"
+cn_label = "返回主菜单"
+en_label = "RETURN TO MENU"
+
+[node name="QuitButton" type="Control" parent="Dim/Center/Panel/VBox"]
+custom_minimum_size = Vector2(460, 72)
+layout_mode = 2
+focus_mode = 2
+mouse_default_cursor_shape = 2
+script = ExtResource("3_btn")
+code = "04"
+cn_label = "退出游戏"
+en_label = "EXIT"
+danger = true

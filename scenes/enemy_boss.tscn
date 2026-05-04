@@ -1,0 +1,69 @@
+[gd_scene load_steps=6 format=3 uid="uid://x2vpeorx1pqx"]
+
+[ext_resource type="PackedScene" path="res://scenes/enemy.tscn" id="1_base"]
+[ext_resource type="PackedScene" path="res://assets/enemies_mech/George.gltf" id="2_george"]
+
+[sub_resource type="BoxShape3D" id="BoxShape_boss_collision"]
+size = Vector3(2.0, 3.0, 2.0)
+
+[sub_resource type="BoxShape3D" id="BoxShape_boss_leg"]
+size = Vector3(0.6, 5.0, 1.4)
+
+[sub_resource type="BoxShape3D" id="BoxShape_boss_upperbody"]
+size = Vector3(4.4, 3.5, 2.0)
+
+[sub_resource type="BoxShape3D" id="BoxShape_boss_head"]
+size = Vector3(1.4, 1.5, 1.4)
+
+[node name="Enemy" instance=ExtResource("1_base")]
+max_health = 1200.0
+move_speed = 2.5
+health_pack_drop_chance = 1.0
+legendary_drop_chance = 1.0
+score_value = 5000
+is_boss = true
+flank_offset_max = 0.5
+attack_range = 2.5
+attack_damage = 40.0
+attack_windup = 1.0
+attack_cooldown = 1.6
+attack_miss_bonus_cooldown = 0.4
+anim_idle = "Idle"
+anim_walk = "Walk"
+anim_run = "Run"
+anim_attack = "Punch"
+anim_death = "Death"
+
+[node name="CollisionShape3D" parent="." index="0"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.5, 0)
+shape = SubResource("BoxShape_boss_collision")
+
+[node name="body" parent="." index="1"]
+visible = false
+
+[node name="head" parent="." index="2"]
+visible = false
+
+[node name="BodyHitbox" parent="." index="3"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0)
+
+[node name="CollisionShape3D" parent="BodyHitbox" index="0"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1.5, 2.5, 0)
+shape = SubResource("BoxShape_boss_leg")
+
+[node name="CollisionShape3D2" type="CollisionShape3D" parent="BodyHitbox"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.5, 2.5, 0)
+shape = SubResource("BoxShape_boss_leg")
+
+[node name="UpperBody" type="CollisionShape3D" parent="BodyHitbox"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 5.25, -0.5)
+shape = SubResource("BoxShape_boss_upperbody")
+
+[node name="HeadHitbox" parent="." index="4"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 8.25, 0)
+
+[node name="CollisionShape3D" parent="HeadHitbox" index="0"]
+shape = SubResource("BoxShape_boss_head")
+
+[node name="model" parent="." instance=ExtResource("2_george")]
+transform = Transform3D(-1.6, 0, 0, 0, 1.6, 0, 0, 0, -1.6, 0, 0, 0)

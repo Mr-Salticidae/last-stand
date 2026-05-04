@@ -1,0 +1,81 @@
+[gd_scene format=3 uid="uid://bsupvfj7j4mss"]
+
+[ext_resource type="Script" uid="uid://b0r1ggky4j51j" path="res://scripts/ui/stat_card.gd" id="1_script"]
+[ext_resource type="FontVariation" path="res://assets/fonts/font_jbmono_500.tres" id="2_jb5"]
+[ext_resource type="FontVariation" path="res://assets/fonts/font_jbmono_400.tres" id="3_jb4"]
+[ext_resource type="FontVariation" path="res://assets/fonts/font_notosc_900.tres" id="4_n9"]
+[ext_resource type="FontVariation" path="res://assets/fonts/font_oswald_700.tres" id="5_o7"]
+
+[node name="StatCard" type="Control" unique_id=1643556768]
+custom_minimum_size = Vector2(660, 220)
+layout_mode = 3
+anchors_preset = 0
+mouse_filter = 2
+script = ExtResource("1_script")
+
+[node name="CodeENLabel" type="Label" parent="." unique_id=530535166]
+layout_mode = 1
+offset_left = 36.0
+offset_top = 36.0
+offset_right = 360.0
+offset_bottom = 60.0
+theme_override_colors/font_color = Color(0.855, 0.18, 0.2, 1)
+theme_override_fonts/font = ExtResource("2_jb5")
+theme_override_font_sizes/font_size = 14
+text = "[01] TOP WAVE"
+vertical_alignment = 1
+
+[node name="CNLabel" type="Label" parent="." unique_id=893255579]
+layout_mode = 1
+anchors_preset = 1
+anchor_left = 1.0
+anchor_right = 1.0
+offset_left = -240.0
+offset_top = 30.0
+offset_right = -36.0
+offset_bottom = 64.0
+theme_override_colors/font_color = Color(0.855, 0.18, 0.2, 1)
+theme_override_fonts/font = ExtResource("4_n9")
+theme_override_font_sizes/font_size = 20
+text = "最高波次"
+horizontal_alignment = 2
+vertical_alignment = 1
+
+[node name="ValueLabel" type="Label" parent="." unique_id=1719053953]
+layout_mode = 1
+offset_left = 36.0
+offset_top = 48.0
+offset_right = 460.0
+offset_bottom = 209.0
+theme_override_colors/font_color = Color(0.478, 0.416, 0.361, 0.55)
+theme_override_fonts/font = ExtResource("5_o7")
+theme_override_font_sizes/font_size = 108
+text = "----"
+
+[node name="UnitLabel" type="Label" parent="." unique_id=1351156946]
+layout_mode = 1
+offset_left = 397.0
+offset_top = 143.0
+offset_right = 537.0
+offset_bottom = 169.0
+theme_override_colors/font_color = Color(0.478, 0.416, 0.361, 1)
+theme_override_fonts/font = ExtResource("2_jb5")
+theme_override_font_sizes/font_size = 14
+text = "WAVE"
+vertical_alignment = 1
+
+[node name="CaptionLabel" type="Label" parent="." unique_id=1633197867]
+layout_mode = 1
+anchors_preset = 12
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 36.0
+offset_top = -36.0
+offset_right = -36.0
+offset_bottom = -16.0
+theme_override_colors/font_color = Color(0.478, 0.416, 0.361, 0.7)
+theme_override_fonts/font = ExtResource("3_jb4")
+theme_override_font_sizes/font_size = 12
+text = "NO RECORD ON FILE  ·  AWAITING FIRST DEPLOYMENT"
+vertical_alignment = 1

@@ -1,0 +1,177 @@
+[gd_scene format=3 uid="uid://dx5kvpfn8a3qm"]
+
+[ext_resource type="Script" path="res://scripts/ui/level_card.gd" id="1_script"]
+[ext_resource type="FontVariation" path="res://assets/fonts/font_jbmono_500.tres" id="2_jb5"]
+[ext_resource type="FontVariation" path="res://assets/fonts/font_jbmono_400.tres" id="3_jb4"]
+[ext_resource type="FontVariation" path="res://assets/fonts/font_notosc_900.tres" id="4_n9"]
+[ext_resource type="FontVariation" path="res://assets/fonts/font_notosc_400.tres" id="5_n4"]
+[ext_resource type="FontVariation" path="res://assets/fonts/font_oswald_500.tres" id="6_o5"]
+[ext_resource type="Script" path="res://scripts/ui/level_thumbnail.gd" id="7_thumb"]
+
+[sub_resource type="StyleBoxFlat" id="map_chip_style"]
+bg_color = Color(0.075, 0.04, 0.04, 0.7)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.227, 0.125, 0.102, 1)
+corner_radius_top_left = 0
+corner_radius_top_right = 0
+corner_radius_bottom_right = 0
+corner_radius_bottom_left = 0
+
+[sub_resource type="StyleBoxFlat" id="threat_chip_style"]
+bg_color = Color(0, 0, 0, 0.5)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(1, 0.451, 0.314, 1)
+corner_radius_top_left = 0
+corner_radius_top_right = 0
+corner_radius_bottom_right = 0
+corner_radius_bottom_left = 0
+
+
+[node name="LevelCard" type="Control"]
+custom_minimum_size = Vector2(530, 560)
+layout_mode = 3
+anchors_preset = 0
+focus_mode = 2
+mouse_default_cursor_shape = 2
+script = ExtResource("1_script")
+
+[node name="ThumbBg" type="Control" parent="."]
+layout_mode = 1
+offset_left = 0.0
+offset_top = 0.0
+offset_right = 530.0
+offset_bottom = 330.0
+mouse_filter = 2
+script = ExtResource("7_thumb")
+kind = "training"
+
+[node name="ThumbLabel" type="Label" parent="."]
+visible = false
+layout_mode = 1
+offset_top = 2.0
+offset_right = 530.0
+offset_bottom = 332.0
+mouse_filter = 2
+theme_override_colors/font_color = Color(0.788, 0.718, 0.643, 0.6)
+theme_override_fonts/font = ExtResource("6_o5")
+theme_override_font_sizes/font_size = 24
+text = "PROVING GROUND"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="MapChip" type="Panel" parent="."]
+layout_mode = 1
+offset_left = 16.0
+offset_top = 16.0
+offset_right = 156.0
+offset_bottom = 38.0
+mouse_filter = 2
+theme_override_styles/panel = SubResource("map_chip_style")
+
+[node name="Label" type="Label" parent="MapChip"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 8.0
+offset_right = -8.0
+mouse_filter = 2
+theme_override_colors/font_color = Color(0.478, 0.416, 0.361, 1)
+theme_override_fonts/font = ExtResource("2_jb5")
+theme_override_font_sizes/font_size = 12
+text = "MAP · TRAINING"
+vertical_alignment = 1
+
+[node name="ThreatChip" type="Panel" parent="."]
+layout_mode = 1
+anchors_preset = 1
+anchor_left = 1.0
+anchor_right = 1.0
+offset_left = -136.0
+offset_top = 16.0
+offset_right = -16.0
+offset_bottom = 38.0
+mouse_filter = 2
+theme_override_styles/panel = SubResource("threat_chip_style")
+
+[node name="Label" type="Label" parent="ThreatChip"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 8.0
+offset_right = -8.0
+mouse_filter = 2
+theme_override_colors/font_color = Color(1, 0.451, 0.314, 1)
+theme_override_fonts/font = ExtResource("2_jb5")
+theme_override_font_sizes/font_size = 11
+text = "THREAT · MED"
+vertical_alignment = 1
+
+[node name="CnNameLabel" type="Label" parent="."]
+layout_mode = 1
+offset_left = 24.0
+offset_top = 354.0
+offset_right = 320.0
+offset_bottom = 410.0
+mouse_filter = 2
+theme_override_colors/font_color = Color(0.79, 0.74, 0.66, 1)
+theme_override_fonts/font = ExtResource("4_n9")
+theme_override_font_sizes/font_size = 32
+text = "训练场"
+vertical_alignment = 1
+
+[node name="EnNameLabel" type="Label" parent="."]
+layout_mode = 1
+anchors_preset = 1
+anchor_left = 1.0
+anchor_right = 1.0
+offset_left = -240.0
+offset_top = 354.0
+offset_right = -22.0
+offset_bottom = 410.0
+mouse_filter = 2
+theme_override_colors/font_color = Color(0.478, 0.416, 0.361, 1)
+theme_override_fonts/font = ExtResource("6_o5")
+theme_override_font_sizes/font_size = 16
+text = "PROVING GROUND"
+horizontal_alignment = 2
+vertical_alignment = 1
+
+[node name="DescLabel" type="Label" parent="."]
+layout_mode = 1
+anchors_preset = 12
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 24.0
+offset_top = -126.0
+offset_right = -24.0
+offset_bottom = -22.0
+mouse_filter = 2
+theme_override_colors/font_color = Color(0.478, 0.416, 0.361, 1)
+theme_override_constants/line_spacing = 8
+theme_override_fonts/font = ExtResource("5_n4")
+theme_override_font_sizes/font_size = 15
+text = ""
+autowrap_mode = 3
+
+[node name="LockedLabel" type="Label" parent="."]
+visible = false
+layout_mode = 1
+offset_top = 2.0
+offset_right = 530.0
+offset_bottom = 332.0
+mouse_filter = 2
+theme_override_colors/font_color = Color(0.62, 0.56, 0.47, 1)
+theme_override_fonts/font = ExtResource("6_o5")
+theme_override_font_sizes/font_size = 20
+text = "✕  锁定 / LOCKED"
+horizontal_alignment = 1
+vertical_alignment = 1

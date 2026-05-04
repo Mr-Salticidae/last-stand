@@ -1,0 +1,236 @@
+﻿{
+"asset": {
+"generator": "FBX2glTF v0.9.7",
+"version": "2.0"
+},
+"scene": 0,
+"buffers": [
+{
+"byteLength": 15864
+}
+],
+"bufferViews": [
+{
+"buffer": 0,
+"byteLength": 2136,
+"byteOffset": 0,
+"target": 34963
+},
+{
+"buffer": 0,
+"byteLength": 5592,
+"byteOffset": 2136,
+"target": 34962
+},
+{
+"buffer": 0,
+"byteLength": 5592,
+"byteOffset": 7728,
+"target": 34962
+},
+{
+"buffer": 0,
+"byteLength": 288,
+"byteOffset": 13320,
+"target": 34963
+},
+{
+"buffer": 0,
+"byteLength": 1128,
+"byteOffset": 13608,
+"target": 34962
+},
+{
+"buffer": 0,
+"byteLength": 1128,
+"byteOffset": 14736,
+"target": 34962
+}
+],
+"scenes": [
+{
+"name": "Root Scene",
+"nodes": [
+0
+]
+}
+],
+"accessors": [
+{
+"componentType": 5123,
+"type": "SCALAR",
+"count": 1068,
+"bufferView": 0,
+"byteOffset": 0
+},
+{
+"componentType": 5126,
+"type": "VEC3",
+"count": 466,
+"bufferView": 1,
+"byteOffset": 0,
+"min": [
+-0.00675937160849571,
+-0.000367212516721338,
+-0.00012199196498841
+],
+"max": [
+0.00675937160849571,
+0.000222065427806228,
+0.00513768615201116
+]
+},
+{
+"componentType": 5126,
+"type": "VEC3",
+"count": 466,
+"bufferView": 2,
+"byteOffset": 0
+},
+{
+"componentType": 5123,
+"type": "SCALAR",
+"count": 144,
+"bufferView": 3,
+"byteOffset": 0
+},
+{
+"componentType": 5126,
+"type": "VEC3",
+"count": 94,
+"bufferView": 4,
+"byteOffset": 0,
+"min": [
+-0.00675937160849571,
+-0.000367212516721338,
+1.38287778099766e-05
+],
+"max": [
+0.00675937160849571,
+0.000222065049456432,
+0.00513768615201116
+]
+},
+{
+"componentType": 5126,
+"type": "VEC3",
+"count": 94,
+"bufferView": 5,
+"byteOffset": 0
+}
+],
+"samplers": [
+{}
+],
+"materials": [
+{
+"name": "Wood",
+"alphaMode": "OPAQUE",
+"extras": {
+"fromFBX": {
+"shadingModel": "Phong",
+"isTruePBR": false
+}
+},
+"pbrMetallicRoughness": {
+"baseColorFactor": [
+0.246187329292297,
+0.144358962774277,
+0.0537984296679497,
+1.0
+],
+"metallicFactor": 0.400000005960464,
+"roughnessFactor": 0.272165536880493
+}
+},
+{
+"name": "Wood_Light",
+"alphaMode": "OPAQUE",
+"extras": {
+"fromFBX": {
+"shadingModel": "Phong",
+"isTruePBR": false
+}
+},
+"pbrMetallicRoughness": {
+"baseColorFactor": [
+0.375745296478271,
+0.243188440799713,
+0.0974606275558472,
+1.0
+],
+"metallicFactor": 0.400000005960464,
+"roughnessFactor": 0.272165536880493
+}
+}
+],
+"meshes": [
+{
+"name": "Wall_FirstAge",
+"primitives": [
+{
+"material": 0,
+"mode": 4,
+"attributes": {
+"NORMAL": 2,
+"POSITION": 1
+},
+"indices": 0
+},
+{
+"material": 1,
+"mode": 4,
+"attributes": {
+"NORMAL": 5,
+"POSITION": 4
+},
+"indices": 3
+}
+]
+}
+],
+"nodes": [
+{
+"name": "RootNode",
+"translation": [
+0.0,
+0.0,
+0.0
+],
+"rotation": [
+0.0,
+0.0,
+0.0,
+1.0
+],
+"scale": [
+1.0,
+1.0,
+1.0
+],
+"children": [
+1
+]
+},
+{
+"name": "Wall_FirstAge",
+"translation": [
+0.0,
+0.0,
+0.0
+],
+"rotation": [
+-0.707106828689575,
+0.0,
+0.0,
+0.707106709480286
+],
+"scale": [
+100.0,
+100.0,
+100.0
+],
+"mesh": 0
+}
+]
+}

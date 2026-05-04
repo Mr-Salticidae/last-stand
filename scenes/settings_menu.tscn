@@ -1,0 +1,513 @@
+[gd_scene load_steps=12 format=3]
+
+[ext_resource type="Script" path="res://scripts/settings_menu.gd" id="1_set"]
+[ext_resource type="PackedScene" path="res://scenes/ui_common/atmosphere_background.tscn" id="2_atmos"]
+[ext_resource type="Script" path="res://scripts/ui/custom_slider.gd" id="3_sl"]
+[ext_resource type="Script" path="res://scripts/ui/custom_toggle.gd" id="4_tg"]
+[ext_resource type="Script" path="res://scripts/ui/custom_cycle_button.gd" id="4b_cyc"]
+[ext_resource type="Script" path="res://scripts/ui/secondary_button.gd" id="5_sb"]
+[ext_resource type="Script" path="res://scripts/ui/chamfer_panel.gd" id="6_cp"]
+[ext_resource type="FontVariation" path="res://assets/fonts/font_oswald_700.tres" id="7_o7"]
+[ext_resource type="FontVariation" path="res://assets/fonts/font_oswald_500.tres" id="8_o5"]
+[ext_resource type="FontVariation" path="res://assets/fonts/font_jbmono_500.tres" id="9_jb5"]
+[ext_resource type="FontVariation" path="res://assets/fonts/font_notosc_700.tres" id="10_n7"]
+[ext_resource type="FontVariation" path="res://assets/fonts/font_notosc_900.tres" id="11_n9"]
+
+[node name="SettingsMenu" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+script = ExtResource("1_set")
+
+[node name="AtmosphereBackground" parent="." instance=ExtResource("2_atmos")]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="PageHeader" type="Control" parent="."]
+layout_mode = 1
+anchors_preset = 10
+anchor_right = 1.0
+offset_left = 120.0
+offset_top = 130.0
+offset_right = -120.0
+offset_bottom = 290.0
+grow_horizontal = 2
+mouse_filter = 2
+
+[node name="Eyebrow" type="Label" parent="PageHeader"]
+layout_mode = 1
+offset_right = 400.0
+offset_bottom = 20.0
+text = "// SYSTEM CONFIG · 0XR-07"
+vertical_alignment = 1
+theme_override_fonts/font = ExtResource("9_jb5")
+theme_override_font_sizes/font_size = 12
+theme_override_colors/font_color = Color(0.855, 0.18, 0.2, 1)
+
+[node name="TitleEN" type="Label" parent="PageHeader"]
+layout_mode = 1
+offset_top = 30.0
+offset_right = 600.0
+offset_bottom = 130.0
+text = "SETTINGS"
+vertical_alignment = 1
+theme_override_fonts/font = ExtResource("7_o7")
+theme_override_font_sizes/font_size = 84
+theme_override_colors/font_color = Color(1, 0.918, 0.851, 1)
+theme_override_colors/font_outline_color = Color(0, 0, 0, 0.6)
+theme_override_constants/outline_size = 4
+
+[node name="TitleCN" type="Label" parent="PageHeader"]
+layout_mode = 1
+offset_left = 360.0
+offset_top = 70.0
+offset_right = 600.0
+offset_bottom = 110.0
+text = "设置"
+vertical_alignment = 1
+theme_override_fonts/font = ExtResource("11_n9")
+theme_override_font_sizes/font_size = 28
+theme_override_colors/font_color = Color(0.855, 0.18, 0.2, 1)
+
+[node name="Rule" type="Label" parent="PageHeader"]
+layout_mode = 1
+offset_top = 138.0
+offset_right = 800.0
+offset_bottom = 158.0
+text = "◤  TUNE YOUR LOADOUT"
+vertical_alignment = 1
+theme_override_fonts/font = ExtResource("9_jb5")
+theme_override_font_sizes/font_size = 13
+theme_override_colors/font_color = Color(0.478, 0.416, 0.361, 1)
+
+[node name="PageBody" type="HBoxContainer" parent="."]
+layout_mode = 1
+anchor_left = 0.5
+anchor_right = 0.5
+offset_left = -780.0
+offset_top = 320.0
+offset_right = 780.0
+offset_bottom = 880.0
+theme_override_constants/separation = 60
+
+[node name="LeftCol" type="VBoxContainer" parent="PageBody"]
+custom_minimum_size = Vector2(750, 0)
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_constants/separation = 28
+
+[node name="AudioGroup" type="VBoxContainer" parent="PageBody/LeftCol"]
+layout_mode = 2
+theme_override_constants/separation = 6
+
+[node name="GroupHeader" type="Label" parent="PageBody/LeftCol/AudioGroup"]
+custom_minimum_size = Vector2(0, 32)
+layout_mode = 2
+text = "// AUDIO  音频"
+vertical_alignment = 1
+theme_override_fonts/font = ExtResource("8_o5")
+theme_override_font_sizes/font_size = 20
+theme_override_colors/font_color = Color(0.855, 0.18, 0.2, 1)
+
+[node name="MasterRow" type="HBoxContainer" parent="PageBody/LeftCol/AudioGroup"]
+custom_minimum_size = Vector2(0, 56)
+layout_mode = 2
+theme_override_constants/separation = 16
+
+[node name="LeftLabel" type="Label" parent="PageBody/LeftCol/AudioGroup/MasterRow"]
+custom_minimum_size = Vector2(240, 0)
+layout_mode = 2
+text = "主音量  /  MASTER VOLUME"
+vertical_alignment = 1
+theme_override_fonts/font = ExtResource("10_n7")
+theme_override_font_sizes/font_size = 14
+theme_override_colors/font_color = Color(0.788, 0.718, 0.643, 1)
+
+[node name="Slider" type="Control" parent="PageBody/LeftCol/AudioGroup/MasterRow"]
+custom_minimum_size = Vector2(0, 36)
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 4
+focus_mode = 2
+mouse_default_cursor_shape = 2
+script = ExtResource("3_sl")
+value = 1.0
+
+[node name="Value" type="Label" parent="PageBody/LeftCol/AudioGroup/MasterRow"]
+custom_minimum_size = Vector2(80, 0)
+layout_mode = 2
+text = "100%"
+horizontal_alignment = 2
+vertical_alignment = 1
+theme_override_fonts/font = ExtResource("9_jb5")
+theme_override_font_sizes/font_size = 18
+theme_override_colors/font_color = Color(0.855, 0.18, 0.2, 1)
+
+[node name="SfxRow" type="HBoxContainer" parent="PageBody/LeftCol/AudioGroup"]
+custom_minimum_size = Vector2(0, 56)
+layout_mode = 2
+theme_override_constants/separation = 16
+
+[node name="LeftLabel" type="Label" parent="PageBody/LeftCol/AudioGroup/SfxRow"]
+custom_minimum_size = Vector2(240, 0)
+layout_mode = 2
+text = "音效  /  SFX"
+vertical_alignment = 1
+theme_override_fonts/font = ExtResource("10_n7")
+theme_override_font_sizes/font_size = 14
+theme_override_colors/font_color = Color(0.788, 0.718, 0.643, 1)
+
+[node name="Slider" type="Control" parent="PageBody/LeftCol/AudioGroup/SfxRow"]
+custom_minimum_size = Vector2(0, 36)
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 4
+focus_mode = 2
+mouse_default_cursor_shape = 2
+script = ExtResource("3_sl")
+value = 1.0
+
+[node name="Value" type="Label" parent="PageBody/LeftCol/AudioGroup/SfxRow"]
+custom_minimum_size = Vector2(80, 0)
+layout_mode = 2
+text = "100%"
+horizontal_alignment = 2
+vertical_alignment = 1
+theme_override_fonts/font = ExtResource("9_jb5")
+theme_override_font_sizes/font_size = 18
+theme_override_colors/font_color = Color(0.855, 0.18, 0.2, 1)
+
+[node name="MusicRow" type="HBoxContainer" parent="PageBody/LeftCol/AudioGroup"]
+custom_minimum_size = Vector2(0, 56)
+layout_mode = 2
+theme_override_constants/separation = 16
+
+[node name="LeftLabel" type="Label" parent="PageBody/LeftCol/AudioGroup/MusicRow"]
+custom_minimum_size = Vector2(240, 0)
+layout_mode = 2
+text = "音乐  /  MUSIC"
+vertical_alignment = 1
+theme_override_fonts/font = ExtResource("10_n7")
+theme_override_font_sizes/font_size = 14
+theme_override_colors/font_color = Color(0.788, 0.718, 0.643, 1)
+
+[node name="Slider" type="Control" parent="PageBody/LeftCol/AudioGroup/MusicRow"]
+custom_minimum_size = Vector2(0, 36)
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 4
+focus_mode = 2
+mouse_default_cursor_shape = 2
+script = ExtResource("3_sl")
+value = 0.7
+
+[node name="Value" type="Label" parent="PageBody/LeftCol/AudioGroup/MusicRow"]
+custom_minimum_size = Vector2(80, 0)
+layout_mode = 2
+text = "70%"
+horizontal_alignment = 2
+vertical_alignment = 1
+theme_override_fonts/font = ExtResource("9_jb5")
+theme_override_font_sizes/font_size = 18
+theme_override_colors/font_color = Color(0.855, 0.18, 0.2, 1)
+
+[node name="ControlsGroup" type="VBoxContainer" parent="PageBody/LeftCol"]
+layout_mode = 2
+theme_override_constants/separation = 6
+
+[node name="GroupHeader" type="Label" parent="PageBody/LeftCol/ControlsGroup"]
+custom_minimum_size = Vector2(0, 32)
+layout_mode = 2
+text = "// CONTROLS  操作"
+vertical_alignment = 1
+theme_override_fonts/font = ExtResource("8_o5")
+theme_override_font_sizes/font_size = 20
+theme_override_colors/font_color = Color(0.855, 0.18, 0.2, 1)
+
+[node name="SensRow" type="HBoxContainer" parent="PageBody/LeftCol/ControlsGroup"]
+custom_minimum_size = Vector2(0, 56)
+layout_mode = 2
+theme_override_constants/separation = 16
+
+[node name="LeftLabel" type="Label" parent="PageBody/LeftCol/ControlsGroup/SensRow"]
+custom_minimum_size = Vector2(240, 0)
+layout_mode = 2
+text = "鼠标灵敏度  /  SENSITIVITY"
+vertical_alignment = 1
+theme_override_fonts/font = ExtResource("10_n7")
+theme_override_font_sizes/font_size = 14
+theme_override_colors/font_color = Color(0.788, 0.718, 0.643, 1)
+
+[node name="Slider" type="Control" parent="PageBody/LeftCol/ControlsGroup/SensRow"]
+custom_minimum_size = Vector2(0, 36)
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 4
+focus_mode = 2
+mouse_default_cursor_shape = 2
+script = ExtResource("3_sl")
+min_value = 0.05
+max_value = 0.5
+value = 0.2
+
+[node name="Value" type="Label" parent="PageBody/LeftCol/ControlsGroup/SensRow"]
+custom_minimum_size = Vector2(80, 0)
+layout_mode = 2
+text = "33%"
+horizontal_alignment = 2
+vertical_alignment = 1
+theme_override_fonts/font = ExtResource("9_jb5")
+theme_override_font_sizes/font_size = 18
+theme_override_colors/font_color = Color(0.855, 0.18, 0.2, 1)
+
+[node name="RightCol" type="VBoxContainer" parent="PageBody"]
+custom_minimum_size = Vector2(750, 0)
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_constants/separation = 28
+
+[node name="DisplayGroup" type="VBoxContainer" parent="PageBody/RightCol"]
+layout_mode = 2
+theme_override_constants/separation = 6
+
+[node name="GroupHeader" type="Label" parent="PageBody/RightCol/DisplayGroup"]
+custom_minimum_size = Vector2(0, 32)
+layout_mode = 2
+text = "// DISPLAY  显示"
+vertical_alignment = 1
+theme_override_fonts/font = ExtResource("8_o5")
+theme_override_font_sizes/font_size = 20
+theme_override_colors/font_color = Color(0.855, 0.18, 0.2, 1)
+
+[node name="WindowModeRow" type="HBoxContainer" parent="PageBody/RightCol/DisplayGroup"]
+custom_minimum_size = Vector2(0, 56)
+layout_mode = 2
+theme_override_constants/separation = 16
+
+[node name="LeftLabel" type="Label" parent="PageBody/RightCol/DisplayGroup/WindowModeRow"]
+custom_minimum_size = Vector2(240, 0)
+layout_mode = 2
+text = "显示模式  /  WINDOW MODE"
+vertical_alignment = 1
+theme_override_fonts/font = ExtResource("10_n7")
+theme_override_font_sizes/font_size = 14
+theme_override_colors/font_color = Color(0.788, 0.718, 0.643, 1)
+
+[node name="Cycle" type="Control" parent="PageBody/RightCol/DisplayGroup/WindowModeRow"]
+custom_minimum_size = Vector2(140, 32)
+layout_mode = 2
+size_flags_vertical = 4
+focus_mode = 2
+mouse_default_cursor_shape = 2
+script = ExtResource("4b_cyc")
+
+[node name="Caption" type="Label" parent="PageBody/RightCol/DisplayGroup/WindowModeRow"]
+custom_minimum_size = Vector2(80, 0)
+layout_mode = 2
+size_flags_horizontal = 3
+text = "MODE"
+horizontal_alignment = 0
+vertical_alignment = 1
+theme_override_fonts/font = ExtResource("10_n7")
+theme_override_font_sizes/font_size = 14
+theme_override_colors/font_color = Color(0.478, 0.416, 0.361, 1)
+
+[node name="ResolutionRow" type="HBoxContainer" parent="PageBody/RightCol/DisplayGroup"]
+custom_minimum_size = Vector2(0, 56)
+layout_mode = 2
+theme_override_constants/separation = 16
+
+[node name="LeftLabel" type="Label" parent="PageBody/RightCol/DisplayGroup/ResolutionRow"]
+custom_minimum_size = Vector2(240, 0)
+layout_mode = 2
+text = "分辨率  /  RESOLUTION"
+vertical_alignment = 1
+theme_override_fonts/font = ExtResource("10_n7")
+theme_override_font_sizes/font_size = 14
+theme_override_colors/font_color = Color(0.788, 0.718, 0.643, 1)
+
+[node name="Cycle" type="Control" parent="PageBody/RightCol/DisplayGroup/ResolutionRow"]
+custom_minimum_size = Vector2(180, 32)
+layout_mode = 2
+size_flags_vertical = 4
+focus_mode = 2
+mouse_default_cursor_shape = 2
+script = ExtResource("4b_cyc")
+
+[node name="Caption" type="Label" parent="PageBody/RightCol/DisplayGroup/ResolutionRow"]
+custom_minimum_size = Vector2(80, 0)
+layout_mode = 2
+size_flags_horizontal = 3
+text = "PX"
+horizontal_alignment = 0
+vertical_alignment = 1
+theme_override_fonts/font = ExtResource("10_n7")
+theme_override_font_sizes/font_size = 14
+theme_override_colors/font_color = Color(0.478, 0.416, 0.361, 1)
+
+[node name="VsyncRow" type="HBoxContainer" parent="PageBody/RightCol/DisplayGroup"]
+custom_minimum_size = Vector2(0, 56)
+layout_mode = 2
+theme_override_constants/separation = 16
+
+[node name="LeftLabel" type="Label" parent="PageBody/RightCol/DisplayGroup/VsyncRow"]
+custom_minimum_size = Vector2(240, 0)
+layout_mode = 2
+text = "垂直同步  /  V-SYNC"
+vertical_alignment = 1
+theme_override_fonts/font = ExtResource("10_n7")
+theme_override_font_sizes/font_size = 14
+theme_override_colors/font_color = Color(0.788, 0.718, 0.643, 1)
+
+[node name="Toggle" type="Control" parent="PageBody/RightCol/DisplayGroup/VsyncRow"]
+custom_minimum_size = Vector2(120, 32)
+layout_mode = 2
+size_flags_vertical = 4
+focus_mode = 2
+mouse_default_cursor_shape = 2
+script = ExtResource("4_tg")
+
+[node name="Caption" type="Label" parent="PageBody/RightCol/DisplayGroup/VsyncRow"]
+custom_minimum_size = Vector2(80, 0)
+layout_mode = 2
+size_flags_horizontal = 3
+text = "启用"
+horizontal_alignment = 0
+vertical_alignment = 1
+theme_override_fonts/font = ExtResource("10_n7")
+theme_override_font_sizes/font_size = 14
+theme_override_colors/font_color = Color(0.478, 0.416, 0.361, 1)
+
+[node name="FpsRow" type="HBoxContainer" parent="PageBody/RightCol/DisplayGroup"]
+custom_minimum_size = Vector2(0, 56)
+layout_mode = 2
+theme_override_constants/separation = 16
+
+[node name="LeftLabel" type="Label" parent="PageBody/RightCol/DisplayGroup/FpsRow"]
+custom_minimum_size = Vector2(240, 0)
+layout_mode = 2
+text = "帧率限制  /  FPS LIMIT"
+vertical_alignment = 1
+theme_override_fonts/font = ExtResource("10_n7")
+theme_override_font_sizes/font_size = 14
+theme_override_colors/font_color = Color(0.788, 0.718, 0.643, 1)
+
+[node name="Cycle" type="Control" parent="PageBody/RightCol/DisplayGroup/FpsRow"]
+custom_minimum_size = Vector2(140, 32)
+layout_mode = 2
+size_flags_vertical = 4
+focus_mode = 2
+mouse_default_cursor_shape = 2
+script = ExtResource("4b_cyc")
+
+[node name="Caption" type="Label" parent="PageBody/RightCol/DisplayGroup/FpsRow"]
+custom_minimum_size = Vector2(80, 0)
+layout_mode = 2
+size_flags_horizontal = 3
+text = "FPS"
+horizontal_alignment = 0
+vertical_alignment = 1
+theme_override_fonts/font = ExtResource("10_n7")
+theme_override_font_sizes/font_size = 14
+theme_override_colors/font_color = Color(0.478, 0.416, 0.361, 1)
+
+[node name="ProfileCard" type="Control" parent="PageBody/RightCol"]
+custom_minimum_size = Vector2(0, 200)
+layout_mode = 2
+mouse_filter = 2
+script = ExtResource("6_cp")
+bg_color = Color(0.0588, 0.0392, 0.0392, 0.6)
+border_color = Color(0.227, 0.125, 0.102, 1)
+border_width = 2.0
+chamfer_size = 14.0
+
+[node name="ProfileEyebrow" type="Label" parent="PageBody/RightCol/ProfileCard"]
+layout_mode = 1
+offset_left = 24.0
+offset_top = 18.0
+offset_right = 600.0
+offset_bottom = 38.0
+text = "// PROFILE  档案"
+vertical_alignment = 1
+theme_override_fonts/font = ExtResource("9_jb5")
+theme_override_font_sizes/font_size = 12
+theme_override_colors/font_color = Color(0.855, 0.18, 0.2, 1)
+
+[node name="ProfileGrid" type="GridContainer" parent="PageBody/RightCol/ProfileCard"]
+layout_mode = 1
+offset_left = 24.0
+offset_top = 56.0
+offset_right = 700.0
+offset_bottom = 180.0
+columns = 2
+theme_override_constants/h_separation = 30
+theme_override_constants/v_separation = 12
+
+[node name="L1" type="Label" parent="PageBody/RightCol/ProfileCard/ProfileGrid"]
+layout_mode = 2
+text = "操作员代号"
+theme_override_fonts/font = ExtResource("10_n7")
+theme_override_font_sizes/font_size = 14
+theme_override_colors/font_color = Color(0.478, 0.416, 0.361, 1)
+
+[node name="V1" type="Label" parent="PageBody/RightCol/ProfileCard/ProfileGrid"]
+layout_mode = 2
+text = "OPR-UNKNOWN"
+theme_override_fonts/font = ExtResource("9_jb5")
+theme_override_font_sizes/font_size = 14
+theme_override_colors/font_color = Color(0.788, 0.718, 0.643, 1)
+
+[node name="L2" type="Label" parent="PageBody/RightCol/ProfileCard/ProfileGrid"]
+layout_mode = 2
+text = "构建版本"
+theme_override_fonts/font = ExtResource("10_n7")
+theme_override_font_sizes/font_size = 14
+theme_override_colors/font_color = Color(0.478, 0.416, 0.361, 1)
+
+[node name="V2" type="Label" parent="PageBody/RightCol/ProfileCard/ProfileGrid"]
+layout_mode = 2
+text = "v0.1.1 / 2026.04"
+theme_override_fonts/font = ExtResource("9_jb5")
+theme_override_font_sizes/font_size = 14
+theme_override_colors/font_color = Color(0.788, 0.718, 0.643, 1)
+
+[node name="L3" type="Label" parent="PageBody/RightCol/ProfileCard/ProfileGrid"]
+layout_mode = 2
+text = "状态"
+theme_override_fonts/font = ExtResource("10_n7")
+theme_override_font_sizes/font_size = 14
+theme_override_colors/font_color = Color(0.478, 0.416, 0.361, 1)
+
+[node name="V3" type="Label" parent="PageBody/RightCol/ProfileCard/ProfileGrid"]
+layout_mode = 2
+text = "● UNDER SIEGE"
+theme_override_fonts/font = ExtResource("9_jb5")
+theme_override_font_sizes/font_size = 14
+theme_override_colors/font_color = Color(0.855, 0.18, 0.2, 1)
+
+[node name="Footer" type="Control" parent="."]
+layout_mode = 1
+anchors_preset = 12
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_top = -160.0
+grow_horizontal = 2
+grow_vertical = 0
+mouse_filter = 2
+
+[node name="BackButton" type="Control" parent="Footer"]
+custom_minimum_size = Vector2(220, 56)
+layout_mode = 1
+offset_left = 120.0
+offset_top = 16.0
+offset_right = 340.0
+offset_bottom = 72.0
+focus_mode = 2
+mouse_default_cursor_shape = 2
+script = ExtResource("5_sb")

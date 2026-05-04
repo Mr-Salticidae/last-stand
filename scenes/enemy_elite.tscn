@@ -1,0 +1,52 @@
+[gd_scene load_steps=4 format=3]
+
+[ext_resource type="PackedScene" path="res://scenes/enemy.tscn" id="1_base"]
+[ext_resource type="PackedScene" path="res://assets/enemies_quaternius/Enemy_EyeDrone.gltf" id="2_eyedrone"]
+
+[sub_resource type="BoxShape3D" id="BoxShape_elite_body"]
+size = Vector3(1.0, 1.0, 1.0)
+
+[sub_resource type="BoxShape3D" id="BoxShape_elite_eye"]
+size = Vector3(0.4, 0.4, 0.4)
+
+[node name="Enemy" instance=ExtResource("1_base")]
+move_speed = 4.0
+max_health = 500.0
+attack_damage = 30.0
+attack_windup = 0.8
+attack_cooldown = 1.3
+attack_miss_bonus_cooldown = 0.3
+health_pack_drop_chance = 1.0
+legendary_drop_chance = 0.30
+score_value = 1200
+is_elite = true
+flank_offset_max = 0.5
+is_flying = true
+anim_idle = "Idle"
+anim_attack = "Attack"
+anim_death = "TurnOff"
+
+[node name="CollisionShape3D" parent="." index="0"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.0, 0)
+shape = SubResource("BoxShape_elite_body")
+
+[node name="body" parent="." index="1"]
+visible = false
+
+[node name="head" parent="." index="2"]
+visible = false
+
+[node name="BodyHitbox" parent="." index="3"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.0, 0)
+
+[node name="CollisionShape3D" parent="BodyHitbox" index="0"]
+shape = SubResource("BoxShape_elite_body")
+
+[node name="HeadHitbox" parent="." index="4"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.0, -0.7)
+
+[node name="CollisionShape3D" parent="HeadHitbox" index="0"]
+shape = SubResource("BoxShape_elite_eye")
+
+[node name="model" parent="." instance=ExtResource("2_eyedrone")]
+transform = Transform3D(-1, 0, 0, 0, 1, 0, 0, 0, -1, 0, 1.0, 0)

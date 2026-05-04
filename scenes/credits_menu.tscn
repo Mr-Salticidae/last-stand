@@ -1,0 +1,352 @@
+[gd_scene load_steps=11 format=3]
+
+[ext_resource type="Script" path="res://scripts/credits_menu.gd" id="1_cr"]
+[ext_resource type="PackedScene" path="res://scenes/ui_common/atmosphere_background.tscn" id="2_atmos"]
+[ext_resource type="Script" path="res://scripts/ui/secondary_button.gd" id="3_sb"]
+[ext_resource type="Script" path="res://scripts/ui/chamfer_panel.gd" id="4_cp"]
+[ext_resource type="FontVariation" path="res://assets/fonts/font_oswald_700.tres" id="5_o7"]
+[ext_resource type="FontVariation" path="res://assets/fonts/font_oswald_500.tres" id="6_o5"]
+[ext_resource type="FontVariation" path="res://assets/fonts/font_jbmono_500.tres" id="7_jb5"]
+[ext_resource type="FontVariation" path="res://assets/fonts/font_jbmono_400.tres" id="8_jb4"]
+[ext_resource type="FontVariation" path="res://assets/fonts/font_notosc_700.tres" id="9_n7"]
+[ext_resource type="FontVariation" path="res://assets/fonts/font_notosc_800.tres" id="9b_n8"]
+[ext_resource type="FontVariation" path="res://assets/fonts/font_notosc_900.tres" id="10_n9"]
+
+[node name="CreditsMenu" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+script = ExtResource("1_cr")
+
+[node name="AtmosphereBackground" parent="." instance=ExtResource("2_atmos")]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="PageHeader" type="Control" parent="."]
+layout_mode = 1
+anchors_preset = 10
+anchor_right = 1.0
+offset_left = 120.0
+offset_top = 130.0
+offset_right = -120.0
+offset_bottom = 290.0
+grow_horizontal = 2
+mouse_filter = 2
+
+[node name="Eyebrow" type="Label" parent="PageHeader"]
+layout_mode = 1
+offset_right = 400.0
+offset_bottom = 20.0
+text = "// CREDITS · 0XR-07"
+vertical_alignment = 1
+theme_override_fonts/font = ExtResource("7_jb5")
+theme_override_font_sizes/font_size = 12
+theme_override_colors/font_color = Color(0.855, 0.18, 0.2, 1)
+
+[node name="TitleEN" type="Label" parent="PageHeader"]
+layout_mode = 1
+offset_top = 30.0
+offset_right = 600.0
+offset_bottom = 130.0
+text = "CREDITS"
+vertical_alignment = 1
+theme_override_fonts/font = ExtResource("5_o7")
+theme_override_font_sizes/font_size = 84
+theme_override_colors/font_color = Color(1, 0.918, 0.851, 1)
+theme_override_colors/font_outline_color = Color(0, 0, 0, 0.6)
+theme_override_constants/outline_size = 4
+
+[node name="TitleCN" type="Label" parent="PageHeader"]
+layout_mode = 1
+offset_left = 320.0
+offset_top = 70.0
+offset_right = 600.0
+offset_bottom = 110.0
+text = "致谢"
+vertical_alignment = 1
+theme_override_fonts/font = ExtResource("10_n9")
+theme_override_font_sizes/font_size = 28
+theme_override_colors/font_color = Color(0.855, 0.18, 0.2, 1)
+
+[node name="Rule" type="Label" parent="PageHeader"]
+layout_mode = 1
+offset_top = 138.0
+offset_right = 800.0
+offset_bottom = 158.0
+text = "◤  TO EVERYONE WHO HELD THE LINE"
+vertical_alignment = 1
+theme_override_fonts/font = ExtResource("7_jb5")
+theme_override_font_sizes/font_size = 13
+theme_override_colors/font_color = Color(0.478, 0.416, 0.361, 1)
+
+[node name="PageBody" type="HBoxContainer" parent="."]
+layout_mode = 1
+anchor_left = 0.5
+anchor_right = 0.5
+offset_left = -780.0
+offset_top = 360.0
+offset_right = 780.0
+offset_bottom = 880.0
+theme_override_constants/separation = 80
+
+[node name="LeftCol" type="GridContainer" parent="PageBody"]
+custom_minimum_size = Vector2(750, 0)
+layout_mode = 2
+size_flags_horizontal = 3
+columns = 2
+theme_override_constants/h_separation = 26
+theme_override_constants/v_separation = 22
+
+[node name="L1" type="Label" parent="PageBody/LeftCol"]
+custom_minimum_size = Vector2(220, 0)
+layout_mode = 2
+text = "GAME DESIGN  ·  游戏设计"
+horizontal_alignment = 2
+vertical_alignment = 1
+theme_override_fonts/font = ExtResource("7_jb5")
+theme_override_font_sizes/font_size = 12
+theme_override_colors/font_color = Color(0.855, 0.18, 0.2, 1)
+
+[node name="V1" type="Label" parent="PageBody/LeftCol"]
+layout_mode = 2
+text = "跳蛛先生  ·  CLAUDE CODE"
+vertical_alignment = 1
+theme_override_fonts/font = ExtResource("9b_n8")
+theme_override_font_sizes/font_size = 20
+theme_override_colors/font_color = Color(1, 0.918, 0.851, 1)
+
+[node name="L2" type="Label" parent="PageBody/LeftCol"]
+custom_minimum_size = Vector2(220, 0)
+layout_mode = 2
+text = "PROGRAMMING  ·  程序"
+horizontal_alignment = 2
+vertical_alignment = 1
+theme_override_fonts/font = ExtResource("7_jb5")
+theme_override_font_sizes/font_size = 12
+theme_override_colors/font_color = Color(0.855, 0.18, 0.2, 1)
+
+[node name="V2" type="Label" parent="PageBody/LeftCol"]
+layout_mode = 2
+text = "跳蛛先生  ·  CLAUDE CODE"
+vertical_alignment = 1
+theme_override_fonts/font = ExtResource("9b_n8")
+theme_override_font_sizes/font_size = 20
+theme_override_colors/font_color = Color(1, 0.918, 0.851, 1)
+
+[node name="L3" type="Label" parent="PageBody/LeftCol"]
+custom_minimum_size = Vector2(220, 0)
+layout_mode = 2
+text = "ART & UI  ·  美术与UI"
+horizontal_alignment = 2
+vertical_alignment = 1
+theme_override_fonts/font = ExtResource("7_jb5")
+theme_override_font_sizes/font_size = 12
+theme_override_colors/font_color = Color(0.855, 0.18, 0.2, 1)
+
+[node name="V3" type="Label" parent="PageBody/LeftCol"]
+layout_mode = 2
+text = "跳蛛先生  ·  CLAUDE DESIGN"
+vertical_alignment = 1
+theme_override_fonts/font = ExtResource("9b_n8")
+theme_override_font_sizes/font_size = 20
+theme_override_colors/font_color = Color(1, 0.918, 0.851, 1)
+
+[node name="L4" type="Label" parent="PageBody/LeftCol"]
+custom_minimum_size = Vector2(220, 0)
+layout_mode = 2
+text = "SFX  ·  音效"
+horizontal_alignment = 2
+vertical_alignment = 1
+theme_override_fonts/font = ExtResource("7_jb5")
+theme_override_font_sizes/font_size = 12
+theme_override_colors/font_color = Color(0.855, 0.18, 0.2, 1)
+
+[node name="V4" type="Label" parent="PageBody/LeftCol"]
+layout_mode = 2
+text = "ELEVENLABS"
+vertical_alignment = 1
+theme_override_fonts/font = ExtResource("9b_n8")
+theme_override_font_sizes/font_size = 20
+theme_override_colors/font_color = Color(1, 0.918, 0.851, 1)
+
+[node name="L4b" type="Label" parent="PageBody/LeftCol"]
+custom_minimum_size = Vector2(220, 0)
+layout_mode = 2
+text = "MUSIC  ·  音乐"
+horizontal_alignment = 2
+vertical_alignment = 1
+theme_override_fonts/font = ExtResource("7_jb5")
+theme_override_font_sizes/font_size = 12
+theme_override_colors/font_color = Color(0.855, 0.18, 0.2, 1)
+
+[node name="V4b" type="Label" parent="PageBody/LeftCol"]
+layout_mode = 2
+text = "SUNO  ·  BUNKER WATCH"
+vertical_alignment = 1
+theme_override_fonts/font = ExtResource("9b_n8")
+theme_override_font_sizes/font_size = 20
+theme_override_colors/font_color = Color(1, 0.918, 0.851, 1)
+
+[node name="L5" type="Label" parent="PageBody/LeftCol"]
+custom_minimum_size = Vector2(220, 0)
+layout_mode = 2
+text = "ENGINE  ·  引擎"
+horizontal_alignment = 2
+vertical_alignment = 1
+theme_override_fonts/font = ExtResource("7_jb5")
+theme_override_font_sizes/font_size = 12
+theme_override_colors/font_color = Color(0.855, 0.18, 0.2, 1)
+
+[node name="V5" type="Label" parent="PageBody/LeftCol"]
+layout_mode = 2
+text = "GODOT  4.6"
+vertical_alignment = 1
+theme_override_fonts/font = ExtResource("9b_n8")
+theme_override_font_sizes/font_size = 20
+theme_override_colors/font_color = Color(1, 0.918, 0.851, 1)
+
+[node name="L6" type="Label" parent="PageBody/LeftCol"]
+custom_minimum_size = Vector2(220, 0)
+layout_mode = 2
+text = "FONTS  ·  字体"
+horizontal_alignment = 2
+vertical_alignment = 1
+theme_override_fonts/font = ExtResource("7_jb5")
+theme_override_font_sizes/font_size = 12
+theme_override_colors/font_color = Color(0.855, 0.18, 0.2, 1)
+
+[node name="V6" type="Label" parent="PageBody/LeftCol"]
+layout_mode = 2
+text = "OSWALD  ·  NOTO SANS SC"
+vertical_alignment = 1
+theme_override_fonts/font = ExtResource("9b_n8")
+theme_override_font_sizes/font_size = 20
+theme_override_colors/font_color = Color(1, 0.918, 0.851, 1)
+
+[node name="L7" type="Label" parent="PageBody/LeftCol"]
+custom_minimum_size = Vector2(220, 0)
+layout_mode = 2
+text = "ASSETS  ·  美术素材"
+horizontal_alignment = 2
+vertical_alignment = 1
+theme_override_fonts/font = ExtResource("7_jb5")
+theme_override_font_sizes/font_size = 12
+theme_override_colors/font_color = Color(0.855, 0.18, 0.2, 1)
+
+[node name="V7" type="Label" parent="PageBody/LeftCol"]
+layout_mode = 2
+text = "QUATERNIUS  ·  R2DETTA  ·  POLYHAVEN"
+vertical_alignment = 1
+theme_override_fonts/font = ExtResource("9b_n8")
+theme_override_font_sizes/font_size = 20
+theme_override_colors/font_color = Color(1, 0.918, 0.851, 1)
+
+[node name="L8" type="Label" parent="PageBody/LeftCol"]
+custom_minimum_size = Vector2(220, 0)
+layout_mode = 2
+text = "SPECIAL THANKS  ·  特别鸣谢"
+horizontal_alignment = 2
+vertical_alignment = 1
+theme_override_fonts/font = ExtResource("7_jb5")
+theme_override_font_sizes/font_size = 12
+theme_override_colors/font_color = Color(0.855, 0.18, 0.2, 1)
+
+[node name="V8" type="Label" parent="PageBody/LeftCol"]
+layout_mode = 2
+text = "ANYONE WHO HELD THE LINE"
+vertical_alignment = 1
+theme_override_fonts/font = ExtResource("9b_n8")
+theme_override_font_sizes/font_size = 20
+theme_override_colors/font_color = Color(1, 0.918, 0.851, 1)
+
+[node name="NoteCard" type="Control" parent="PageBody"]
+custom_minimum_size = Vector2(560, 380)
+layout_mode = 2
+size_flags_horizontal = 3
+mouse_filter = 2
+script = ExtResource("4_cp")
+bg_color = Color(0.0588, 0.0392, 0.0392, 0.6)
+border_color = Color(0.227, 0.125, 0.102, 1)
+border_width = 2.0
+chamfer_size = 14.0
+
+[node name="NoteEyebrow" type="Label" parent="PageBody/NoteCard"]
+layout_mode = 1
+offset_left = 36.0
+offset_top = 32.0
+offset_right = 540.0
+offset_bottom = 52.0
+text = "// PERSONAL NOTE"
+vertical_alignment = 1
+theme_override_fonts/font = ExtResource("7_jb5")
+theme_override_font_sizes/font_size = 12
+theme_override_colors/font_color = Color(0.855, 0.18, 0.2, 1)
+
+[node name="NoteCN" type="Label" parent="PageBody/NoteCard"]
+layout_mode = 1
+offset_left = 36.0
+offset_top = 80.0
+offset_right = 540.0
+offset_bottom = 200.0
+text = "感谢每一位陪我撑到
+最后一波的玩家。"
+autowrap_mode = 3
+theme_override_fonts/font = ExtResource("9_n7")
+theme_override_font_sizes/font_size = 22
+theme_override_colors/font_color = Color(1, 0.918, 0.851, 1)
+theme_override_constants/line_spacing = 10
+
+[node name="NoteEN" type="Label" parent="PageBody/NoteCard"]
+layout_mode = 1
+offset_left = 36.0
+offset_top = 220.0
+offset_right = 540.0
+offset_bottom = 310.0
+text = "TO EVERYONE WHO HELD THE LINE —
+THIS ONE'S FOR YOU."
+autowrap_mode = 3
+theme_override_fonts/font = ExtResource("6_o5")
+theme_override_font_sizes/font_size = 14
+theme_override_colors/font_color = Color(0.788, 0.718, 0.643, 1)
+theme_override_constants/line_spacing = 6
+
+[node name="NoteFooter" type="Label" parent="PageBody/NoteCard"]
+layout_mode = 1
+anchor_top = 1.0
+anchor_bottom = 1.0
+offset_left = 36.0
+offset_top = -42.0
+offset_right = 540.0
+offset_bottom = -22.0
+text = "—  OPR-UNKNOWN, SECTOR 07"
+vertical_alignment = 1
+theme_override_fonts/font = ExtResource("8_jb4")
+theme_override_font_sizes/font_size = 11
+theme_override_colors/font_color = Color(0.478, 0.416, 0.361, 1)
+
+[node name="Footer" type="Control" parent="."]
+layout_mode = 1
+anchors_preset = 12
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_top = -160.0
+grow_horizontal = 2
+grow_vertical = 0
+mouse_filter = 2
+
+[node name="BackButton" type="Control" parent="Footer"]
+custom_minimum_size = Vector2(220, 56)
+layout_mode = 1
+offset_left = 120.0
+offset_top = 16.0
+offset_right = 340.0
+offset_bottom = 72.0
+focus_mode = 2
+mouse_default_cursor_shape = 2
+script = ExtResource("3_sb")

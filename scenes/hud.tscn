@@ -1,0 +1,173 @@
+[gd_scene load_steps=9 format=3]
+
+[ext_resource type="Script" path="res://scripts/hud.gd" id="1_hud"]
+[ext_resource type="Script" path="res://scripts/crosshair.gd" id="2_cross"]
+[ext_resource type="Shader" path="res://assets/shaders/damage_vignette.gdshader" id="3_bloodshader"]
+[ext_resource type="Script" path="res://scripts/threat_indicator.gd" id="4_threat"]
+[ext_resource type="PackedScene" path="res://scenes/weapon_bar.tscn" id="5_wbar"]
+
+[sub_resource type="ShaderMaterial" id="ShaderMat_bloodvig"]
+shader = ExtResource("3_bloodshader")
+shader_parameter/intensity = 0.0
+shader_parameter/blood_color = Color(0.55, 0.02, 0.02, 1)
+shader_parameter/inner_radius = 0.28
+shader_parameter/outer_radius = 0.72
+
+[sub_resource type="ShaderMaterial" id="ShaderMat_healvig"]
+shader = ExtResource("3_bloodshader")
+shader_parameter/intensity = 0.0
+shader_parameter/blood_color = Color(0.15, 0.75, 0.25, 1)
+shader_parameter/inner_radius = 0.32
+shader_parameter/outer_radius = 0.78
+
+[sub_resource type="StyleBoxFlat" id="HealthBarBG"]
+bg_color = Color(0.05, 0.04, 0.04, 0.7)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0, 0, 0, 0.85)
+
+[sub_resource type="StyleBoxFlat" id="HealthBarFill"]
+bg_color = Color(0.85, 0.12, 0.12, 0.95)
+
+[node name="HUD" type="CanvasLayer"]
+script = ExtResource("1_hud")
+
+[node name="DamageVignette" type="ColorRect" parent="."]
+material = SubResource("ShaderMat_bloodvig")
+anchor_right = 1.0
+anchor_bottom = 1.0
+mouse_filter = 2
+color = Color(1, 1, 1, 1)
+
+[node name="HealVignette" type="ColorRect" parent="."]
+material = SubResource("ShaderMat_healvig")
+anchor_right = 1.0
+anchor_bottom = 1.0
+mouse_filter = 2
+color = Color(1, 1, 1, 1)
+
+[node name="Crosshair" type="Control" parent="."]
+anchor_right = 1.0
+anchor_bottom = 1.0
+mouse_filter = 2
+script = ExtResource("2_cross")
+
+[node name="ThreatIndicator" type="Control" parent="."]
+anchor_right = 1.0
+anchor_bottom = 1.0
+mouse_filter = 2
+script = ExtResource("4_threat")
+
+[node name="HealthBar" type="ProgressBar" parent="."]
+anchor_top = 1.0
+anchor_bottom = 1.0
+offset_left = 24.0
+offset_top = -52.0
+offset_right = 264.0
+offset_bottom = -28.0
+max_value = 100.0
+value = 100.0
+show_percentage = false
+theme_override_styles/background = SubResource("HealthBarBG")
+theme_override_styles/fill = SubResource("HealthBarFill")
+
+[node name="HealthLabel" type="Label" parent="."]
+anchor_top = 1.0
+anchor_bottom = 1.0
+offset_left = 272.0
+offset_top = -72.0
+offset_right = 560.0
+offset_bottom = -16.0
+text = "100 / 100"
+horizontal_alignment = 0
+vertical_alignment = 1
+theme_override_colors/font_color = Color(1, 1, 1, 0.95)
+theme_override_colors/font_outline_color = Color(0, 0, 0, 0.8)
+theme_override_constants/outline_size = 4
+theme_override_font_sizes/font_size = 40
+
+[node name="AmmoLabel" type="Label" parent="."]
+anchor_left = 1.0
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = -200.0
+offset_top = -80.0
+offset_right = -24.0
+offset_bottom = -24.0
+text = "12 / 12"
+horizontal_alignment = 2
+vertical_alignment = 1
+theme_override_colors/font_color = Color(1, 1, 1, 0.95)
+theme_override_colors/font_outline_color = Color(0, 0, 0, 0.8)
+theme_override_constants/outline_size = 4
+theme_override_font_sizes/font_size = 40
+
+[node name="WaveLabel" type="Label" parent="."]
+anchor_left = 1.0
+anchor_right = 1.0
+offset_left = -360.0
+offset_top = 20.0
+offset_right = -24.0
+offset_bottom = 100.0
+text = "第 1 波 · 5s 后开始"
+horizontal_alignment = 2
+vertical_alignment = 0
+theme_override_colors/font_color = Color(1, 0.95, 0.85, 0.95)
+theme_override_colors/font_outline_color = Color(0, 0, 0, 0.85)
+theme_override_constants/outline_size = 4
+theme_override_font_sizes/font_size = 32
+
+[node name="ScoreLabel" type="Label" parent="."]
+anchor_left = 1.0
+anchor_right = 1.0
+offset_left = -360.0
+offset_top = 110.0
+offset_right = -24.0
+offset_bottom = 160.0
+text = "得分 0"
+horizontal_alignment = 2
+vertical_alignment = 0
+theme_override_colors/font_color = Color(1, 0.85, 0.65, 0.9)
+theme_override_colors/font_outline_color = Color(0, 0, 0, 0.85)
+theme_override_constants/outline_size = 4
+theme_override_font_sizes/font_size = 28
+
+[node name="ComboLabel" type="Label" parent="."]
+anchor_left = 0.5
+anchor_top = 0.28
+anchor_right = 0.5
+anchor_bottom = 0.28
+offset_left = -250.0
+offset_top = -50.0
+offset_right = 250.0
+offset_bottom = 50.0
+modulate = Color(1, 1, 1, 0)
+pivot_offset = Vector2(250, 50)
+text = ""
+horizontal_alignment = 1
+vertical_alignment = 1
+theme_override_colors/font_color = Color(1, 0.55, 0.15, 1)
+theme_override_colors/font_outline_color = Color(0, 0, 0, 0.95)
+theme_override_constants/outline_size = 6
+theme_override_font_sizes/font_size = 56
+
+[node name="WeaponUnlockLabel" type="Label" parent="."]
+anchor_left = 0.5
+anchor_right = 0.5
+offset_left = -300.0
+offset_top = 90.0
+offset_right = 300.0
+offset_bottom = 170.0
+modulate = Color(1, 1, 1, 0)
+text = ""
+horizontal_alignment = 1
+vertical_alignment = 1
+theme_override_colors/font_color = Color(1, 0.9, 0.4, 1)
+theme_override_colors/font_outline_color = Color(0, 0, 0, 0.95)
+theme_override_constants/outline_size = 6
+theme_override_font_sizes/font_size = 38
+
+[node name="WeaponBar" parent="." instance=ExtResource("5_wbar")]

@@ -1,0 +1,356 @@
+﻿{
+"asset": {
+"generator": "FBX2glTF v0.9.7",
+"version": "2.0"
+},
+"scene": 0,
+"buffers": [
+{
+"byteLength": 13648
+}
+],
+"bufferViews": [
+{
+"buffer": 0,
+"byteLength": 864,
+"byteOffset": 0,
+"target": 34963
+},
+{
+"buffer": 0,
+"byteLength": 3264,
+"byteOffset": 864,
+"target": 34962
+},
+{
+"buffer": 0,
+"byteLength": 3264,
+"byteOffset": 4128,
+"target": 34962
+},
+{
+"buffer": 0,
+"byteLength": 2176,
+"byteOffset": 7392,
+"target": 34962
+},
+{
+"buffer": 0,
+"byteLength": 384,
+"byteOffset": 9568,
+"target": 34963
+},
+{
+"buffer": 0,
+"byteLength": 1200,
+"byteOffset": 9952,
+"target": 34962
+},
+{
+"buffer": 0,
+"byteLength": 1200,
+"byteOffset": 11152,
+"target": 34962
+},
+{
+"buffer": 0,
+"byteLength": 800,
+"byteOffset": 12352,
+"target": 34962
+},
+{
+"buffer": 0,
+"byteLength": 48,
+"byteOffset": 13152,
+"target": 34963
+},
+{
+"buffer": 0,
+"byteLength": 168,
+"byteOffset": 13200,
+"target": 34962
+},
+{
+"buffer": 0,
+"byteLength": 168,
+"byteOffset": 13368,
+"target": 34962
+},
+{
+"buffer": 0,
+"byteLength": 112,
+"byteOffset": 13536,
+"target": 34962
+}
+],
+"scenes": [
+{
+"name": "Root Scene",
+"nodes": [
+0
+]
+}
+],
+"accessors": [
+{
+"componentType": 5123,
+"type": "SCALAR",
+"count": 432,
+"bufferView": 0,
+"byteOffset": 0
+},
+{
+"componentType": 5126,
+"type": "VEC3",
+"count": 272,
+"bufferView": 1,
+"byteOffset": 0,
+"min": [
+-0.00770049775019288,
+-0.00092500081518665,
+-6.58525095786899e-05
+],
+"max": [
+0.00759492721408606,
+0.00100776250474155,
+0.00389040587469935
+]
+},
+{
+"componentType": 5126,
+"type": "VEC3",
+"count": 272,
+"bufferView": 2,
+"byteOffset": 0
+},
+{
+"componentType": 5126,
+"type": "VEC2",
+"count": 272,
+"bufferView": 3,
+"byteOffset": 0
+},
+{
+"componentType": 5123,
+"type": "SCALAR",
+"count": 192,
+"bufferView": 4,
+"byteOffset": 0
+},
+{
+"componentType": 5126,
+"type": "VEC3",
+"count": 100,
+"bufferView": 5,
+"byteOffset": 0,
+"min": [
+-0.00786569435149431,
+-0.00124074041377753,
+-6.58529170323163e-05
+],
+"max": [
+0.00773879885673523,
+0.0012262212112546,
+0.00439334567636251
+]
+},
+{
+"componentType": 5126,
+"type": "VEC3",
+"count": 100,
+"bufferView": 6,
+"byteOffset": 0
+},
+{
+"componentType": 5126,
+"type": "VEC2",
+"count": 100,
+"bufferView": 7,
+"byteOffset": 0
+},
+{
+"componentType": 5123,
+"type": "SCALAR",
+"count": 24,
+"bufferView": 8,
+"byteOffset": 0
+},
+{
+"componentType": 5126,
+"type": "VEC3",
+"count": 14,
+"bufferView": 9,
+"byteOffset": 0,
+"min": [
+-0.00770049775019288,
+-0.000740606570616364,
+0.00389040587469935
+],
+"max": [
+0.00759492721408606,
+0.000859641470015049,
+0.00426467088982463
+]
+},
+{
+"componentType": 5126,
+"type": "VEC3",
+"count": 14,
+"bufferView": 10,
+"byteOffset": 0
+},
+{
+"componentType": 5126,
+"type": "VEC2",
+"count": 14,
+"bufferView": 11,
+"byteOffset": 0
+}
+],
+"samplers": [
+{}
+],
+"materials": [
+{
+"name": "Stone",
+"alphaMode": "OPAQUE",
+"extras": {
+"fromFBX": {
+"shadingModel": "Phong",
+"isTruePBR": false
+}
+},
+"pbrMetallicRoughness": {
+"baseColorFactor": [
+0.244364306330681,
+0.246188819408417,
+0.215450540184975,
+1.0
+],
+"metallicFactor": 0.400000005960464,
+"roughnessFactor": 0.272165536880493
+}
+},
+{
+"name": "Stone_Light",
+"alphaMode": "OPAQUE",
+"extras": {
+"fromFBX": {
+"shadingModel": "Phong",
+"isTruePBR": false
+}
+},
+"pbrMetallicRoughness": {
+"baseColorFactor": [
+0.454056978225708,
+0.457527011632919,
+0.39911425113678,
+1.0
+],
+"metallicFactor": 0.400000005960464,
+"roughnessFactor": 0.272165536880493
+}
+},
+{
+"name": "Wood",
+"alphaMode": "OPAQUE",
+"extras": {
+"fromFBX": {
+"shadingModel": "Phong",
+"isTruePBR": false
+}
+},
+"pbrMetallicRoughness": {
+"baseColorFactor": [
+0.246187329292297,
+0.144358962774277,
+0.0537984296679497,
+1.0
+],
+"metallicFactor": 0.400000005960464,
+"roughnessFactor": 0.272165536880493
+}
+}
+],
+"meshes": [
+{
+"name": "Wall_SecondAge",
+"primitives": [
+{
+"material": 0,
+"mode": 4,
+"attributes": {
+"NORMAL": 2,
+"POSITION": 1,
+"TEXCOORD_0": 3
+},
+"indices": 0
+},
+{
+"material": 1,
+"mode": 4,
+"attributes": {
+"NORMAL": 6,
+"POSITION": 5,
+"TEXCOORD_0": 7
+},
+"indices": 4
+},
+{
+"material": 2,
+"mode": 4,
+"attributes": {
+"NORMAL": 10,
+"POSITION": 9,
+"TEXCOORD_0": 11
+},
+"indices": 8
+}
+]
+}
+],
+"nodes": [
+{
+"name": "RootNode",
+"translation": [
+0.0,
+0.0,
+0.0
+],
+"rotation": [
+0.0,
+0.0,
+0.0,
+1.0
+],
+"scale": [
+1.0,
+1.0,
+1.0
+],
+"children": [
+1
+]
+},
+{
+"name": "Wall_SecondAge",
+"translation": [
+0.0,
+0.0,
+0.0
+],
+"rotation": [
+-0.707106828689575,
+0.0,
+0.0,
+0.707106709480286
+],
+"scale": [
+100.0,
+100.0,
+100.0
+],
+"mesh": 0
+}
+]
+}

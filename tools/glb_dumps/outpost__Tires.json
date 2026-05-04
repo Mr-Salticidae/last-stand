@@ -1,0 +1,158 @@
+﻿{
+"asset": {
+"generator": "FBX2glTF v0.9.7",
+"version": "2.0"
+},
+"scene": 0,
+"buffers": [
+{
+"byteLength": 78240
+}
+],
+"bufferViews": [
+{
+"buffer": 0,
+"byteLength": 10656,
+"byteOffset": 0,
+"target": 34963
+},
+{
+"buffer": 0,
+"byteLength": 33792,
+"byteOffset": 10656,
+"target": 34962
+},
+{
+"buffer": 0,
+"byteLength": 33792,
+"byteOffset": 44448,
+"target": 34962
+}
+],
+"scenes": [
+{
+"name": "Root Scene",
+"nodes": [
+0
+]
+}
+],
+"accessors": [
+{
+"componentType": 5123,
+"type": "SCALAR",
+"count": 5328,
+"bufferView": 0,
+"byteOffset": 0
+},
+{
+"componentType": 5126,
+"type": "VEC3",
+"count": 2816,
+"bufferView": 1,
+"byteOffset": 0,
+"min": [
+-0.00978757254779339,
+-0.0097747091203928,
+-0.000493062078021467
+],
+"max": [
+0.0201708450913429,
+0.00975461024791002,
+0.0180651526898146
+]
+},
+{
+"componentType": 5126,
+"type": "VEC3",
+"count": 2816,
+"bufferView": 2,
+"byteOffset": 0
+}
+],
+"samplers": [
+{}
+],
+"materials": [
+{
+"name": "Black",
+"alphaMode": "OPAQUE",
+"extras": {
+"fromFBX": {
+"shadingModel": "Phong",
+"isTruePBR": false
+}
+},
+"pbrMetallicRoughness": {
+"baseColorFactor": [
+0.018919175490737,
+0.018919175490737,
+0.018919175490737,
+1.0
+],
+"metallicFactor": 0.400000005960464,
+"roughnessFactor": 0.415087103843689
+}
+}
+],
+"meshes": [
+{
+"name": "Debris_Tires",
+"primitives": [
+{
+"material": 0,
+"mode": 4,
+"attributes": {
+"NORMAL": 2,
+"POSITION": 1
+},
+"indices": 0
+}
+]
+}
+],
+"nodes": [
+{
+"name": "RootNode",
+"translation": [
+0.0,
+0.0,
+0.0
+],
+"rotation": [
+0.0,
+0.0,
+0.0,
+1.0
+],
+"scale": [
+1.0,
+1.0,
+1.0
+],
+"children": [
+1
+]
+},
+{
+"name": "Debris_Tires",
+"translation": [
+0.0,
+0.0,
+0.0
+],
+"rotation": [
+-0.707106828689575,
+0.0,
+0.0,
+0.707106709480286
+],
+"scale": [
+58.6000022888184,
+58.6000022888184,
+58.6000022888184
+],
+"mesh": 0
+}
+]
+}

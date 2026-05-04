@@ -1,0 +1,374 @@
+[gd_scene format=3 uid="uid://upgradepanel0xx"]
+
+[ext_resource type="Script" path="res://scripts/upgrade_panel.gd" id="1_script"]
+[ext_resource type="Script" path="res://scripts/ui/chamfer_panel.gd" id="2_panel"]
+[ext_resource type="Script" path="res://scripts/ui/chamfer_button.gd" id="3_btn"]
+[ext_resource type="Script" path="res://scripts/ui/secondary_button.gd" id="4_secbtn"]
+[ext_resource type="FontVariation" path="res://assets/fonts/font_jbmono_400.tres" id="5_jb4"]
+[ext_resource type="FontVariation" path="res://assets/fonts/font_jbmono_500.tres" id="6_jb5"]
+[ext_resource type="FontVariation" path="res://assets/fonts/font_notosc_400.tres" id="7_n4"]
+[ext_resource type="FontVariation" path="res://assets/fonts/font_notosc_900.tres" id="8_n9"]
+
+[node name="UpgradePanel" type="CanvasLayer"]
+layer = 20
+script = ExtResource("1_script")
+
+[node name="Dim" type="ColorRect" parent="."]
+anchor_right = 1.0
+anchor_bottom = 1.0
+mouse_filter = 1
+color = Color(0, 0, 0, 0.65)
+
+[node name="Center" type="Control" parent="."]
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -570.0
+offset_top = -340.0
+offset_right = 570.0
+offset_bottom = 340.0
+mouse_filter = 1
+
+[node name="Panel" type="Control" parent="Center"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+mouse_filter = 1
+script = ExtResource("2_panel")
+bg_color = Color(0.0588, 0.0392, 0.0392, 0.94)
+border_color = Color(0.227, 0.125, 0.102, 1)
+border_width = 2.0
+chamfer_size = 20.0
+
+[node name="Eyebrow" type="Label" parent="Center/Panel"]
+layout_mode = 0
+offset_left = 40.0
+offset_top = 32.0
+offset_right = 800.0
+offset_bottom = 52.0
+theme_override_colors/font_color = Color(0.855, 0.18, 0.2, 1)
+theme_override_fonts/font = ExtResource("6_jb5")
+theme_override_font_sizes/font_size = 12
+text = "// UPGRADE BRIEFING  ·  COMMIT BEFORE NEXT WAVE"
+vertical_alignment = 1
+
+[node name="TitleLabel" type="Label" parent="Center/Panel"]
+layout_mode = 0
+offset_left = 40.0
+offset_top = 60.0
+offset_right = 800.0
+offset_bottom = 110.0
+theme_override_colors/font_color = Color(1, 0.918, 0.851, 1)
+theme_override_fonts/font = ExtResource("8_n9")
+theme_override_font_sizes/font_size = 30
+text = "第 0 波已清 · 升级备战"
+vertical_alignment = 1
+
+[node name="ScoreLabel" type="Label" parent="Center/Panel"]
+layout_mode = 1
+anchors_preset = 1
+anchor_left = 1.0
+anchor_right = 1.0
+offset_left = -360.0
+offset_top = 32.0
+offset_right = -40.0
+offset_bottom = 84.0
+theme_override_colors/font_color = Color(0.855, 0.55, 0.18, 1)
+theme_override_fonts/font = ExtResource("6_jb5")
+theme_override_font_sizes/font_size = 16
+text = "// RESERVE FUNDS · 0 CR"
+horizontal_alignment = 2
+vertical_alignment = 1
+
+[node name="CardsHBox" type="HBoxContainer" parent="Center/Panel"]
+layout_mode = 0
+offset_left = 36.0
+offset_top = 130.0
+offset_right = 1104.0
+offset_bottom = 530.0
+alignment = 1
+theme_override_constants/separation = 24
+
+[node name="Card0" type="Control" parent="Center/Panel/CardsHBox"]
+custom_minimum_size = Vector2(340, 380)
+layout_mode = 2
+mouse_filter = 1
+script = ExtResource("2_panel")
+bg_color = Color(0.0588, 0.0392, 0.0392, 0.94)
+border_color = Color(0.478, 0.416, 0.361, 1)
+border_width = 2.0
+chamfer_size = 14.0
+
+[node name="RarityLabel" type="Label" parent="Center/Panel/CardsHBox/Card0"]
+layout_mode = 0
+offset_left = 24.0
+offset_top = 22.0
+offset_right = 316.0
+offset_bottom = 42.0
+theme_override_colors/font_color = Color(0.55, 0.55, 0.6, 1)
+theme_override_fonts/font = ExtResource("6_jb5")
+theme_override_font_sizes/font_size = 12
+text = "// COMMON"
+vertical_alignment = 1
+
+[node name="NameLabel" type="Label" parent="Center/Panel/CardsHBox/Card0"]
+layout_mode = 0
+offset_left = 24.0
+offset_top = 50.0
+offset_right = 316.0
+offset_bottom = 96.0
+theme_override_colors/font_color = Color(1, 0.918, 0.851, 1)
+theme_override_fonts/font = ExtResource("8_n9")
+theme_override_font_sizes/font_size = 26
+text = "卡片名"
+vertical_alignment = 1
+
+[node name="StackLabel" type="Label" parent="Center/Panel/CardsHBox/Card0"]
+layout_mode = 0
+offset_left = 24.0
+offset_top = 100.0
+offset_right = 316.0
+offset_bottom = 120.0
+theme_override_colors/font_color = Color(0.478, 0.416, 0.361, 1)
+theme_override_fonts/font = ExtResource("5_jb4")
+theme_override_font_sizes/font_size = 11
+text = "STACK · 0 / 0"
+vertical_alignment = 1
+
+[node name="DescLabel" type="Label" parent="Center/Panel/CardsHBox/Card0"]
+layout_mode = 0
+offset_left = 24.0
+offset_top = 130.0
+offset_right = 316.0
+offset_bottom = 240.0
+theme_override_colors/font_color = Color(0.788, 0.718, 0.643, 1)
+theme_override_constants/line_spacing = 6
+theme_override_fonts/font = ExtResource("7_n4")
+theme_override_font_sizes/font_size = 14
+text = "效果描述"
+autowrap_mode = 3
+
+[node name="BuyButton" type="Control" parent="Center/Panel/CardsHBox/Card0"]
+custom_minimum_size = Vector2(292, 56)
+layout_mode = 0
+offset_left = 24.0
+offset_top = 256.0
+offset_right = 316.0
+offset_bottom = 312.0
+focus_mode = 2
+mouse_default_cursor_shape = 2
+script = ExtResource("4_secbtn")
+icon = "▶"
+cn_label = "购买"
+en_label = "BUY"
+
+[node name="LockButton" type="Control" parent="Center/Panel/CardsHBox/Card0"]
+custom_minimum_size = Vector2(292, 56)
+layout_mode = 0
+offset_left = 24.0
+offset_top = 318.0
+offset_right = 316.0
+offset_bottom = 374.0
+focus_mode = 2
+mouse_default_cursor_shape = 2
+script = ExtResource("4_secbtn")
+icon = "✕"
+cn_label = "锁定"
+en_label = "LOCK"
+
+[node name="Card1" type="Control" parent="Center/Panel/CardsHBox"]
+custom_minimum_size = Vector2(340, 380)
+layout_mode = 2
+mouse_filter = 1
+script = ExtResource("2_panel")
+bg_color = Color(0.0588, 0.0392, 0.0392, 0.94)
+border_color = Color(0.478, 0.416, 0.361, 1)
+border_width = 2.0
+chamfer_size = 14.0
+
+[node name="RarityLabel" type="Label" parent="Center/Panel/CardsHBox/Card1"]
+layout_mode = 0
+offset_left = 24.0
+offset_top = 22.0
+offset_right = 316.0
+offset_bottom = 42.0
+theme_override_colors/font_color = Color(0.55, 0.55, 0.6, 1)
+theme_override_fonts/font = ExtResource("6_jb5")
+theme_override_font_sizes/font_size = 12
+text = "// COMMON"
+vertical_alignment = 1
+
+[node name="NameLabel" type="Label" parent="Center/Panel/CardsHBox/Card1"]
+layout_mode = 0
+offset_left = 24.0
+offset_top = 50.0
+offset_right = 316.0
+offset_bottom = 96.0
+theme_override_colors/font_color = Color(1, 0.918, 0.851, 1)
+theme_override_fonts/font = ExtResource("8_n9")
+theme_override_font_sizes/font_size = 26
+text = "卡片名"
+vertical_alignment = 1
+
+[node name="StackLabel" type="Label" parent="Center/Panel/CardsHBox/Card1"]
+layout_mode = 0
+offset_left = 24.0
+offset_top = 100.0
+offset_right = 316.0
+offset_bottom = 120.0
+theme_override_colors/font_color = Color(0.478, 0.416, 0.361, 1)
+theme_override_fonts/font = ExtResource("5_jb4")
+theme_override_font_sizes/font_size = 11
+text = "STACK · 0 / 0"
+vertical_alignment = 1
+
+[node name="DescLabel" type="Label" parent="Center/Panel/CardsHBox/Card1"]
+layout_mode = 0
+offset_left = 24.0
+offset_top = 130.0
+offset_right = 316.0
+offset_bottom = 240.0
+theme_override_colors/font_color = Color(0.788, 0.718, 0.643, 1)
+theme_override_constants/line_spacing = 6
+theme_override_fonts/font = ExtResource("7_n4")
+theme_override_font_sizes/font_size = 14
+text = "效果描述"
+autowrap_mode = 3
+
+[node name="BuyButton" type="Control" parent="Center/Panel/CardsHBox/Card1"]
+custom_minimum_size = Vector2(292, 56)
+layout_mode = 0
+offset_left = 24.0
+offset_top = 256.0
+offset_right = 316.0
+offset_bottom = 312.0
+focus_mode = 2
+mouse_default_cursor_shape = 2
+script = ExtResource("4_secbtn")
+icon = "▶"
+cn_label = "购买"
+en_label = "BUY"
+
+[node name="LockButton" type="Control" parent="Center/Panel/CardsHBox/Card1"]
+custom_minimum_size = Vector2(292, 56)
+layout_mode = 0
+offset_left = 24.0
+offset_top = 318.0
+offset_right = 316.0
+offset_bottom = 374.0
+focus_mode = 2
+mouse_default_cursor_shape = 2
+script = ExtResource("4_secbtn")
+icon = "✕"
+cn_label = "锁定"
+en_label = "LOCK"
+
+[node name="Card2" type="Control" parent="Center/Panel/CardsHBox"]
+custom_minimum_size = Vector2(340, 380)
+layout_mode = 2
+mouse_filter = 1
+script = ExtResource("2_panel")
+bg_color = Color(0.0588, 0.0392, 0.0392, 0.94)
+border_color = Color(0.478, 0.416, 0.361, 1)
+border_width = 2.0
+chamfer_size = 14.0
+
+[node name="RarityLabel" type="Label" parent="Center/Panel/CardsHBox/Card2"]
+layout_mode = 0
+offset_left = 24.0
+offset_top = 22.0
+offset_right = 316.0
+offset_bottom = 42.0
+theme_override_colors/font_color = Color(0.55, 0.55, 0.6, 1)
+theme_override_fonts/font = ExtResource("6_jb5")
+theme_override_font_sizes/font_size = 12
+text = "// COMMON"
+vertical_alignment = 1
+
+[node name="NameLabel" type="Label" parent="Center/Panel/CardsHBox/Card2"]
+layout_mode = 0
+offset_left = 24.0
+offset_top = 50.0
+offset_right = 316.0
+offset_bottom = 96.0
+theme_override_colors/font_color = Color(1, 0.918, 0.851, 1)
+theme_override_fonts/font = ExtResource("8_n9")
+theme_override_font_sizes/font_size = 26
+text = "卡片名"
+vertical_alignment = 1
+
+[node name="StackLabel" type="Label" parent="Center/Panel/CardsHBox/Card2"]
+layout_mode = 0
+offset_left = 24.0
+offset_top = 100.0
+offset_right = 316.0
+offset_bottom = 120.0
+theme_override_colors/font_color = Color(0.478, 0.416, 0.361, 1)
+theme_override_fonts/font = ExtResource("5_jb4")
+theme_override_font_sizes/font_size = 11
+text = "STACK · 0 / 0"
+vertical_alignment = 1
+
+[node name="DescLabel" type="Label" parent="Center/Panel/CardsHBox/Card2"]
+layout_mode = 0
+offset_left = 24.0
+offset_top = 130.0
+offset_right = 316.0
+offset_bottom = 240.0
+theme_override_colors/font_color = Color(0.788, 0.718, 0.643, 1)
+theme_override_constants/line_spacing = 6
+theme_override_fonts/font = ExtResource("7_n4")
+theme_override_font_sizes/font_size = 14
+text = "效果描述"
+autowrap_mode = 3
+
+[node name="BuyButton" type="Control" parent="Center/Panel/CardsHBox/Card2"]
+custom_minimum_size = Vector2(292, 56)
+layout_mode = 0
+offset_left = 24.0
+offset_top = 256.0
+offset_right = 316.0
+offset_bottom = 312.0
+focus_mode = 2
+mouse_default_cursor_shape = 2
+script = ExtResource("4_secbtn")
+icon = "▶"
+cn_label = "购买"
+en_label = "BUY"
+
+[node name="LockButton" type="Control" parent="Center/Panel/CardsHBox/Card2"]
+custom_minimum_size = Vector2(292, 56)
+layout_mode = 0
+offset_left = 24.0
+offset_top = 318.0
+offset_right = 316.0
+offset_bottom = 374.0
+focus_mode = 2
+mouse_default_cursor_shape = 2
+script = ExtResource("4_secbtn")
+icon = "✕"
+cn_label = "锁定"
+en_label = "LOCK"
+
+[node name="ContinueButton" type="Control" parent="Center/Panel"]
+custom_minimum_size = Vector2(460, 72)
+layout_mode = 1
+anchors_preset = 7
+anchor_left = 0.5
+anchor_top = 1.0
+anchor_right = 0.5
+anchor_bottom = 1.0
+offset_left = -230.0
+offset_top = -98.0
+offset_right = 230.0
+offset_bottom = -26.0
+focus_mode = 2
+mouse_default_cursor_shape = 2
+script = ExtResource("3_btn")
+code = "GO"
+cn_label = "继续作战"
+en_label = "DEPLOY · NEXT WAVE"

@@ -1,0 +1,50 @@
+[gd_scene load_steps=4 format=3]
+
+[ext_resource type="PackedScene" path="res://scenes/enemy.tscn" id="1_base"]
+[ext_resource type="PackedScene" path="res://assets/enemies_quaternius/Enemy_QuadShell.gltf" id="2_quadshell"]
+
+[sub_resource type="BoxShape3D" id="BoxShape_brute_body"]
+size = Vector3(1.6, 1.0, 1.6)
+
+[sub_resource type="BoxShape3D" id="BoxShape_brute_weakpoint"]
+size = Vector3(0.8, 1.0, 0.8)
+
+[node name="Enemy" instance=ExtResource("1_base")]
+move_speed = 2.0
+max_health = 260.0
+attack_damage = 25.0
+attack_windup = 0.7
+attack_cooldown = 1.5
+health_pack_drop_chance = 0.6
+legendary_drop_chance = 0.02
+score_value = 400
+anim_idle = "Idle"
+anim_walk = "Walk"
+anim_run = "Run"
+anim_attack = "Attack"
+anim_death = "TurnOff"
+
+[node name="CollisionShape3D" parent="." index="0"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.5, 0)
+shape = SubResource("BoxShape_brute_body")
+
+[node name="body" parent="." index="1"]
+visible = false
+
+[node name="head" parent="." index="2"]
+visible = false
+
+[node name="BodyHitbox" parent="." index="3"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.5, 0)
+
+[node name="CollisionShape3D" parent="BodyHitbox" index="0"]
+shape = SubResource("BoxShape_brute_body")
+
+[node name="HeadHitbox" parent="." index="4"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.5, 0)
+
+[node name="CollisionShape3D" parent="HeadHitbox" index="0"]
+shape = SubResource("BoxShape_brute_weakpoint")
+
+[node name="model" parent="." instance=ExtResource("2_quadshell")]
+transform = Transform3D(-1, 0, 0, 0, 1, 0, 0, 0, -1, 0, 0, 0)

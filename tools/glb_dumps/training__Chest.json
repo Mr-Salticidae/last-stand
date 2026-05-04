@@ -1,0 +1,195 @@
+﻿{
+"asset": {
+"generator": "FBX2glTF v0.9.7",
+"version": "2.0"
+},
+"scene": 0,
+"buffers": [
+{
+"byteLength": 149684
+}
+],
+"bufferViews": [
+{
+"buffer": 0,
+"byteLength": 6256,
+"byteOffset": 0
+},
+{
+"buffer": 0,
+"byteLength": 19140,
+"byteOffset": 6256,
+"target": 34963
+},
+{
+"buffer": 0,
+"byteLength": 46608,
+"byteOffset": 25396,
+"target": 34962
+},
+{
+"buffer": 0,
+"byteLength": 46608,
+"byteOffset": 72004,
+"target": 34962
+},
+{
+"buffer": 0,
+"byteLength": 31072,
+"byteOffset": 118612,
+"target": 34962
+}
+],
+"scenes": [
+{
+"name": "Root Scene",
+"nodes": [
+0
+]
+}
+],
+"accessors": [
+{
+"componentType": 5123,
+"type": "SCALAR",
+"count": 9570,
+"bufferView": 1,
+"byteOffset": 0
+},
+{
+"componentType": 5126,
+"type": "VEC3",
+"count": 3884,
+"bufferView": 2,
+"byteOffset": 0,
+"min": [
+-0.00319808535277843,
+3.19799146382138e-05,
+-0.00241474970243871
+],
+"max": [
+0.00319808535277843,
+0.00409367633983493,
+0.00241474783979356
+]
+},
+{
+"componentType": 5126,
+"type": "VEC3",
+"count": 3884,
+"bufferView": 3,
+"byteOffset": 0
+},
+{
+"componentType": 5126,
+"type": "VEC2",
+"count": 3884,
+"bufferView": 4,
+"byteOffset": 0
+}
+],
+"images": [
+{
+"name": "Zombie_Atlas.png",
+"bufferView": 0,
+"mimeType": "image/png"
+}
+],
+"samplers": [
+{}
+],
+"textures": [
+{
+"name": "base_color_texture",
+"sampler": 0,
+"source": 0
+}
+],
+"materials": [
+{
+"name": "Atlas.036",
+"alphaMode": "OPAQUE",
+"extras": {
+"fromFBX": {
+"shadingModel": "Phong",
+"isTruePBR": false
+}
+},
+"pbrMetallicRoughness": {
+"baseColorTexture": {
+"index": 0,
+"texCoord": 0
+},
+"baseColorFactor": [
+1.0,
+1.0,
+1.0,
+1.0
+],
+"metallicFactor": 0.400000005960464,
+"roughnessFactor": 1.0
+}
+}
+],
+"meshes": [
+{
+"name": "Chest",
+"primitives": [
+{
+"material": 0,
+"mode": 4,
+"attributes": {
+"NORMAL": 2,
+"POSITION": 1,
+"TEXCOORD_0": 3
+},
+"indices": 0
+}
+]
+}
+],
+"nodes": [
+{
+"name": "RootNode",
+"translation": [
+0.0,
+0.0,
+0.0
+],
+"rotation": [
+0.0,
+0.0,
+0.0,
+1.0
+],
+"scale": [
+1.0,
+1.0,
+1.0
+],
+"children": [
+1
+]
+},
+{
+"name": "Chest",
+"translation": [
+0.0,
+0.0,
+0.0
+],
+"rotation": [
+2.1855694143369e-08,
+0.0,
+0.0,
+1.0
+],
+"scale": [
+100.0,
+100.0,
+100.0
+],
+"mesh": 0
+}
+]
+}

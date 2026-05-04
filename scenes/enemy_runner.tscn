@@ -1,0 +1,53 @@
+[gd_scene load_steps=5 format=3]
+
+[ext_resource type="PackedScene" path="res://scenes/enemy.tscn" id="1_base"]
+[ext_resource type="PackedScene" path="res://assets/enemies_quaternius/Enemy_Trilobite.gltf" id="2_trilobite"]
+
+[sub_resource type="BoxShape3D" id="BoxShape_runner_collision"]
+size = Vector3(1.5, 1.2, 1.2)
+
+[sub_resource type="BoxShape3D" id="BoxShape_runner_hitbox"]
+size = Vector3(2.0, 2.0, 1.6)
+
+[sub_resource type="BoxShape3D" id="BoxShape_runner_weakpoint"]
+size = Vector3(0.6, 0.4, 0.5)
+
+[node name="Enemy" instance=ExtResource("1_base")]
+move_speed = 5.5
+max_health = 40.0
+attack_damage = 6.0
+attack_windup = 0.3
+attack_cooldown = 0.9
+health_pack_drop_chance = 0.15
+score_value = 150
+flank_offset_max = 2.5
+anim_idle = "Idle"
+anim_walk = "Walk"
+anim_run = "Run"
+anim_attack = "Attack"
+anim_death = "TurnOff"
+
+[node name="CollisionShape3D" parent="." index="0"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.6, 0)
+shape = SubResource("BoxShape_runner_collision")
+
+[node name="body" parent="." index="1"]
+visible = false
+
+[node name="head" parent="." index="2"]
+visible = false
+
+[node name="BodyHitbox" parent="." index="3"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.0, 0)
+
+[node name="CollisionShape3D" parent="BodyHitbox" index="0"]
+shape = SubResource("BoxShape_runner_hitbox")
+
+[node name="HeadHitbox" parent="." index="4"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2.2, 0)
+
+[node name="CollisionShape3D" parent="HeadHitbox" index="0"]
+shape = SubResource("BoxShape_runner_weakpoint")
+
+[node name="model" parent="." instance=ExtResource("2_trilobite")]
+transform = Transform3D(-1, 0, 0, 0, 1, 0, 0, 0, -1, 0, 0, 0)

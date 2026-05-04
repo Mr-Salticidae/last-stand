@@ -1,0 +1,170 @@
+[gd_scene format=3 uid="uid://deathscreen0xx"]
+
+[ext_resource type="Script" path="res://scripts/death_screen.gd" id="1_deathscript"]
+[ext_resource type="Shader" path="res://assets/shaders/desaturate.gdshader" id="2_desat"]
+[ext_resource type="Script" path="res://scripts/ui/chamfer_panel.gd" id="3_panel"]
+[ext_resource type="Script" path="res://scripts/ui/chamfer_button.gd" id="4_btn"]
+[ext_resource type="Script" path="res://scripts/ui/secondary_button.gd" id="5_secbtn"]
+[ext_resource type="FontVariation" path="res://assets/fonts/font_jbmono_500.tres" id="6_jb5"]
+[ext_resource type="FontVariation" path="res://assets/fonts/font_notosc_900.tres" id="7_n9"]
+[ext_resource type="FontVariation" path="res://assets/fonts/font_notosc_400.tres" id="8_n4"]
+[ext_resource type="FontVariation" path="res://assets/fonts/font_oswald_700.tres" id="9_o7"]
+
+[sub_resource type="ShaderMaterial" id="ShaderMat_desat"]
+shader = ExtResource("2_desat")
+shader_parameter/desaturation = 0.0
+
+[node name="DeathScreen" type="CanvasLayer"]
+layer = 10
+script = ExtResource("1_deathscript")
+
+[node name="Desaturate" type="ColorRect" parent="."]
+material = SubResource("ShaderMat_desat")
+anchor_right = 1.0
+anchor_bottom = 1.0
+mouse_filter = 2
+color = Color(1, 1, 1, 1)
+
+[node name="EyelidTop" type="ColorRect" parent="."]
+anchor_right = 1.0
+mouse_filter = 2
+color = Color(0, 0, 0, 1)
+
+[node name="EyelidBottom" type="ColorRect" parent="."]
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+mouse_filter = 2
+color = Color(0, 0, 0, 1)
+
+[node name="UIRoot" type="Control" parent="."]
+anchor_right = 1.0
+anchor_bottom = 1.0
+mouse_filter = 2
+
+[node name="Center" type="Control" parent="UIRoot"]
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -440.0
+offset_top = -340.0
+offset_right = 440.0
+offset_bottom = 340.0
+mouse_filter = 1
+
+[node name="EyebrowLabel" type="Label" parent="UIRoot/Center"]
+layout_mode = 0
+offset_left = 0.0
+offset_top = 0.0
+offset_right = 880.0
+offset_bottom = 24.0
+theme_override_colors/font_color = Color(0.855, 0.18, 0.2, 1)
+theme_override_fonts/font = ExtResource("6_jb5")
+theme_override_font_sizes/font_size = 13
+text = "// MISSION TERMINATED  ·  FALLEN IN ACTION"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="TitleLabel" type="Label" parent="UIRoot/Center"]
+layout_mode = 0
+offset_left = 0.0
+offset_top = 36.0
+offset_right = 880.0
+offset_bottom = 156.0
+theme_override_colors/font_color = Color(1, 0.918, 0.851, 1)
+theme_override_colors/font_outline_color = Color(0, 0, 0, 0.7)
+theme_override_constants/outline_size = 6
+theme_override_fonts/font = ExtResource("7_n9")
+theme_override_font_sizes/font_size = 96
+text = "功  败  垂  成"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="TitleEN" type="Label" parent="UIRoot/Center"]
+layout_mode = 0
+offset_left = 0.0
+offset_top = 168.0
+offset_right = 880.0
+offset_bottom = 200.0
+theme_override_colors/font_color = Color(0.855, 0.18, 0.2, 1)
+theme_override_fonts/font = ExtResource("9_o7")
+theme_override_font_sizes/font_size = 24
+text = "SECTOR LOST"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="StatsCard" type="Control" parent="UIRoot/Center"]
+layout_mode = 0
+offset_left = 80.0
+offset_top = 220.0
+offset_right = 800.0
+offset_bottom = 460.0
+mouse_filter = 1
+script = ExtResource("3_panel")
+bg_color = Color(0.0588, 0.0392, 0.0392, 0.85)
+border_color = Color(0.227, 0.125, 0.102, 1)
+border_width = 1.0
+chamfer_size = 16.0
+
+[node name="StatsEyebrow" type="Label" parent="UIRoot/Center/StatsCard"]
+layout_mode = 0
+offset_left = 32.0
+offset_top = 24.0
+offset_right = 688.0
+offset_bottom = 44.0
+theme_override_colors/font_color = Color(0.855, 0.18, 0.2, 1)
+theme_override_fonts/font = ExtResource("6_jb5")
+theme_override_font_sizes/font_size = 12
+text = "// CASUALTY REPORT"
+vertical_alignment = 1
+
+[node name="StatsLabel" type="RichTextLabel" parent="UIRoot/Center/StatsCard"]
+layout_mode = 0
+offset_left = 32.0
+offset_top = 60.0
+offset_right = 688.0
+offset_bottom = 220.0
+bbcode_enabled = true
+fit_content = true
+scroll_active = false
+text = ""
+theme_override_colors/default_color = Color(0.788, 0.718, 0.643, 0.95)
+theme_override_constants/line_separation = 8
+theme_override_fonts/normal_font = ExtResource("8_n4")
+theme_override_font_sizes/normal_font_size = 22
+
+[node name="ButtonsHBox" type="HBoxContainer" parent="UIRoot/Center"]
+layout_mode = 1
+anchors_preset = 12
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 80.0
+offset_top = -90.0
+offset_right = -80.0
+offset_bottom = -16.0
+alignment = 1
+theme_override_constants/separation = 24
+
+[node name="MainMenuButton" type="Control" parent="UIRoot/Center/ButtonsHBox"]
+custom_minimum_size = Vector2(220, 56)
+layout_mode = 2
+focus_mode = 2
+mouse_default_cursor_shape = 2
+script = ExtResource("5_secbtn")
+icon = "◀"
+cn_label = "返回主菜单"
+en_label = "RETURN"
+
+[node name="RespawnButton" type="Control" parent="UIRoot/Center/ButtonsHBox"]
+custom_minimum_size = Vector2(360, 74)
+layout_mode = 2
+focus_mode = 2
+mouse_default_cursor_shape = 2
+script = ExtResource("4_btn")
+code = "R"
+cn_label = "重振旗鼓"
+en_label = "RESPAWN"

@@ -1,0 +1,120 @@
+[gd_scene format=3 uid="uid://bo0psd2ds2vq0"]
+
+[ext_resource type="Script" path="res://scripts/ui/exit_confirm.gd" id="1_script"]
+[ext_resource type="Script" path="res://scripts/ui/chamfer_panel.gd" id="2_panel"]
+[ext_resource type="Script" path="res://scripts/ui/secondary_button.gd" id="3_secbtn"]
+[ext_resource type="FontVariation" path="res://assets/fonts/font_jbmono_500.tres" id="4_jb5"]
+[ext_resource type="FontVariation" path="res://assets/fonts/font_notosc_900.tres" id="5_n9"]
+[ext_resource type="FontVariation" path="res://assets/fonts/font_notosc_400.tres" id="6_n4"]
+
+[node name="ExitConfirm" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+mouse_filter = 0
+script = ExtResource("1_script")
+
+[node name="Bg" type="ColorRect" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+color = Color(0, 0, 0, 0.75)
+
+[node name="Center" type="Control" parent="."]
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -320.0
+offset_top = -180.0
+offset_right = 320.0
+offset_bottom = 180.0
+mouse_filter = 1
+
+[node name="Dialog" type="Control" parent="Center"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+mouse_filter = 1
+script = ExtResource("2_panel")
+bg_color = Color(0.0745, 0.0314, 0.0275, 0.96)
+border_color = Color(0.855, 0.18, 0.2, 1)
+border_width = 2.0
+chamfer_size = 18.0
+glow_color = Color(0.855, 0.18, 0.2, 0.35)
+glow_width = 8.0
+
+[node name="Eyebrow" type="Label" parent="Center/Dialog"]
+layout_mode = 0
+offset_left = 48.0
+offset_top = 44.0
+offset_right = 592.0
+offset_bottom = 66.0
+theme_override_colors/font_color = Color(0.855, 0.18, 0.2, 1)
+theme_override_fonts/font = ExtResource("4_jb5")
+theme_override_font_sizes/font_size = 12
+text = "// CONFIRM ABORT"
+vertical_alignment = 1
+
+[node name="Title" type="Label" parent="Center/Dialog"]
+layout_mode = 0
+offset_left = 48.0
+offset_top = 80.0
+offset_right = 592.0
+offset_bottom = 144.0
+theme_override_colors/font_color = Color(1, 0.918, 0.851, 1)
+theme_override_fonts/font = ExtResource("5_n9")
+theme_override_font_sizes/font_size = 44
+text = "放 弃 阵 地?"
+
+[node name="Description" type="Label" parent="Center/Dialog"]
+layout_mode = 0
+offset_left = 48.0
+offset_top = 158.0
+offset_right = 592.0
+offset_bottom = 240.0
+theme_override_colors/font_color = Color(0.788, 0.718, 0.643, 1)
+theme_override_constants/line_spacing = 8
+theme_override_fonts/font = ExtResource("6_n4")
+theme_override_font_sizes/font_size = 16
+text = "关闭程序将立即终止当前部署。任何未保存的进度都将丢失。"
+autowrap_mode = 3
+
+[node name="Buttons" type="HBoxContainer" parent="Center/Dialog"]
+layout_mode = 1
+anchors_preset = 12
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 48.0
+offset_top = -100.0
+offset_right = -48.0
+offset_bottom = -44.0
+alignment = 2
+theme_override_constants/separation = 16
+
+[node name="CancelButton" type="Control" parent="Center/Dialog/Buttons"]
+custom_minimum_size = Vector2(180, 56)
+layout_mode = 2
+focus_mode = 2
+mouse_default_cursor_shape = 2
+script = ExtResource("3_secbtn")
+icon = "◀"
+cn_label = "取消"
+en_label = "CANCEL"
+
+[node name="ConfirmButton" type="Control" parent="Center/Dialog/Buttons"]
+custom_minimum_size = Vector2(220, 56)
+layout_mode = 2
+focus_mode = 2
+mouse_default_cursor_shape = 2
+script = ExtResource("3_secbtn")
+icon = "✕"
+cn_label = "确认退出"
+en_label = "CONFIRM EXIT"
+danger = true

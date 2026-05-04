@@ -1,0 +1,793 @@
+class_name Enemy extends CharacterBody3D
+
+# ========== 数值配置 ==========
+@export_group("Stats")
+@export var max_health: float = 100.0
+@export var move_speed: float = 3.5
+@export var stop_distance: float = 1.5   # 扑击模式下未使用，保留给未来"远程型"敌人等行为
+@export var flash_duration: float = 0.15 # 受击闪红时长（秒）
+
+@export_group("Loot")
+@export var health_pack_drop_chance: float = 0.3
+@export var legendary_drop_chance: float = 0.0     # 传说武器掉落概率（Grunt/Runner=0, Brute=2%, Elite=30%, Boss=100%）
+@export var score_value: int = 100                 # 击杀得分（Grunt 基准；变种在 tscn 里覆盖）
+
+@export_group("Tier")
+@export var is_elite: bool = false                 # 精英：供 weapon "精英猎手"加成识别
+@export var is_boss: bool = false                  # BOSS：同上
+
+@export_group("AI")
+# 视野四重判定：水平距离 + 高度差 + 正前方夹角 + raycast 墙体遮挡
+@export var sight_range: float = 15.0            # 视野距离（水平）
+@export var sight_angle_deg: float = 110.0       # 视野锥总夹角（单边 55°）
+@export var sight_height_max: float = 4.0        # 垂直视野限制（防空中/深坑误判）
+# 亲眼发现玩家 / 被击中时告警周围敌人（水平距离，忽略高度差）
+@export var alert_radius: float = 18.0
+# 失去视野后的搜索行为
+@export var search_move_speed: float = 3.0      # 朝最后已知位置移动的速度（略高于巡逻、低于追击）
+@export var search_linger: float = 3.0          # 到达最后已知位置后站定等待秒数
+# 侧翼偏移：追击时目标点横向偏离玩家一段距离，让同方向来的多只敌人形成散兵线而非一列纵队
+# Runner 偏移大（绕侧翼），Elite/Boss 偏移小（主 menace 直冲），近身 3m 内自动归零（直扑收尾）
+@export var flank_offset_max: float = 2.0
+
+@export_group("Attack")
+# 扑击节奏：distance ≤ attack_range → WINDUP（前摇 attack_windup 秒，身体警示色脉动）
+# → STRIKE（瞬时判定，仍在 attack_range 内即命中）→ COOLDOWN（attack_cooldown 秒）→ CHASE
+# MISS 额外加 attack_miss_bonus_cooldown，作为玩家闪避成功的奖励
+@export var attack_range: float = 1.6
+@export var attack_damage: float = 12.0
+@export var attack_windup: float = 0.5             # 前摇（玩家闪避/反击窗口）
+@export var attack_cooldown: float = 1.2           # 命中后的基础冷却
+@export var attack_miss_bonus_cooldown: float = 0.5 # 闪避奖励：MISS 追加冷却
+@export var attack_tell_pulse_hz: float = 6.0      # 前摇警示色脉冲频率（Hz）
+@export var max_attack_height_diff: float = 2.5    # 敌人/玩家 y 差超过此值视为不在同一层，不攻击
+
+@export_group("Safety")
+@export var fall_death_y: float = -20.0            # y 低于此值自动销毁（防虚空幽灵继续作祟）
+
+# 飞行型敌人（EyeDrone 等）：关重力、不走 navmesh、直线追玩家、维持玩家头顶上方高度
+# 破除"高地无敌点"——地面单位被 navmesh 困住时，飞行单位仍能直达玩家
+@export_group("Flying")
+@export var is_flying: bool = false
+@export var fly_height_offset: float = 1.5  # 在玩家中心上方 N 米悬停（避免穿过玩家视野中心）
+@export var fly_height_lerp_rate: float = 4.0  # 高度跟随响应速度（越大越激进）
+
+# 状态机 → GLTF AnimationPlayer 动画名映射。每个 variant tscn override 自己的命名
+# （Mech Pack 用 Punch/Death，Sci-Fi Kit 用 Attack/TurnOff），空字符串表示无对应动画跳过播放
+@export_group("Animation")
+@export var anim_idle: String = ""
+@export var anim_walk: String = ""        # SEARCH 慢速；CHASE fallback when run 为空
+@export var anim_run: String = ""         # CHASE 快速首选
+@export var anim_attack: String = ""      # WINDUP 前摇
+@export var anim_death: String = ""       # _die 倒地动画
+
+# 前摇警示色（HDR > 1 让它在 tonemap 下微微发光）
+const ATTACK_TELL_COLOR: Color = Color(1.4, 0.9, 0.25)
+# 射线源/目标高度：敌人眼睛 + 玩家胸部，避免射线从脚底开始被地面误挡
+const EYE_HEIGHT: float = 1.85
+const PLAYER_TARGET_HEIGHT: float = 1.5
+const HEALTH_PACK_SCENE: PackedScene = preload("res://scenes/health_pack.tscn")
+const LEGENDARY_PICKUP_SCENE: PackedScene = preload("res://scenes/legendary_pickup.tscn")
+# 传说武器抽奖池：50/50 重机枪 vs 电磁炮（后续可以加新成员）
+# 注意：用 load() 而非 preload()，避免编译时和 weapon.gd 的 uid 注册顺序冲突
+# （preload heavy_mg/railgun → 间接引用 weapon.gd uid，但 main_menu 阶段 uid_cache 尚未填充）
+var LEGENDARY_POOL: Array[PackedScene] = [
+	load("res://scenes/weapons/heavy_mg.tscn"),
+	load("res://scenes/weapons/railgun.tscn"),
+]
+
+# 全局攻击互锁：同一时刻仅允许 1 只敌人进入 WINDUP
+static var _active_attacker: Enemy = null
+
+# ========== 节点引用 ==========
+@onready var collision: CollisionShape3D = $CollisionShape3D
+@onready var _nav_agent: NavigationAgent3D = $NavigationAgent3D
+var _anim_player: AnimationPlayer = null
+var _current_anim: String = ""
+
+# ========== 状态机 ==========
+# IDLE: 原地站岗，做视野检测；看到玩家 → CHASE 并告警
+# CHASE: 追击玩家，每帧 look_at + 视野检测；丢失视野 → SEARCH
+# SEARCH: 走向最后已知位置，到达后 linger 秒 → IDLE；期间重新看到 → CHASE
+# WINDUP / COOLDOWN: 攻击子循环，独立于感知
+enum State { IDLE, CHASE, SEARCH, WINDUP, COOLDOWN }
+
+# ========== 运行时状态 ==========
+var current_health: float
+var _is_dead: bool = false
+var _player: Node3D
+var _flash_timer: float = 0.0
+# 每个元素 = [material, original_color]；受击闪红 / 攻击预警共用这份副本
+var _flash_cache: Array = []
+
+var _state: int = State.IDLE
+var _state_timer: float = 0.0
+var _tell_elapsed: float = 0.0
+
+# 感知状态
+var _initial_forward: Vector3 = Vector3.FORWARD  # IDLE 朝向（_ready 时记录；SEARCH→IDLE 时更新）
+var _last_known_player_pos: Vector3 = Vector3.ZERO
+var _search_target: Vector3 = Vector3.ZERO
+var _search_arrived: bool = false
+var _search_linger_timer: float = 0.0
+
+# 导航：path 缓存 + Pure Pursuit + progress_seg 单调推进（抗 repath 震荡）
+var _nav_path: PackedVector3Array = []
+var _nav_path_target: Vector3 = Vector3.ZERO
+var _nav_repath_timer: float = 0.0
+var _nav_progress_seg: int = 0                # 当前在 path 的第几段，只增不减（repath 时 smart 重置）
+const _NAV_REPATH_INTERVAL: float = 1.5   # repath 间隔拉长，避免 path[1] 波动导致震荡
+const _NAV_REPATH_TARGET_DELTA: float = 3.0  # target 变化超过 3m 才强制 repath
+const _NAV_LOOKAHEAD: float = 1.5
+
+# Stuck detection：CHASE/SEARCH 中卡住超过 _STUCK_TIMEOUT 秒就强制 repath + jitter
+var _stuck_timer: float = 0.0
+var _stuck_last_pos: Vector3 = Vector3.ZERO
+const _STUCK_TIMEOUT: float = 1.5
+const _STUCK_DIST: float = 0.3
+
+# 侧翼偏移：生成时随机，玩家大幅移动时重算，用来让群体自然拉开散兵线
+var _lateral_offset: float = 0.0
+var _lateral_ref_player_pos: Vector3 = Vector3.ZERO
+var _has_lateral_ref: bool = false
+const _LATERAL_REFRESH_DIST: float = 5.0
+# 收尾距离：敌人与玩家 < _FLANK_CLOSE_DIST 时偏移归零，直扑玩家
+const _FLANK_CLOSE_DIST: float = 3.0
+
+# 敌人互推：近身时横向推开，避免多只叠在同一格
+const _SEPARATION_RADIUS: float = 0.9
+const _SEPARATION_STRENGTH: float = 5.0
+
+signal died
+
+func _ready() -> void:
+	current_health = max_health
+	_find_player()
+	# 每只敌人独立随机侧翼偏移（含符号），让同方向来的多只自然分左/中/右
+	if flank_offset_max > 0.0:
+		_lateral_offset = randf_range(-flank_offset_max, flank_offset_max)
+
+	# 记录初始朝向作为 IDLE 姿态（world.tscn 里的 transform 决定敌人开局面朝哪）
+	_initial_forward = -global_transform.basis.z
+	_initial_forward.y = 0.0
+	if _initial_forward.length_squared() < 0.001:
+		_initial_forward = Vector3.FORWARD
+	else:
+		_initial_forward = _initial_forward.normalized()
+
+	# 复制材质副本，避免多个敌人实例共享材质导致集体变色
+	# 递归扫整个子树，兼容旧 capsule+box 占位和新 GLTF 模型（含 Skeleton 下的多 MeshInstance3D）
+	_collect_flash_cache_from(self)
+
+	# GLTF 自带 AnimationPlayer 一般在 model 子树里，递归找
+	_anim_player = find_child("AnimationPlayer", true, false) as AnimationPlayer
+
+func _find_player() -> void:
+	_player = get_tree().get_first_node_in_group("player") as Node3D
+
+# 递归收集子树里所有 MeshInstance3D 的 BaseMaterial3D 副本
+# 既支持基类 enemy.tscn 的 body/head 占位（surface_override material），
+# 也支持继承场景里 instance 的 GLTF 模型（mesh 自带 surface material）
+# 收到的副本写回 surface_override，运行时改 albedo_color 实现闪红 / 警示色脉冲
+func _collect_flash_cache_from(node: Node) -> void:
+	for child in node.get_children():
+		if child is MeshInstance3D:
+			var mi: MeshInstance3D = child
+			if mi.mesh != null:
+				var surface_count: int = mi.mesh.get_surface_count()
+				for i in surface_count:
+					var mat: Material = mi.get_surface_override_material(i)
+					if mat == null:
+						mat = mi.mesh.surface_get_material(i)
+					if mat is BaseMaterial3D:
+						var unique_mat: BaseMaterial3D = (mat as BaseMaterial3D).duplicate()
+						mi.set_surface_override_material(i, unique_mat)
+						_flash_cache.append([unique_mat, unique_mat.albedo_color])
+		_collect_flash_cache_from(child)
+
+# 供 HUD 威胁指示器查询：当前是否在攻击前摇（即将出拳）
+func is_winding_up() -> bool:
+	return _state == State.WINDUP and not _is_dead
+
+# 供 weapon 判击杀反馈
+func is_dead() -> bool:
+	return _is_dead
+
+func _physics_process(delta: float) -> void:
+	if _is_dead:
+		return
+
+	# 虚空清理：掉出关卡范围的敌人立即销毁
+	if global_position.y < fall_death_y:
+		_release_attack_lock()
+		queue_free()
+		return
+
+	# 受击闪红计时（优先级最高：盖过攻击警示色脉冲）
+	if _flash_timer > 0.0:
+		_flash_timer -= delta
+		if _flash_timer <= 0.0:
+			_restore_colors()
+
+	# 玩家可能还没 ready，延迟查找
+	if _player == null:
+		_find_player()
+		return
+
+	# 分离水平距离 / 高度差
+	var raw_to_player: Vector3 = _player.global_position - global_position
+	var height_diff: float = raw_to_player.y
+	var to_player: Vector3 = raw_to_player
+	to_player.y = 0.0
+	var distance: float = to_player.length()
+
+	match _state:
+		State.IDLE:
+			_tick_idle()
+		State.CHASE:
+			_tick_chase(distance, to_player, height_diff)
+		State.SEARCH:
+			_tick_search(delta)
+		State.WINDUP:
+			_tick_windup(delta, distance)
+		State.COOLDOWN:
+			_tick_cooldown(delta)
+
+	# 飞行型跳过 navmesh-based stuck detection 和敌人互推（飞行单位无地面约束）
+	if not is_flying:
+		# Stuck detection：追击 / 未到达的搜索中 1.5s 没移动 → 强制 repath + jitter
+		# 跳过"到达后 linger"状态（那是预期的停驻）
+		var active_movement: bool = (
+			_state == State.CHASE
+			or (_state == State.SEARCH and not _search_arrived)
+		)
+		if active_movement:
+			if global_position.distance_to(_stuck_last_pos) < _STUCK_DIST:
+				_stuck_timer += delta
+				if _stuck_timer >= _STUCK_TIMEOUT:
+					_nav_path.clear()
+					_nav_repath_timer = 0.0
+					_nav_progress_seg = 0
+					_stuck_timer = 0.0
+					# 给一个随机方向的小冲量跳出卡死
+					velocity.x += randf_range(-2.5, 2.5)
+					velocity.z += randf_range(-2.5, 2.5)
+			else:
+				_stuck_timer = 0.0
+				_stuck_last_pos = global_position
+		else:
+			_stuck_timer = 0.0
+			_stuck_last_pos = global_position
+
+		# 敌人互推：仅在追击/搜索中生效（IDLE/WINDUP/COOLDOWN 不推，避免站桩被挤走）
+		if _state == State.CHASE or _state == State.SEARCH:
+			_apply_enemy_separation()
+
+	# 重力 vs 高度跟随
+	if is_flying:
+		# 飞行型：根据状态决定目标高度，PD 控制 velocity.y 让它平滑接近
+		var target_y: float = global_position.y
+		if _player and (_state == State.CHASE or _state == State.WINDUP or _state == State.COOLDOWN):
+			target_y = _player.global_position.y + fly_height_offset
+		elif _state == State.SEARCH:
+			target_y = _search_target.y + fly_height_offset
+		velocity.y = clamp((target_y - global_position.y) * fly_height_lerp_rate, -move_speed, move_speed)
+	elif not is_on_floor():
+		velocity += get_gravity() * delta
+
+	_update_anim()
+	move_and_slide()
+
+# 状态机驱动 GLTF 动画。每帧调，内部去重避免重复 play 同一个
+# CHASE 优先 run，没有就 walk fallback；SEARCH 用 walk；WINDUP 用 attack；其余 idle
+func _update_anim() -> void:
+	if _anim_player == null:
+		return
+	var target: String = ""
+	match _state:
+		State.IDLE:
+			target = anim_idle
+		State.CHASE:
+			target = anim_run if not anim_run.is_empty() else anim_walk
+		State.SEARCH:
+			target = anim_walk if not anim_walk.is_empty() else anim_idle
+		State.WINDUP:
+			target = anim_attack
+		State.COOLDOWN:
+			target = anim_idle
+	_play_anim(target)
+
+func _play_anim(anim_name: String, force: bool = false) -> void:
+	if _anim_player == null or anim_name.is_empty():
+		return
+	if not _anim_player.has_animation(anim_name):
+		return
+	if not force and _current_anim == anim_name and _anim_player.is_playing():
+		return
+	_anim_player.play(anim_name)
+	_current_anim = anim_name
+
+# ---------- 状态 tick ----------
+func _tick_idle() -> void:
+	velocity.x = 0.0
+	velocity.z = 0.0
+	# 保持初始朝向（不追玩家）
+	look_at(global_position + _initial_forward, Vector3.UP)
+
+	# SEARCH→IDLE 后的敌人不再局限视野锥，改为全向警觉（距离+raycast 判定）
+	# 避免玩家站在 IDLE 敌人视野锥外但还在 sight_range 内时被忽略
+	if _can_see_player(true):
+		_last_known_player_pos = _player.global_position
+		_state = State.CHASE
+		_alert_nearby_enemies()
+
+func _tick_chase(distance: float, to_player: Vector3, height_diff: float) -> void:
+	# 视野检查：CHASE 中 forward 朝 nav_dir 不朝玩家，用 ignore_angle 只判距离+高度+raycast
+	# 只有墙遮挡才会让敌人"丢失视野"切 SEARCH
+	if _can_see_player(true):
+		_last_known_player_pos = _player.global_position
+	else:
+		var new_target: Vector3 = _last_known_player_pos
+		# 只有 search_target 大幅变动才 reset arrived；target 稳定时保持 linger 状态
+		# 防止 CHASE/SEARCH 频繁切换导致 linger_timer 永远走不完
+		if _search_target.distance_to(new_target) > 1.5:
+			_search_arrived = false
+		_search_target = new_target
+		_state = State.SEARCH
+		velocity.x = 0.0
+		velocity.z = 0.0
+		return
+
+	# 攻击判定：水平近 + 高度同层。在攻击距离内直接朝玩家、准备开打
+	var in_range: bool = distance <= attack_range and absf(height_diff) <= max_attack_height_diff
+	if in_range:
+		if distance > 0.01:
+			look_at(global_position + to_player, Vector3.UP)
+		if _can_claim_attack_lock():
+			_active_attacker = self
+			_enter_windup()
+		else:
+			velocity.x = 0.0
+			velocity.z = 0.0
+		return
+
+	# 飞行型直线追击（不走 navmesh，破除高地无敌点）；地面型用 nav path + 散兵线偏移
+	if is_flying:
+		_move_flying_toward(_player.global_position, move_speed)
+	else:
+		_move_along_nav_path(_compute_chase_target(to_player, distance), move_speed)
+
+func _tick_search(delta: float) -> void:
+	# 视野优先：重新发现玩家 → CHASE（不重复告警，已在 combat）
+	if _can_see_player():
+		_last_known_player_pos = _player.global_position
+		_state = State.CHASE
+		return
+
+	if not _search_arrived:
+		# 距离 < 1m 视为到达（改用直线距离，不依赖 NavigationAgent3D 的 is_navigation_finished）
+		var dist_to_target: float = Vector2(
+			_search_target.x - global_position.x,
+			_search_target.z - global_position.z
+		).length()
+		if dist_to_target < 1.0:
+			_search_arrived = true
+			_search_linger_timer = search_linger
+			velocity.x = 0.0
+			velocity.z = 0.0
+		elif is_flying:
+			_move_flying_toward(_search_target, search_move_speed)
+		else:
+			_move_along_nav_path(_search_target, search_move_speed)
+	else:
+		velocity.x = 0.0
+		velocity.z = 0.0
+		_search_linger_timer -= delta
+		if _search_linger_timer <= 0.0:
+			# 保留当前朝向作为新 IDLE 姿态（不要转回原位，更自然）
+			var cur_forward: Vector3 = -global_transform.basis.z
+			cur_forward.y = 0.0
+			if cur_forward.length_squared() > 0.001:
+				_initial_forward = cur_forward.normalized()
+			_state = State.IDLE
+
+# 敌人互推：扫邻近敌人，水平距离 < _SEPARATION_RADIUS 时给一个横向推力
+# 只让活敌人之间排斥，避免多只叠在同一格（enemy 之间不互相碰撞，必须手动做）
+func _apply_enemy_separation() -> void:
+	var push: Vector3 = Vector3.ZERO
+	for other in get_tree().get_nodes_in_group("enemy"):
+		if other == self or not is_instance_valid(other):
+			continue
+		if (other as Enemy)._is_dead:
+			continue
+		var diff: Vector3 = global_position - (other as Node3D).global_position
+		diff.y = 0.0
+		var d: float = diff.length()
+		if d < 0.01 or d > _SEPARATION_RADIUS:
+			continue
+		# 权重与距离成反比：越近推力越大（最近处接近 1，远端趋近 0）
+		push += diff.normalized() * (_SEPARATION_RADIUS - d)
+	if push.length_squared() > 0.0001:
+		velocity.x += push.x * _SEPARATION_STRENGTH
+		velocity.z += push.z * _SEPARATION_STRENGTH
+
+# 计算追击目标点：玩家位置 + 横向偏移（right 向量 × _lateral_offset）
+# 近身 _FLANK_CLOSE_DIST 内偏移归零，避免最后扑击时绕路
+# 玩家大幅移动（>_LATERAL_REFRESH_DIST）时重新随机偏移方向
+func _compute_chase_target(to_player: Vector3, distance: float) -> Vector3:
+	if flank_offset_max <= 0.0 or distance < _FLANK_CLOSE_DIST:
+		return _player.global_position
+	# 刷新偏移：首帧或玩家位置漂移过远
+	if not _has_lateral_ref or _lateral_ref_player_pos.distance_to(_player.global_position) > _LATERAL_REFRESH_DIST:
+		_lateral_offset = randf_range(-flank_offset_max, flank_offset_max)
+		_lateral_ref_player_pos = _player.global_position
+		_has_lateral_ref = true
+	var to_player_dir: Vector3 = Vector3(to_player.x, 0.0, to_player.z)
+	if to_player_dir.length_squared() < 0.001:
+		return _player.global_position
+	to_player_dir = to_player_dir.normalized()
+	var right: Vector3 = Vector3.UP.cross(to_player_dir)
+	return _player.global_position + right * _lateral_offset
+
+# 飞行型直线追击：水平方向直奔目标，y 方向由 _physics_process 末尾的高度跟随控制
+# 不走 navmesh = 无视墙壁绕路、无视高低差，能直达 watchtower / 浮岛上的玩家
+func _move_flying_toward(target: Vector3, speed: float) -> void:
+	var to_target: Vector3 = target - global_position
+	to_target.y = 0.0
+	var dist: float = to_target.length()
+	if dist < 0.01:
+		velocity.x = 0.0
+		velocity.z = 0.0
+		return
+	var dir: Vector3 = to_target / dist
+	look_at(global_position + dir, Vector3.UP)
+	velocity.x = dir.x * speed
+	velocity.z = dir.z * speed
+
+# Pure Pursuit：每帧求敌人在 path 上的进度（最近 segment + 参数 t），
+# 朝 path 上前方 1.5m 的点走。不依赖 waypoint index 状态，彻底消除 repath 抖动。
+func _move_along_nav_path(target: Vector3, speed: float) -> void:
+	_nav_repath_timer -= get_physics_process_delta_time()
+	var needs_repath: bool = (
+		_nav_path.size() < 2
+		or _nav_progress_seg >= _nav_path.size() - 1   # path 走完了立即重算，避免敌人呆站等 interval
+		or _nav_repath_timer <= 0.0
+		or _nav_path_target.distance_to(target) > _NAV_REPATH_TARGET_DELTA
+	)
+	if needs_repath:
+		var map_rid: RID = get_world_3d().navigation_map
+		# optimize=false 保留 polygon portal waypoint（含斜坡入口点），让 pure pursuit
+		# 能引导敌人正确绕到斜坡底部而不是撞斜坡侧壁。progress_seg 防震荡，
+		# stuck detection 防死锁。
+		_nav_path = NavigationServer3D.map_get_path(map_rid, global_position, target, false)
+		_nav_path_target = target
+		_nav_repath_timer = _NAV_REPATH_INTERVAL
+		# smart 重置 progress：找新 path 中离 agent 最近的 segment
+		_nav_progress_seg = _find_closest_segment()
+
+	if _nav_path.size() < 2:
+		velocity.x = 0.0
+		velocity.z = 0.0
+		return
+
+	var lookahead: Vector3 = _get_lookahead_point(_NAV_LOOKAHEAD)
+
+	var nav_vec: Vector3 = lookahead - global_position
+	nav_vec.y = 0.0
+	if nav_vec.length_squared() < 0.0001:
+		velocity.x = 0.0
+		velocity.z = 0.0
+		return
+
+	var nav_dir: Vector3 = nav_vec.normalized()
+	look_at(global_position + nav_dir, Vector3.UP)
+	velocity.x = nav_dir.x * speed
+	velocity.z = nav_dir.z * speed
+
+# Repath 时调：找 path 中离 agent 水平最近的 segment index
+func _find_closest_segment() -> int:
+	if _nav_path.size() < 2:
+		return 0
+	var pos2: Vector2 = Vector2(global_position.x, global_position.z)
+	var best_seg: int = 0
+	var best_dist: float = INF
+	for i in range(_nav_path.size() - 1):
+		var a2: Vector2 = Vector2(_nav_path[i].x, _nav_path[i].z)
+		var b2: Vector2 = Vector2(_nav_path[i + 1].x, _nav_path[i + 1].z)
+		var ab: Vector2 = b2 - a2
+		var l2: float = ab.length_squared()
+		var t: float = 0.0
+		if l2 > 0.001:
+			t = clamp((pos2 - a2).dot(ab) / l2, 0.0, 1.0)
+		var closest: Vector2 = a2 + ab * t
+		var d: float = pos2.distance_to(closest)
+		if d < best_dist:
+			best_dist = d
+			best_seg = i
+	return best_seg
+
+# Pure Pursuit + progress_seg 单调推进：从 _nav_progress_seg 开始向前找 lookahead
+# 到达 segment 末端才推进 progress，不倒退避免 repath 震荡
+func _get_lookahead_point(lookahead_dist: float) -> Vector3:
+	if _nav_path.size() < 2:
+		return global_position
+	var pos2: Vector2 = Vector2(global_position.x, global_position.z)
+
+	# 推进 progress_seg：agent 过了当前 segment 末端（t≥0.9）就前进
+	while _nav_progress_seg < _nav_path.size() - 1:
+		var a2: Vector2 = Vector2(_nav_path[_nav_progress_seg].x, _nav_path[_nav_progress_seg].z)
+		var b2: Vector2 = Vector2(_nav_path[_nav_progress_seg + 1].x, _nav_path[_nav_progress_seg + 1].z)
+		var ab: Vector2 = b2 - a2
+		var l2: float = ab.length_squared()
+		if l2 < 0.001:
+			_nav_progress_seg += 1
+			continue
+		var t: float = clamp((pos2 - a2).dot(ab) / l2, 0.0, 1.0)
+		if t >= 0.9:
+			_nav_progress_seg += 1
+		else:
+			break
+
+	if _nav_progress_seg >= _nav_path.size() - 1:
+		return _nav_path[_nav_path.size() - 1]
+
+	# 从 (_nav_progress_seg, current_t) 沿 path 向前走 lookahead_dist
+	var a: Vector3 = _nav_path[_nav_progress_seg]
+	var b: Vector3 = _nav_path[_nav_progress_seg + 1]
+	var a2: Vector2 = Vector2(a.x, a.z)
+	var b2: Vector2 = Vector2(b.x, b.z)
+	var ab: Vector2 = b2 - a2
+	var l2: float = ab.length_squared()
+	var current_t: float = 0.0
+	if l2 > 0.001:
+		current_t = clamp((pos2 - a2).dot(ab) / l2, 0.0, 1.0)
+
+	var remaining: float = lookahead_dist
+	var seg: int = _nav_progress_seg
+	var t_param: float = current_t
+	while seg < _nav_path.size() - 1:
+		var sa: Vector3 = _nav_path[seg]
+		var sb: Vector3 = _nav_path[seg + 1]
+		var seg_len: float = Vector2(sb.x - sa.x, sb.z - sa.z).length()
+		var remaining_in_seg: float = seg_len * (1.0 - t_param)
+		if remaining <= remaining_in_seg and seg_len > 0.001:
+			var new_t: float = t_param + remaining / seg_len
+			return sa.lerp(sb, new_t)
+		remaining -= remaining_in_seg
+		seg += 1
+		t_param = 0.0
+	return _nav_path[_nav_path.size() - 1]
+
+func _tick_windup(delta: float, distance: float) -> void:
+	velocity.x = 0.0
+	velocity.z = 0.0
+	# 攻击态继续面朝玩家
+	var to_player_flat: Vector3 = _player.global_position - global_position
+	to_player_flat.y = 0.0
+	if to_player_flat.length() > 0.01:
+		look_at(global_position + to_player_flat, Vector3.UP)
+
+	_state_timer -= delta
+	_tell_elapsed += delta
+
+	# 脉冲警示色
+	if _flash_timer <= 0.0:
+		var pulse: float = 0.55 + 0.45 * sin(_tell_elapsed * attack_tell_pulse_hz * TAU)
+		for entry in _flash_cache:
+			entry[0].albedo_color = ATTACK_TELL_COLOR * pulse + entry[1] * (1.0 - pulse)
+
+	if _state_timer <= 0.0:
+		_strike(distance)
+
+func _tick_cooldown(delta: float) -> void:
+	velocity.x = 0.0
+	velocity.z = 0.0
+	# 冷却也保持朝向玩家，准备下一次攻击
+	var to_player_flat: Vector3 = _player.global_position - global_position
+	to_player_flat.y = 0.0
+	if to_player_flat.length() > 0.01:
+		look_at(global_position + to_player_flat, Vector3.UP)
+
+	_state_timer -= delta
+	if _state_timer <= 0.0:
+		# COOLDOWN 结束回 CHASE（CHASE 第一帧会决定继续追 / 切 SEARCH）
+		_state = State.CHASE
+
+# ---------- 感知 ----------
+# 视野四重判定：距离 → 高度差 → 夹角 → raycast 遮挡
+# CHASE 状态传 ignore_angle=true：已经锁定目标，敌人脑子里有玩家方位，
+# 不需要 forward 对齐（用 nav 导航时 forward 朝移动方向，不朝玩家）；
+# 只靠 raycast 墙体遮挡来丢失视野。IDLE/SEARCH 保留夹角检查（模拟"看向"）。
+func _can_see_player(ignore_angle: bool = false) -> bool:
+	if _player == null:
+		return false
+	# 玩家已死不算看见（避免死后被追）
+	if "_dead" in _player and _player._dead:
+		return false
+
+	var to_vec: Vector3 = _player.global_position - global_position
+	var horizontal := Vector3(to_vec.x, 0.0, to_vec.z)
+	var dist: float = horizontal.length()
+
+	# 贴身视为看见，跳过后续判定避免除零
+	if dist < 0.01:
+		return true
+	if dist > sight_range:
+		return false
+	if absf(to_vec.y) > sight_height_max:
+		return false
+
+	# 夹角（单边 = 总夹角 / 2）— CHASE 状态可跳过（已锁定目标）
+	if not ignore_angle:
+		var forward: Vector3 = -global_transform.basis.z
+		forward.y = 0.0
+		if forward.length_squared() < 0.001:
+			return false
+		forward = forward.normalized()
+		var to_dir: Vector3 = horizontal / dist   # 已有 dist > 0.01，可直接除
+		var dot_val: float = forward.dot(to_dir)
+		var half_rad: float = deg_to_rad(sight_angle_deg * 0.5)
+		if dot_val < cos(half_rad):
+			return false
+
+	# 遮挡 raycast：眼睛 → 玩家胸部。只有击中玩家本身或无击中才算看见
+	var space := get_world_3d().direct_space_state
+	var from: Vector3 = global_position + Vector3.UP * EYE_HEIGHT
+	var to: Vector3 = _player.global_position + Vector3.UP * PLAYER_TARGET_HEIGHT
+	var query := PhysicsRayQueryParameters3D.create(from, to)
+	query.exclude = [get_rid()]
+	query.collide_with_areas = false
+	var hit := space.intersect_ray(query)
+	if hit.is_empty():
+		return true
+	return hit.get("collider") == _player
+
+# ---------- 告警 ----------
+# 只有"亲眼发现"和"被击中"才发告警；被告警的敌人不传播，避免链式警觉风暴
+func _alert_nearby_enemies() -> void:
+	if _player == null:
+		return
+	var pos: Vector3 = _player.global_position
+	for e in get_tree().get_nodes_in_group("enemy"):
+		if e == self or e == null or not (e is Enemy):
+			continue
+		var other: Enemy = e
+		if other._is_dead:
+			continue
+		# 水平距离：和视野/攻击判定保持一致，"告警=呼叫"的语义不该被高度压缩
+		var hd: float = Vector2(
+			other.global_position.x - global_position.x,
+			other.global_position.z - global_position.z
+		).length()
+		if hd <= alert_radius:
+			other._receive_alert(pos)
+
+func _receive_alert(player_pos: Vector3) -> void:
+	if _is_dead:
+		return
+	# 只有 IDLE / SEARCH 响应告警；CHASE / WINDUP / COOLDOWN 已经在 combat
+	if _state == State.IDLE or _state == State.SEARCH:
+		_last_known_player_pos = player_pos
+		_state = State.CHASE
+		# 故意不再次 _alert_nearby_enemies() — 切断传播链
+
+# ---------- 攻击 ----------
+func _enter_windup() -> void:
+	_state = State.WINDUP
+	_state_timer = attack_windup
+	_tell_elapsed = 0.0
+	velocity.x = 0.0
+	velocity.z = 0.0
+	if _flash_timer <= 0.0:
+		for entry in _flash_cache:
+			entry[0].albedo_color = ATTACK_TELL_COLOR
+	# 强制从头播 attack 动画一次，避免 _update_anim 每帧检测 is_playing 误重启
+	_play_anim(anim_attack, true)
+	AudioManager.play_enemy_windup(global_position)
+
+func _strike(distance: float) -> void:
+	# 守卫：只有 WINDUP 状态才能 strike
+	if _state != State.WINDUP:
+		push_warning("[%s] _strike called in non-WINDUP state %d, ignored" % [name, _state])
+		return
+
+	if _flash_timer <= 0.0:
+		_restore_colors()
+	_release_attack_lock()
+
+	# 实时水平距离 + 高度差再验一次
+	var actual_dist: float = distance
+	var same_layer: bool = true
+	if _player:
+		var d: Vector3 = _player.global_position - global_position
+		same_layer = absf(d.y) <= max_attack_height_diff
+		d.y = 0.0
+		actual_dist = d.length()
+
+	var hit: bool = actual_dist <= attack_range and same_layer and _player and _player.has_method("take_damage")
+	if hit:
+		_player.take_damage(attack_damage, self)
+		AudioManager.play_enemy_attack_hit(global_position)
+
+	_state = State.COOLDOWN
+	_state_timer = attack_cooldown + (0.0 if hit else attack_miss_bonus_cooldown)
+
+func _can_claim_attack_lock() -> bool:
+	return (_active_attacker == null
+			or not is_instance_valid(_active_attacker)
+			or _active_attacker._is_dead
+			or _active_attacker == self)
+
+func _release_attack_lock() -> void:
+	if _active_attacker == self:
+		_active_attacker = null
+
+# ---------- 伤害接收 ----------
+# weapon.gd 通过 duck typing 调用（collider.has_method("take_damage")）
+func take_damage(amount: float) -> void:
+	if _is_dead:
+		return
+	current_health -= amount
+	_flash_red()
+
+	# 痛感告警：IDLE / SEARCH 中被击中立即切 CHASE 并告警
+	# （被打中说明玩家在附近，即使视野没看到也该反击）
+	if _state == State.IDLE or _state == State.SEARCH:
+		if _player:
+			_last_known_player_pos = _player.global_position
+			_state = State.CHASE
+			_alert_nearby_enemies()
+
+	if current_health <= 0.0:
+		_die()
+
+func _flash_red() -> void:
+	for entry in _flash_cache:
+		entry[0].albedo_color = Color(2.0, 0.2, 0.2)
+	_flash_timer = flash_duration
+
+func _restore_colors() -> void:
+	for entry in _flash_cache:
+		entry[0].albedo_color = entry[1]
+
+func _die() -> void:
+	_is_dead = true
+	collision.disabled = true
+	# 禁用 hitbox 避免 weapon 打到尸体触发额外 kill/hit 反馈
+	for child in get_children():
+		if child is Area3D:
+			(child as Area3D).monitorable = false
+	_release_attack_lock()
+	if _flash_timer <= 0.0:
+		_restore_colors()
+	_drop_loot()
+	died.emit()
+	_play_death_sequence()
+
+# 倒地序列：优先用 GLTF 自带 death 动画，没有则 fallback 到 tween rotation。
+# 统一 1.4s 后 queue_free（足够 Mech Pack Death + Sci-Fi TurnOff 播完）
+func _play_death_sequence() -> void:
+	if _anim_player and not anim_death.is_empty() and _anim_player.has_animation(anim_death):
+		_anim_player.play(anim_death)
+	else:
+		var tween: Tween = create_tween()
+		tween.tween_property(self, "rotation:x", deg_to_rad(90), 0.6).set_ease(Tween.EASE_OUT)
+	await get_tree().create_timer(1.4).timeout
+	if is_instance_valid(self):
+		queue_free()
+
+func _drop_loot() -> void:
+	# 升级系统"战场拾荒"给所有敌人叠全局 drop 加成
+	var bonus: float = UpgradeManager.drop_chance_bonus if UpgradeManager else 0.0
+	if randf() < health_pack_drop_chance + bonus:
+		var pack: Node3D = HEALTH_PACK_SCENE.instantiate()
+		get_tree().current_scene.add_child(pack)
+		pack.global_position = global_position + Vector3.UP * 0.1
+
+	# 传说武器掉落：按敌人 tier 配置概率（Brute 2% / Elite 30% / Boss 100%）
+	# 抽 LEGENDARY_POOL 一把，instantiate pickup 并指向该武器场景
+	if legendary_drop_chance > 0.0 and randf() < legendary_drop_chance and not LEGENDARY_POOL.is_empty():
+		var pickup: Node3D = LEGENDARY_PICKUP_SCENE.instantiate()
+		pickup.set("weapon_scene", LEGENDARY_POOL[randi() % LEGENDARY_POOL.size()])
+		get_tree().current_scene.add_child(pickup)
+		pickup.global_position = global_position + Vector3.UP * 0.5

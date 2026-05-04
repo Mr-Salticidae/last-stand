@@ -1,0 +1,53 @@
+[gd_scene load_steps=7 format=3]
+
+[ext_resource type="Script" path="res://scripts/legendary_pickup.gd" id="1_pickup"]
+
+[sub_resource type="SphereShape3D" id="SphereShape_pickup"]
+radius = 1.5
+
+[sub_resource type="BoxMesh" id="BoxMesh_pickup_core"]
+size = Vector3(0.45, 0.18, 0.18)
+
+[sub_resource type="BoxMesh" id="BoxMesh_pickup_glow"]
+size = Vector3(0.65, 0.30, 0.30)
+
+[sub_resource type="StandardMaterial3D" id="Mat_pickup_core"]
+albedo_color = Color(0.85, 0.40, 0.10, 1)
+metallic = 0.5
+roughness = 0.30
+emission_enabled = true
+emission = Color(1.0, 0.55, 0.15, 1)
+emission_energy_multiplier = 4.0
+
+[sub_resource type="StandardMaterial3D" id="Mat_pickup_glow"]
+albedo_color = Color(1.0, 0.55, 0.15, 0.30)
+emission_enabled = true
+emission = Color(1.0, 0.45, 0.10, 1)
+emission_energy_multiplier = 2.5
+transparency = 1
+metallic = 0.0
+roughness = 0.10
+
+[node name="legendary_pickup" type="Area3D" groups=["legendary_pickup"]]
+monitoring = true
+monitorable = false
+script = ExtResource("1_pickup")
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="."]
+shape = SubResource("SphereShape_pickup")
+
+[node name="MeshRoot" type="Node3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.0, 0)
+
+[node name="mesh_core" type="MeshInstance3D" parent="MeshRoot"]
+mesh = SubResource("BoxMesh_pickup_core")
+surface_material_override/0 = SubResource("Mat_pickup_core")
+
+[node name="mesh_glow" type="MeshInstance3D" parent="MeshRoot"]
+mesh = SubResource("BoxMesh_pickup_glow")
+surface_material_override/0 = SubResource("Mat_pickup_glow")
+
+[node name="OmniLight3D" type="OmniLight3D" parent="MeshRoot"]
+light_color = Color(1.0, 0.55, 0.15, 1)
+light_energy = 3.0
+omni_range = 6.0

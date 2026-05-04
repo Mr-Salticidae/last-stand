@@ -1,0 +1,93 @@
+[gd_scene load_steps=5 format=3]
+
+[ext_resource type="Script" path="res://scripts/weapon.gd" id="1_weapon"]
+[ext_resource type="Mesh" path="res://assets/weapons/models/Revolver_5.obj" id="2_mesh"]
+[ext_resource type="Texture2D" path="res://assets/ui/weapons/revolver.png" id="3_preview"]
+
+[sub_resource type="Animation" id="Anim_revolver_reset"]
+length = 0.001
+tracks/0/type = "value"
+tracks/0/imported = false
+tracks/0/enabled = true
+tracks/0/path = NodePath(".:position")
+tracks/0/interp = 1
+tracks/0/loop_wrap = true
+tracks/0/keys = {
+"times": PackedFloat32Array(0),
+"transitions": PackedFloat32Array(1),
+"update": 0,
+"values": [Vector3(0, 0, 0)]
+}
+tracks/1/type = "value"
+tracks/1/imported = false
+tracks/1/enabled = true
+tracks/1/path = NodePath(".:rotation")
+tracks/1/interp = 1
+tracks/1/loop_wrap = true
+tracks/1/keys = {
+"times": PackedFloat32Array(0),
+"transitions": PackedFloat32Array(1),
+"update": 0,
+"values": [Vector3(0, 0, 0)]
+}
+
+[sub_resource type="Animation" id="Anim_revolver_recoil"]
+resource_name = "recoil"
+length = 0.40
+tracks/0/type = "value"
+tracks/0/imported = false
+tracks/0/enabled = true
+tracks/0/path = NodePath(".:position")
+tracks/0/interp = 2
+tracks/0/loop_wrap = true
+tracks/0/keys = {
+"times": PackedFloat32Array(0, 0.05, 0.40),
+"transitions": PackedFloat32Array(1, 1, 1),
+"update": 0,
+"values": [Vector3(0, 0, 0), Vector3(0, 0.015, 0.10), Vector3(0, 0, 0)]
+}
+tracks/1/type = "value"
+tracks/1/imported = false
+tracks/1/enabled = true
+tracks/1/path = NodePath(".:rotation")
+tracks/1/interp = 2
+tracks/1/loop_wrap = true
+tracks/1/keys = {
+"times": PackedFloat32Array(0, 0.05, 0.40),
+"transitions": PackedFloat32Array(1, 1, 1),
+"update": 0,
+"values": [Vector3(0, 0, 0), Vector3(0.40, 0, 0), Vector3(0, 0, 0)]
+}
+
+[sub_resource type="AnimationLibrary" id="AnimLib_revolver"]
+_data = {
+&"RESET": SubResource("Anim_revolver_reset"),
+&"recoil": SubResource("Anim_revolver_recoil")
+}
+
+[node name="revolver" type="Node3D" groups=["weapon"]]
+script = ExtResource("1_weapon")
+weapon_id = "revolver"
+weapon_name = "重型左轮"
+damage = 80.0
+mag_size = 6
+reserve_max = 30
+fire_rate = 0.5
+reload_time = 2.2
+weapon_range = 100.0
+pellet_count = 1
+auto_fire = false
+unlocked = false
+recoil_pitch_deg = 5.0
+bullet_spread_deg = 0.10
+preview_texture = ExtResource("3_preview")
+
+[node name="mesh" type="MeshInstance3D" parent="."]
+transform = Transform3D(0, 0, 0.24, 0, 0.24, 0, -0.24, 0, 0, 0, 0, 0)
+mesh = ExtResource("2_mesh")
+
+[node name="muzzle" type="Marker3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -0.41)
+
+[node name="AnimationPlayer" type="AnimationPlayer" parent="."]
+libraries/ = SubResource("AnimLib_revolver")

@@ -1,0 +1,45 @@
+[gd_scene load_steps=4 format=3]
+
+[ext_resource type="PackedScene" path="res://scenes/enemy.tscn" id="1_base"]
+[ext_resource type="PackedScene" path="res://assets/enemies_mech/Mike.gltf" id="2_mike"]
+
+[sub_resource type="BoxShape3D" id="BoxShape_grunt_collision"]
+size = Vector3(1.0, 1.6, 1.0)
+
+[sub_resource type="BoxShape3D" id="BoxShape_grunt_body"]
+size = Vector3(2.0, 1.8, 1.0)
+
+[sub_resource type="BoxShape3D" id="BoxShape_grunt_head"]
+size = Vector3(1.4, 0.9, 1.0)
+
+[node name="Enemy" instance=ExtResource("1_base")]
+anim_idle = "Idle"
+anim_walk = "Walk"
+anim_run = "Run"
+anim_attack = "Punch"
+anim_death = "Death"
+
+[node name="CollisionShape3D" parent="." index="0"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.8, 0)
+shape = SubResource("BoxShape_grunt_collision")
+
+[node name="body" parent="." index="1"]
+visible = false
+
+[node name="head" parent="." index="2"]
+visible = false
+
+[node name="BodyHitbox" parent="." index="3"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.9, 0)
+
+[node name="CollisionShape3D" parent="BodyHitbox" index="0"]
+shape = SubResource("BoxShape_grunt_body")
+
+[node name="HeadHitbox" parent="." index="4"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2.25, 0)
+
+[node name="CollisionShape3D" parent="HeadHitbox" index="0"]
+shape = SubResource("BoxShape_grunt_head")
+
+[node name="model" parent="." instance=ExtResource("2_mike")]
+transform = Transform3D(-0.5, 0, 0, 0, 0.5, 0, 0, 0, -0.5, 0, 0, 0)
