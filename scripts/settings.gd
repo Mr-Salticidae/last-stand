@@ -41,7 +41,7 @@ const ARENAS: Array[Dictionary] = [
 # 默认值（与 default_bus_layout 一致：0dB = 1.0 线性 = 100%）
 var master_volume: float = 1.0
 var sfx_volume: float = 1.0
-var music_volume: float = 0.7         # BGM 默认稍低，避免压过音效
+var music_volume: float = 0.4         # BGM 默认稍低，避免压过音效（v0.2: 0.7→0.4，玩家反馈首次进入太吵）
 var mouse_sensitivity: float = 0.20    # player.mouse_sens 默认值
 
 # 图形（默认：全屏 + 跟随显示器 + VSync 关 + 不限帧）
