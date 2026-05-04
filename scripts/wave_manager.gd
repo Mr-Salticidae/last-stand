@@ -177,8 +177,8 @@ func _spawn_current_wave() -> void:
 			_spawn_at(sp, health_mult, boss_scene)
 		elif i == 0 and is_elite_wave:
 			_spawn_at(sp, health_mult, elite_scene)
-		elif i == 0 and current_wave == 1 and runner_scene:
-			# TEMP DEBUG (v0.2 #11): 第一波首只强制 runner 用于 hitbox 调试，验证后删除此分支
+		elif current_wave == 1 and runner_scene:
+			# TEMP DEBUG (v0.2 #11): 第一波全部强制 runner 用于 hitbox 调试，验证后删除此分支
 			_spawn_at(sp, health_mult, runner_scene)
 		else:
 			_spawn_at(sp, health_mult)
