@@ -229,6 +229,34 @@ func _on_wave_progress(remaining: int) -> void:
 
 func _on_wave_completed(wave_num: int) -> void:
 	wave_label.text = "第 %d 波已清" % wave_num
+	_show_wave_cleared_toast(wave_num)
+
+# 顶部居中漂浮"区域肃清"toast：fade in 0.15s + hold 0.35s + fade out + 上飘 0.5s
+# 总时长 1s 正好对齐 wave_manager.WAVE_END_DELAY，toast 淡出末尾接升级面板弹出
+func _show_wave_cleared_toast(wave_num: int) -> void:
+	var toast := Label.new()
+	toast.text = "区  域  肃  清    WAVE %02d" % wave_num
+	toast.add_theme_font_size_override("font_size", 40)
+	toast.add_theme_color_override("font_color", Color(1.0, 0.9, 0.55, 1))
+	toast.add_theme_color_override("font_outline_color", Color(0, 0, 0, 0.85))
+	toast.add_theme_constant_override("outline_size", 5)
+	toast.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	toast.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	toast.anchor_left = 0.0
+	toast.anchor_right = 1.0
+	toast.anchor_top = 0.0
+	toast.anchor_bottom = 0.0
+	toast.offset_top = 80
+	toast.offset_bottom = 140
+	toast.modulate.a = 0.0
+	add_child(toast)
+	var tween := create_tween()
+	tween.tween_property(toast, "modulate:a", 1.0, 0.15)
+	tween.tween_interval(0.35)
+	tween.tween_property(toast, "modulate:a", 0.0, 0.5)
+	tween.parallel().tween_property(toast, "offset_top", 50.0, 0.5)
+	tween.parallel().tween_property(toast, "offset_bottom", 110.0, 0.5)
+	tween.tween_callback(toast.queue_free)
 
 func _on_intermission_started(wave_num: int, seconds: float) -> void:
 	_intermission_next_wave = wave_num
