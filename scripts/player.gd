@@ -225,7 +225,10 @@ func _physics_process(delta: float) -> void:
 		# Slide begin logic
 		# 滑铲不再强制 free_looking：鼠标直接控制 body 旋转，玩家可正常瞄准
 		# 方向锁世界空间快照，避免身体旋转改变 slide 运动方向
-		if sprinting && input_dir != Vector2.ZERO:
+		# 触发宽容：不严格要求 sprinting=true，只要 current_speed > walking_speed*0.95
+		# （在跑步状态，含松开 sprint 后 lerp 减速窗口）+ 有移动方向就触发，玩家反馈
+		# "滑铲不好用出来"主因是 sprint 必须按住时机太严
+		if current_speed > walking_speed * 0.95 and input_dir != Vector2.ZERO:
 			sliding = true
 			slide_timer = slide_timer_max
 			slide_world_direction = (transform.basis * Vector3(input_dir.x, 0, input_dir.y)).normalized()
