@@ -76,11 +76,10 @@ var LEGENDARY_POOL: Array[PackedScene] = [
 	load("res://scenes/weapons/railgun.tscn"),
 ]
 
-# 全局攻击互锁：同一时刻最多 MAX_CONCURRENT_ATTACKERS 只敌人进入 WINDUP
-# v0.2 改 max 2（itch.io 反馈"扎堆不打我" + "难度过低" 双修）：原单 slot 时多敌
-# 到 attack_range 只 1 只 windup 其他原地等待，观感像"AI 不打玩家"。
-# 改成允许 N 只并发，扎堆压迫感正常，玩家仍可闪避（不是全员同时砍）
-const MAX_CONCURRENT_ATTACKERS: int = 2
+# 全局攻击互锁：同一时刻最多 N 只敌人进入 WINDUP（"AI 攻击欲望"）
+# N 由 Settings.get_difficulty_param("max_concurrent_attackers") 提供：宽松=1 / 标准=2 / 拼命=3
+# 单 slot 时多敌到 attack_range 只 1 只 windup 其他原地等待 → 观感"AI 不打玩家"
+const MAX_CONCURRENT_ATTACKERS_FALLBACK: int = 2  # Settings 不可用时兜底（开发期/测试场景）
 static var _active_attackers: Array[Enemy] = []
 
 # ========== 节点引用 ==========
@@ -772,7 +771,8 @@ func _can_claim_attack_lock() -> bool:
 	)
 	if _active_attackers.has(self):
 		return true  # 已占有槽位
-	return _active_attackers.size() < MAX_CONCURRENT_ATTACKERS
+	var max_n: int = int(Settings.get_difficulty_param("max_concurrent_attackers", MAX_CONCURRENT_ATTACKERS_FALLBACK))
+	return _active_attackers.size() < max_n
 
 func _release_attack_lock() -> void:
 	_active_attackers.erase(self)

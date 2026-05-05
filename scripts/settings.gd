@@ -29,6 +29,33 @@ const FPS_PRESETS: Array[int] = [60, 120, 144, 0]
 const FPS_NAMES: Array[String] = ["60", "120", "144", "无限"]
 const WINDOW_MODE_NAMES: Array[String] = ["窗口", "无边框", "全屏"]
 
+# ========== 难度 ==========
+# 难度配置：每条 Dictionary 含子参数槽位，未来按需扩展（health_mult / speed_mult /
+# spawn_rate_mult / drop_chance_mult 等）。enemy.gd / wave_manager.gd 等通过
+# Settings.get_difficulty_param(key, default) 读取，未配置的子参数走 default。
+const DIFFICULTY_PROFILES: Array[Dictionary] = [
+	{  # 0
+		"key": "easy",
+		"name_cn": "宽松",
+		"name_en": "EASY",
+		# AI 攻击欲望：同时进入 WINDUP 的最大敌人数
+		"max_concurrent_attackers": 1,
+	},
+	{  # 1（默认）
+		"key": "standard",
+		"name_cn": "标准",
+		"name_en": "STANDARD",
+		"max_concurrent_attackers": 2,
+	},
+	{  # 2
+		"key": "hardcore",
+		"name_cn": "拼命",
+		"name_en": "HARDCORE",
+		"max_concurrent_attackers": 3,
+	},
+]
+const DIFFICULTY_NAMES_CN: Array[String] = ["宽松", "标准", "拼命"]
+
 # ========== 关卡（地图）==========
 # key → 场景路径；level_select 和 main_menu 都从这里取
 # available 决定关卡是否可选（false = 卡片置灰显示"即将到来"）
@@ -56,6 +83,9 @@ var locale: String = "zh_CN"
 # 上次选择的关卡 key（默认训练场）
 var last_arena: String = "training"
 
+# 难度索引（DIFFICULTY_PROFILES 下标），默认 1=标准
+var difficulty_idx: int = 1
+
 signal settings_changed   # 任何字段变更时 emit，UI / player 等可订阅同步
 
 func _ready() -> void:
@@ -79,6 +109,7 @@ func load_settings() -> void:
 	fps_limit_idx = int(cfg.get_value("graphics", "fps_limit_idx", fps_limit_idx))
 	locale = String(cfg.get_value("language", "locale", locale))
 	last_arena = String(cfg.get_value("arena", "last_arena", last_arena))
+	difficulty_idx = int(cfg.get_value("gameplay", "difficulty_idx", difficulty_idx))
 	_load_keybinds(cfg)
 
 func save_settings() -> void:
@@ -93,6 +124,7 @@ func save_settings() -> void:
 	cfg.set_value("graphics", "fps_limit_idx", fps_limit_idx)
 	cfg.set_value("language", "locale", locale)
 	cfg.set_value("arena", "last_arena", last_arena)
+	cfg.set_value("gameplay", "difficulty_idx", difficulty_idx)
 	_save_keybinds(cfg)
 	cfg.save(CONFIG_PATH)
 
@@ -282,6 +314,20 @@ func set_last_arena(key: String) -> void:
 			save_settings()
 			settings_changed.emit()
 			return
+
+# ========== 难度 ==========
+func set_difficulty_idx(idx: int) -> void:
+	difficulty_idx = clampi(idx, 0, DIFFICULTY_PROFILES.size() - 1)
+	save_settings()
+	settings_changed.emit()
+
+# 当前难度的 profile dict（未越界后已 clamp，安全）
+func get_difficulty_profile() -> Dictionary:
+	return DIFFICULTY_PROFILES[clampi(difficulty_idx, 0, DIFFICULTY_PROFILES.size() - 1)]
+
+# 读取当前难度的子参数；未配置的子参数返回 default
+func get_difficulty_param(key: String, default = null):
+	return get_difficulty_profile().get(key, default)
 
 # 取当前 last_arena 的场景路径（如果 last_arena 因故无效，回退到第一个可用关卡）
 func get_current_arena_scene() -> String:
