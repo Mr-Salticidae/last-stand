@@ -112,8 +112,9 @@ func on_equipped() -> void:
 func try_shoot() -> bool:
 	if is_reloading or _shoot_cooldown > 0.0:
 		return false
-	# 打空自动装弹（玩家尝试开火但弹匣空，且备弹还有）
+	# 打空自动装弹（玩家尝试开火但弹匣空，且备弹还有）；同时播空仓击发音作听觉反馈
 	if current_ammo <= 0:
+		AudioManager.play_dry_fire()
 		try_reload()
 		return false
 

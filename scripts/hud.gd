@@ -47,6 +47,11 @@ var _reload_active: bool = false
 var _reload_timer: float = 0.0
 var _reload_duration: float = 1.5
 
+# 弹尽提示：弹匣 0 + 备弹 > 0 时屏幕中央闪红字"装填 RELOAD"，正弦脉冲
+var _reload_prompt_label: Label
+var _reload_prompt_active: bool = false
+var _reload_prompt_pulse_timer: float = 0.0
+
 func _ready() -> void:
 	# 武器管理器：通过 weapon_changed 信号知道当前武器是谁，切换时重连信号
 	_weapon_manager = get_tree().get_first_node_in_group("weapon_manager")
@@ -84,6 +89,24 @@ func _ready() -> void:
 	if weapon_unlock_label:
 		_unlock_default_y = weapon_unlock_label.position.y
 		weapon_unlock_label.modulate.a = 0.0
+
+	# 弹尽提示 label：屏幕中央偏下（准星下方约 50px，靠近换弹圆环不冲突）
+	_reload_prompt_label = Label.new()
+	_reload_prompt_label.text = "[ 装  填 ]    RELOAD"
+	_reload_prompt_label.add_theme_font_size_override("font_size", 32)
+	_reload_prompt_label.add_theme_color_override("font_color", Color(0.95, 0.25, 0.22, 1))
+	_reload_prompt_label.add_theme_color_override("font_outline_color", Color(0, 0, 0, 0.85))
+	_reload_prompt_label.add_theme_constant_override("outline_size", 6)
+	_reload_prompt_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	_reload_prompt_label.anchor_left = 0.0
+	_reload_prompt_label.anchor_top = 0.5
+	_reload_prompt_label.anchor_right = 1.0
+	_reload_prompt_label.anchor_bottom = 0.5
+	_reload_prompt_label.offset_top = 30
+	_reload_prompt_label.offset_bottom = 75
+	_reload_prompt_label.modulate.a = 0.0
+	_reload_prompt_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	add_child(_reload_prompt_label)
 
 	# 换弹圆环进度条：屏幕中央偏下（准星下方 80px），无换弹时不可见
 	_reload_indicator = ReloadIndicator.new()
@@ -127,6 +150,10 @@ func _process(delta: float) -> void:
 	if _reload_active:
 		_reload_timer += delta
 		_reload_indicator.progress = clampf(_reload_timer / _reload_duration, 0.0, 1.0)
+	# 弹尽 RELOAD 提示正弦脉冲（0.5~1.0 alpha 周期 0.8s）
+	if _reload_prompt_active:
+		_reload_prompt_pulse_timer += delta
+		_reload_prompt_label.modulate.a = 0.75 + 0.25 * sin(_reload_prompt_pulse_timer * TAU / 0.8)
 
 	# 波间倒计时文本更新
 	if _intermission_remaining > 0.0:
@@ -207,6 +234,15 @@ func _on_weapon_changed(weapon: Weapon) -> void:
 # ammo 显示："弹匣 / 备弹"，e.g. "12 / 48"
 func _on_ammo_changed(current: int, reserve: int, _maximum: int) -> void:
 	ammo_label.text = "%d / %d" % [current, reserve]
+	# 弹匣 0 + 备弹 > 0 → 闪 RELOAD 提示；其他状态淡出
+	var should_prompt: bool = current <= 0 and reserve > 0
+	if should_prompt and not _reload_prompt_active:
+		_reload_prompt_active = true
+		_reload_prompt_pulse_timer = 0.0
+	elif not should_prompt and _reload_prompt_active:
+		_reload_prompt_active = false
+		var t: Tween = create_tween()
+		t.tween_property(_reload_prompt_label, "modulate:a", 0.0, 0.15)
 
 func _on_reload_started(duration: float) -> void:
 	ammo_label.text = "装填中..."

@@ -15,6 +15,7 @@ extends Node
 @export var heavy_mg_shot_stream: AudioStream
 @export var railgun_shot_stream: AudioStream
 @export var reload_stream: AudioStream
+@export var dry_fire_stream: AudioStream
 @export var hit_stream: AudioStream
 @export var headshot_stream: AudioStream
 @export var kill_stream: AudioStream
@@ -72,6 +73,7 @@ const SFX_FILE_MAP: Dictionary = {
 	"heavy_mg_shot":    "heavy_mg_shot_stream",
 	"railgun_shot":     "railgun_shot_stream",
 	"reload":           "reload_stream",
+	"dry_fire":         "dry_fire_stream",
 	"hit":              "hit_stream",
 	"headshot":         "headshot_stream",
 	"kill":             "kill_stream",
@@ -125,6 +127,8 @@ func _autoload_sfx_files() -> void:
 func _init_fallback_streams() -> void:
 	_fallback["shot"]            = _gen_wav(180.0, 0.08, 2.5, 0.85, 0.6)
 	_fallback["reload"]          = _gen_wav(500.0, 0.12, 1.5, 0.4, 0.25)
+	# 空仓击发：高频短促咔哒（金属撞击感），duration 极短防玩家觉得是普通枪声
+	_fallback["dry_fire"]        = _gen_wav(2400.0, 0.04, 4.5, 0.7, 0.35)
 	_fallback["hit"]             = _gen_wav(1200.0, 0.10, 2.5, 0.15, 0.35)
 	_fallback["headshot"]        = _gen_wav(2200.0, 0.18, 2.0, 0.2, 0.5)
 	_fallback["kill"]            = _gen_wav(140.0, 0.32, 1.8, 0.35, 0.5)
@@ -275,6 +279,8 @@ func _resolve_shot_stream(weapon_id: String) -> AudioStream:
 	return _fallback["shot"]
 func play_reload() -> void:
 	_play_2d(reload_stream if reload_stream else _fallback["reload"])
+func play_dry_fire() -> void:
+	_play_2d(dry_fire_stream if dry_fire_stream else _fallback["dry_fire"], -4.0)
 func play_hit() -> void:
 	_play_2d(hit_stream if hit_stream else _fallback["hit"], -4.0, randf_range(0.95, 1.05))
 func play_headshot() -> void:
