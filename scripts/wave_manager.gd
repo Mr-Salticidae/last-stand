@@ -222,6 +222,9 @@ func _spawn_at(sp: SpawnPoint, health_mult: float, forced_scene: PackedScene = n
 	if debug_freeze:
 		# debug 模式：停 _physics_process 让敌人站定不动；flash 不恢复但 hitbox 调试可接受
 		enemy.set_physics_process(false)
+		# 同时打开 hitbox 可视化（红色=BodyHitbox，蓝色=HeadHitbox）方便对照视觉调
+		if enemy.has_method("enable_hitbox_viz"):
+			enemy.enable_hitbox_viz()
 	elif player:
 		# 生成即 aggro：波次敌人不等视野确认，直接朝玩家冲
 		# 否则大场地 SpawnPoint 距玩家 > sight_range(15) 时敌人会原地傻站

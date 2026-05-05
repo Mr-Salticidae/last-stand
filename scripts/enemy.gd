@@ -165,6 +165,34 @@ func _ready() -> void:
 func _find_player() -> void:
 	_player = get_tree().get_first_node_in_group("player") as Node3D
 
+# Dev tool: 给所有 hitbox 子节点的 BoxShape3D 生成同 size/position 的半透明 mesh
+# BodyHitbox = 红色，HeadHitbox = 蓝色。让 hitbox 范围在运行时可见，方便对照视觉模型调
+# 由 wave_manager debug spawn 路径调用。封版保留，供未来调新敌人 hitbox 用。
+func enable_hitbox_viz() -> void:
+	for area_child in get_children():
+		if not (area_child is Area3D):
+			continue
+		var is_head: bool = (area_child as Node).name.to_lower().contains("head")
+		var color: Color = Color(0.2, 0.4, 1.0, 0.35) if is_head else Color(1.0, 0.3, 0.3, 0.35)
+		for shape_child in area_child.get_children():
+			if not (shape_child is CollisionShape3D):
+				continue
+			var cs: CollisionShape3D = shape_child
+			if not (cs.shape is BoxShape3D):
+				continue
+			var viz: MeshInstance3D = MeshInstance3D.new()
+			var mesh: BoxMesh = BoxMesh.new()
+			mesh.size = (cs.shape as BoxShape3D).size
+			viz.mesh = mesh
+			viz.transform = cs.transform
+			var mat: StandardMaterial3D = StandardMaterial3D.new()
+			mat.albedo_color = color
+			mat.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+			mat.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+			mat.cull_mode = BaseMaterial3D.CULL_DISABLED
+			viz.material_override = mat
+			area_child.add_child(viz)
+
 # 递归收集子树里所有 MeshInstance3D 的 BaseMaterial3D 副本
 # 既支持基类 enemy.tscn 的 body/head 占位（surface_override material），
 # 也支持继承场景里 instance 的 GLTF 模型（mesh 自带 surface material）
