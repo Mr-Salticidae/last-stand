@@ -41,6 +41,12 @@ var _heal_vignette_material: ShaderMaterial
 var _health_tween: Tween = null
 var _combo_tween: Tween = null
 
+# 换弹圆环进度条：reload_started 触发 _reload_active=true，_process 每帧填进度
+var _reload_indicator: ReloadIndicator
+var _reload_active: bool = false
+var _reload_timer: float = 0.0
+var _reload_duration: float = 1.5
+
 func _ready() -> void:
 	# 武器管理器：通过 weapon_changed 信号知道当前武器是谁，切换时重连信号
 	_weapon_manager = get_tree().get_first_node_in_group("weapon_manager")
@@ -79,6 +85,21 @@ func _ready() -> void:
 		_unlock_default_y = weapon_unlock_label.position.y
 		weapon_unlock_label.modulate.a = 0.0
 
+	# 换弹圆环进度条：屏幕中央偏下（准星下方 80px），无换弹时不可见
+	_reload_indicator = ReloadIndicator.new()
+	_reload_indicator.size = Vector2(80, 80)
+	_reload_indicator.anchor_left = 0.5
+	_reload_indicator.anchor_top = 0.5
+	_reload_indicator.anchor_right = 0.5
+	_reload_indicator.anchor_bottom = 0.5
+	_reload_indicator.offset_left = -40
+	_reload_indicator.offset_top = 80
+	_reload_indicator.offset_right = 40
+	_reload_indicator.offset_bottom = 160
+	_reload_indicator.modulate.a = 0.0
+	_reload_indicator.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	add_child(_reload_indicator)
+
 	# 波次管理器
 	_wave_manager = get_tree().get_first_node_in_group("wave_manager")
 	if _wave_manager == null:
@@ -102,6 +123,10 @@ func _process(delta: float) -> void:
 		_heal_intensity = max(0.0, _heal_intensity - HEAL_FADE_RATE * delta)
 		if _heal_vignette_material:
 			_heal_vignette_material.set_shader_parameter("intensity", _heal_intensity)
+	# 换弹进度填充
+	if _reload_active:
+		_reload_timer += delta
+		_reload_indicator.progress = clampf(_reload_timer / _reload_duration, 0.0, 1.0)
 
 	# 波间倒计时文本更新
 	if _intermission_remaining > 0.0:
@@ -183,12 +208,23 @@ func _on_weapon_changed(weapon: Weapon) -> void:
 func _on_ammo_changed(current: int, reserve: int, _maximum: int) -> void:
 	ammo_label.text = "%d / %d" % [current, reserve]
 
-func _on_reload_started() -> void:
+func _on_reload_started(duration: float) -> void:
 	ammo_label.text = "装填中..."
+	_reload_active = true
+	_reload_timer = 0.0
+	_reload_duration = max(duration, 0.01)
+	_reload_indicator.progress = 0.0
+	_reload_indicator.modulate.a = 1.0
 
 func _on_reload_finished() -> void:
 	if _weapon:
 		_on_ammo_changed(_weapon.current_ammo, _weapon.reserve_ammo, _weapon.max_ammo())
+	_reload_active = false
+	_reload_indicator.progress = 1.0
+	# 换弹完成短暂保留满进度（"已装填"反馈）+ 淡出
+	var tween: Tween = create_tween()
+	tween.tween_interval(0.15)
+	tween.tween_property(_reload_indicator, "modulate:a", 0.0, 0.2)
 
 func _on_health_changed(current: float, maximum: float) -> void:
 	health_bar.max_value = maximum

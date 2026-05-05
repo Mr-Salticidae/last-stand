@@ -54,7 +54,7 @@ var _shoot_cooldown: float = 0.0
 # ========== 信号 ==========
 # ammo_changed 三参版：current / reserve / 最终 mag 容量（受 mag_size_mult 影响）
 signal ammo_changed(current: int, reserve: int, maximum: int)
-signal reload_started
+signal reload_started(duration: float)  # duration = 应用 buff 后的实际换弹时长，HUD 进度条用
 signal reload_finished
 # 战斗反馈信号：HUD 用来闪命中标记、爆头提示、击杀确认
 signal hit_confirmed
@@ -263,10 +263,11 @@ func try_reload() -> bool:
 	if reserve_ammo <= 0:
 		return false  # 备弹空：装不进去
 	is_reloading = true
-	reload_started.emit()
-	AudioManager.play_reload()
 	var reload_time_mult: float = _buff("reload_time_mult", 1.0)
-	get_tree().create_timer(reload_time * reload_time_mult).timeout.connect(_finish_reload)
+	var actual_time: float = reload_time * reload_time_mult
+	reload_started.emit(actual_time)
+	AudioManager.play_reload()
+	get_tree().create_timer(actual_time).timeout.connect(_finish_reload)
 	return true
 
 func _finish_reload() -> void:
