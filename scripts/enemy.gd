@@ -76,8 +76,12 @@ var LEGENDARY_POOL: Array[PackedScene] = [
 	load("res://scenes/weapons/railgun.tscn"),
 ]
 
-# 全局攻击互锁：同一时刻仅允许 1 只敌人进入 WINDUP
-static var _active_attacker: Enemy = null
+# 全局攻击互锁：同一时刻最多 MAX_CONCURRENT_ATTACKERS 只敌人进入 WINDUP
+# v0.2 改 max 2（itch.io 反馈"扎堆不打我" + "难度过低" 双修）：原单 slot 时多敌
+# 到 attack_range 只 1 只 windup 其他原地等待，观感像"AI 不打玩家"。
+# 改成允许 N 只并发，扎堆压迫感正常，玩家仍可闪避（不是全员同时砍）
+const MAX_CONCURRENT_ATTACKERS: int = 2
+static var _active_attackers: Array[Enemy] = []
 
 # ========== 节点引用 ==========
 @onready var collision: CollisionShape3D = $CollisionShape3D
@@ -391,7 +395,8 @@ func _tick_chase(distance: float, to_player: Vector3, height_diff: float) -> voi
 		if distance > 0.01:
 			look_at(global_position + to_player, Vector3.UP)
 		if _can_claim_attack_lock():
-			_active_attacker = self
+			if not _active_attackers.has(self):
+				_active_attackers.append(self)
 			_enter_windup()
 		else:
 			velocity.x = 0.0
@@ -760,14 +765,17 @@ func _strike(distance: float) -> void:
 	_state_timer = attack_cooldown + (0.0 if hit else attack_miss_bonus_cooldown)
 
 func _can_claim_attack_lock() -> bool:
-	return (_active_attacker == null
-			or not is_instance_valid(_active_attacker)
-			or _active_attacker._is_dead
-			or _active_attacker == self)
+	# 先清理已失效（free / dead）的占位防止占满槽位（敌人 die 时 _release 已 erase，
+	# 但 fall_death_y 等异常路径可能漏 erase，filter 兜底）
+	_active_attackers = _active_attackers.filter(
+		func(e): return is_instance_valid(e) and not e._is_dead
+	)
+	if _active_attackers.has(self):
+		return true  # 已占有槽位
+	return _active_attackers.size() < MAX_CONCURRENT_ATTACKERS
 
 func _release_attack_lock() -> void:
-	if _active_attacker == self:
-		_active_attacker = null
+	_active_attackers.erase(self)
 
 # ---------- 伤害接收 ----------
 # weapon.gd 通过 duck typing 调用（collider.has_method("take_damage")）
