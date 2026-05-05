@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://colv31e68bjvf"
-path="res://.godot/imported/05_death.png-069c8ac988edd668f3f37702c3657cba.ctex"
+uid="uid://b2opnb5yadq44"
+path="res://.godot/imported/victory_bg.png-4de37bcf175d77bed937c6f484a22305.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://assets/screenshots/上传itch/05_death.png"
-dest_files=["res://.godot/imported/05_death.png-069c8ac988edd668f3f37702c3657cba.ctex"]
+source_file="res://assets/textures/victory_bg.png"
+dest_files=["res://.godot/imported/victory_bg.png-4de37bcf175d77bed937c6f484a22305.ctex"]
 
 [params]
 
