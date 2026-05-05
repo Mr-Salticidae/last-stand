@@ -16,6 +16,8 @@ extends CanvasLayer
 var _desaturate_mat: ShaderMaterial
 var _active: bool = false  # 序列进行中或等待重生输入
 var _is_victory: bool = false  # true=通关结算（金色文案+白幕+wave_start 音）；false=死亡（红文案+黑幕+倒地音）
+var _victory_bg: TextureRect  # 胜利背景图（运行时创建，紧跟 Desaturate 作为底层背景）
+var _title_label_orig_y: float  # 胜利标题滑入动画用的原始 y
 
 # 时间节拍（总时长 1.9s 到可交互）
 const FADE_GRAY_DURATION: float = 1.0
@@ -30,6 +32,22 @@ func _ready() -> void:
 	_desaturate_mat = desaturate_rect.material as ShaderMaterial
 	if _desaturate_mat:
 		_desaturate_mat.set_shader_parameter("desaturation", 0.0)
+	_setup_victory_bg()
+	_title_label_orig_y = title_label.position.y
+
+# 胜利背景图：紧跟 Desaturate 作为底层背景，胜利时 fade in 替代闭幕
+func _setup_victory_bg() -> void:
+	_victory_bg = TextureRect.new()
+	_victory_bg.name = "VictoryBg"
+	_victory_bg.texture = load("res://assets/textures/victory_bg.png")
+	_victory_bg.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	_victory_bg.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_COVERED
+	_victory_bg.anchor_right = 1.0
+	_victory_bg.anchor_bottom = 1.0
+	_victory_bg.modulate.a = 0.0
+	_victory_bg.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	add_child(_victory_bg)
+	move_child(_victory_bg, 1)  # Desaturate(0) → VictoryBg(1) → EyelidTop(2) → ...
 
 	# 初始状态：所有效果都"收起"
 	eyelid_top.anchor_bottom = 0.0
@@ -174,25 +192,31 @@ func _play_sequence() -> void:
 		AudioManager.play_wave_start()
 	else:
 		AudioManager.play_player_death_audio()
-	# 阶段 1+2 并行：黑白滤镜淡入 + 闭眼黑幕合拢
-	# （两者同时播能让沉浸感更强：颜色被抽走的同时视野收窄）
+	# 阶段 1+2: 死亡=黑白化+黑幕合拢；胜利=背景图淡入（不合幕，保留全屏图作为画面张力）
 	var tween := create_tween().set_parallel(true)
-	if not _is_victory:
+	if _is_victory:
+		tween.tween_property(_victory_bg, "modulate:a", 1.0, FADE_GRAY_DURATION) \
+			.set_trans(Tween.TRANS_QUAD)
+	else:
 		tween.tween_method(
 			_set_desaturation,
 			0.0, 1.0, FADE_GRAY_DURATION
 		).set_trans(Tween.TRANS_QUAD)
-	# 闭眼从 0.3s 后开始（稍晚于黑白化，错开节奏）
-	tween.tween_property(eyelid_top, "anchor_bottom", 0.5, EYELID_CLOSE_DURATION) \
-		.set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN).set_delay(0.3)
-	tween.tween_property(eyelid_bottom, "anchor_top", 0.5, EYELID_CLOSE_DURATION) \
-		.set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN).set_delay(0.3)
+		tween.tween_property(eyelid_top, "anchor_bottom", 0.5, EYELID_CLOSE_DURATION) \
+			.set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN).set_delay(0.3)
+		tween.tween_property(eyelid_bottom, "anchor_top", 0.5, EYELID_CLOSE_DURATION) \
+			.set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN).set_delay(0.3)
 	await tween.finished
 
-	# 阶段 3: 标题 + 统计 + 按钮淡入
+	# 阶段 3: 标题 + 统计 + 按钮淡入；胜利时标题从上滑入加凯旋亮相戏剧感
+	if _is_victory:
+		title_label.position.y = _title_label_orig_y - 40
 	var ui_tween := create_tween().set_parallel(true)
 	ui_tween.tween_property(eyebrow_label, "modulate:a", 1.0, UI_FADE_DURATION)
 	ui_tween.tween_property(title_label, "modulate:a", 1.0, UI_FADE_DURATION).set_delay(0.05)
+	if _is_victory:
+		ui_tween.tween_property(title_label, "position:y", _title_label_orig_y, 0.7) \
+			.set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT).set_delay(0.05)
 	ui_tween.tween_property(title_en, "modulate:a", 1.0, UI_FADE_DURATION).set_delay(0.1)
 	ui_tween.tween_property(stats_card, "modulate:a", 1.0, UI_FADE_DURATION).set_delay(0.2)
 	ui_tween.tween_property(respawn_button, "modulate:a", 1.0, UI_FADE_DURATION).set_delay(0.3)
