@@ -62,5 +62,6 @@ func _on_exit_confirmed() -> void:
 	get_tree().quit()
 
 func _on_exit_cancelled() -> void:
-	# ChamferButton 按下时 grab_focus，cancel 后要主动释放，避免 QuitButton 持续点亮
-	quit_btn.release_focus()
+	# ChamferButton 按下时 grab_focus，cancel 后把 focus 转给 start_btn，
+	# 与从 Settings/Credits 等子页面返回主菜单时一致（_ready 里 start_btn.grab_focus）
+	start_btn.grab_focus()
