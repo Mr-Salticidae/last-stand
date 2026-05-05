@@ -16,7 +16,8 @@ extends CanvasLayer
 var _desaturate_mat: ShaderMaterial
 var _active: bool = false  # 序列进行中或等待重生输入
 var _is_victory: bool = false  # true=通关结算（金色文案+白幕+wave_start 音）；false=死亡（红文案+黑幕+倒地音）
-var _victory_bg: TextureRect  # 胜利背景图（运行时创建，紧跟 Desaturate 作为底层背景）
+var _victory_overlay: ColorRect  # 胜利底层不透明深色 mask（完全遮盖游戏世界）
+var _victory_bg: TextureRect  # 胜利背景图（在 overlay 之上做染色氛围底图）
 var _title_label_orig_y: float  # 胜利标题滑入动画用的原始 y
 
 # 时间节拍（总时长 1.9s 到可交互）
@@ -35,9 +36,19 @@ func _ready() -> void:
 	_setup_victory_bg()
 	_title_label_orig_y = title_label.position.y
 
-# 胜利背景图：染军事暖红 + 大幅降透明度作氛围底图，避免水彩剪影喧宾夺主
-# Desaturate(0) → VictoryBg(1) → EyelidTop(2) → ...
+# 胜利双层底图：(1) VictoryOverlay 深暖色全屏 mask 完全遮盖游戏世界
+# (2) VictoryBg 染色氛围底图叠在 overlay 之上 alpha 0.45 不喧宾夺主
+# 节点顺序：Desaturate(0) → VictoryOverlay(1) → VictoryBg(2) → EyelidTop(3) → ...
 func _setup_victory_bg() -> void:
+	_victory_overlay = ColorRect.new()
+	_victory_overlay.name = "VictoryOverlay"
+	_victory_overlay.color = Color(0.08, 0.04, 0.04, 0.0)  # 暖深红黑，alpha=0 不可见
+	_victory_overlay.anchor_right = 1.0
+	_victory_overlay.anchor_bottom = 1.0
+	_victory_overlay.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	add_child(_victory_overlay)
+	move_child(_victory_overlay, 1)
+
 	_victory_bg = TextureRect.new()
 	_victory_bg.name = "VictoryBg"
 	_victory_bg.texture = load("res://assets/textures/victory_bg.png")
@@ -49,7 +60,7 @@ func _setup_victory_bg() -> void:
 	_victory_bg.modulate = Color(0.85, 0.55, 0.4, 0.0)
 	_victory_bg.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	add_child(_victory_bg)
-	move_child(_victory_bg, 1)
+	move_child(_victory_bg, 2)
 
 	# 初始状态：所有效果都"收起"
 	eyelid_top.anchor_bottom = 0.0
@@ -208,7 +219,9 @@ func _play_sequence() -> void:
 	# 阶段 1+2: 死亡=黑白化+黑幕合拢；胜利=背景图淡入（不合幕，保留全屏图作为画面张力）
 	var tween := create_tween().set_parallel(true)
 	if _is_victory:
-		# 终值 0.45 = 氛围底图（不喧宾夺主），rgb 已在 _setup_victory_bg 染暖红
+		# Overlay 不透明深色完全遮盖游戏世界 + VictoryBg 染色氛围底图同时淡入
+		tween.tween_property(_victory_overlay, "color:a", 1.0, FADE_GRAY_DURATION) \
+			.set_trans(Tween.TRANS_QUAD)
 		tween.tween_property(_victory_bg, "modulate:a", 0.45, FADE_GRAY_DURATION) \
 			.set_trans(Tween.TRANS_QUAD)
 	else:
