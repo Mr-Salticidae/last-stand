@@ -19,7 +19,6 @@
 [ext_resource type="PackedScene" path="res://scenes/weapons/shotgun.tscn" id="15_shotgun"]
 [ext_resource type="PackedScene" path="res://scenes/weapons/revolver.tscn" id="16_revolver"]
 [ext_resource type="PackedScene" uid="uid://2cc7okmbmm0a" path="res://scenes/weapons/pistol.tscn" id="17_pistol_scene"]
-[ext_resource type="PackedScene" path="res://scenes/weapons/railgun.tscn" id="18_railgun_dbg"]
 [ext_resource type="Texture2D" uid="uid://b8lhnjb43qbrx" path="res://assets/textures/warehouse/wall_albedo.jpg" id="30_wall_a"]
 [ext_resource type="Texture2D" uid="uid://cl5lk0dy40la2" path="res://assets/textures/warehouse/wall_normal.jpg" id="31_wall_n"]
 [ext_resource type="Texture2D" uid="uid://dj20nraev7xcb" path="res://assets/textures/warehouse/wall_roughness.jpg" id="32_wall_r"]
@@ -484,11 +483,6 @@ shoot_raycast = NodePath("../shoot_raycast")
 [node name="shotgun" parent="player/neck/head/eyes/Camera3D/weapon_holder" unique_id=52928024 instance=ExtResource("15_shotgun")]
 
 [node name="revolver" parent="player/neck/head/eyes/Camera3D/weapon_holder" unique_id=1624823127 instance=ExtResource("16_revolver")]
-
-[node name="railgun" parent="player/neck/head/eyes/Camera3D/weapon_holder" instance=ExtResource("18_railgun_dbg")]
-unlocked = true
-discard_on_empty = false
-reserve_max = 99
 
 [node name="AnimationPlayer" type="AnimationPlayer" parent="player/neck/head/eyes" unique_id=1772758950]
 libraries/ = SubResource("AnimationLibrary_71j4m")
