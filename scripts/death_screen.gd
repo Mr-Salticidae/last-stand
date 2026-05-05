@@ -35,7 +35,8 @@ func _ready() -> void:
 	_setup_victory_bg()
 	_title_label_orig_y = title_label.position.y
 
-# 胜利背景图：紧跟 Desaturate 作为底层背景，胜利时 fade in 替代闭幕
+# 胜利背景图：染军事暖红 + 大幅降透明度作氛围底图，避免水彩剪影喧宾夺主
+# Desaturate(0) → VictoryBg(1) → EyelidTop(2) → ...
 func _setup_victory_bg() -> void:
 	_victory_bg = TextureRect.new()
 	_victory_bg.name = "VictoryBg"
@@ -44,10 +45,11 @@ func _setup_victory_bg() -> void:
 	_victory_bg.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_COVERED
 	_victory_bg.anchor_right = 1.0
 	_victory_bg.anchor_bottom = 1.0
-	_victory_bg.modulate.a = 0.0
+	# modulate rgb 染暖红（拉向战场报告色调），alpha 0=不可见（_play_sequence fade 到 0.45）
+	_victory_bg.modulate = Color(0.85, 0.55, 0.4, 0.0)
 	_victory_bg.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	add_child(_victory_bg)
-	move_child(_victory_bg, 1)  # Desaturate(0) → VictoryBg(1) → EyelidTop(2) → ...
+	move_child(_victory_bg, 1)
 
 	# 初始状态：所有效果都"收起"
 	eyelid_top.anchor_bottom = 0.0
@@ -104,6 +106,10 @@ func _apply_victory_theme() -> void:
 	eyebrow_label.text = "// MISSION COMPLETE  ·  SECTOR HELD"
 	eyebrow_label.add_theme_color_override("font_color", victory_color)
 	title_label.text = "凯  旋  归  来"
+	title_label.add_theme_font_size_override("font_size", 128)  # 96 → 128 加大
+	title_label.add_theme_color_override("font_color", Color(1.0, 0.93, 0.7, 1))  # 暖米白偏金
+	title_label.add_theme_color_override("font_outline_color", Color(0.5, 0.28, 0.06, 0.95))  # 深金 outline
+	title_label.add_theme_constant_override("outline_size", 12)  # 6 → 12 加厚
 	title_en.text = "MISSION COMPLETE"
 	title_en.add_theme_color_override("font_color", victory_color)
 	var stats_eyebrow: Node = stats_card.get_node_or_null("StatsEyebrow")
@@ -195,7 +201,8 @@ func _play_sequence() -> void:
 	# 阶段 1+2: 死亡=黑白化+黑幕合拢；胜利=背景图淡入（不合幕，保留全屏图作为画面张力）
 	var tween := create_tween().set_parallel(true)
 	if _is_victory:
-		tween.tween_property(_victory_bg, "modulate:a", 1.0, FADE_GRAY_DURATION) \
+		# 终值 0.45 = 氛围底图（不喧宾夺主），rgb 已在 _setup_victory_bg 染暖红
+		tween.tween_property(_victory_bg, "modulate:a", 0.45, FADE_GRAY_DURATION) \
 			.set_trans(Tween.TRANS_QUAD)
 	else:
 		tween.tween_method(

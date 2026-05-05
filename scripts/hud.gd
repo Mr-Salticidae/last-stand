@@ -231,31 +231,42 @@ func _on_wave_completed(wave_num: int) -> void:
 	wave_label.text = "第 %d 波已清" % wave_num
 	_show_wave_cleared_toast(wave_num)
 
-# 顶部居中漂浮"区域肃清"toast：fade in 0.15s + hold 0.35s + fade out + 上飘 0.5s
-# 总时长 1s 正好对齐 wave_manager.WAVE_END_DELAY，toast 淡出末尾接升级面板弹出
+# 顶部居中漂浮"区域肃清"toast：上滑入 0.2s + 停留 0.3s + 上飘淡出 0.5s
+# 总时长 1s 对齐 wave_manager.WAVE_END_DELAY，toast 淡出末尾接升级面板弹出
 func _show_wave_cleared_toast(wave_num: int) -> void:
 	var toast := Label.new()
 	toast.text = "区  域  肃  清    WAVE %02d" % wave_num
-	toast.add_theme_font_size_override("font_size", 40)
-	toast.add_theme_color_override("font_color", Color(1.0, 0.9, 0.55, 1))
-	toast.add_theme_color_override("font_outline_color", Color(0, 0, 0, 0.85))
-	toast.add_theme_constant_override("outline_size", 5)
+	toast.add_theme_font_size_override("font_size", 56)  # 40 → 56 加大
+	toast.add_theme_color_override("font_color", Color(1.0, 0.95, 0.55, 1))  # 更亮的暖金
+	toast.add_theme_color_override("font_outline_color", Color(0.35, 0.18, 0.04, 0.95))  # 深金 outline
+	toast.add_theme_constant_override("outline_size", 9)  # 5 → 9 加厚
+	# drop shadow 加层次，离地面感
+	toast.add_theme_color_override("font_shadow_color", Color(0, 0, 0, 0.55))
+	toast.add_theme_constant_override("shadow_offset_x", 0)
+	toast.add_theme_constant_override("shadow_offset_y", 4)
 	toast.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	toast.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	toast.anchor_left = 0.0
 	toast.anchor_right = 1.0
 	toast.anchor_top = 0.0
 	toast.anchor_bottom = 0.0
-	toast.offset_top = 80
-	toast.offset_bottom = 140
+	# 入场起点（更高），tween 滑到 70/150 到位
+	toast.offset_top = 50
+	toast.offset_bottom = 130
 	toast.modulate.a = 0.0
 	add_child(toast)
 	var tween := create_tween()
-	tween.tween_property(toast, "modulate:a", 1.0, 0.15)
-	tween.tween_interval(0.35)
+	# 入场：alpha + 上滑到位（0.25s），back-out 给点弹性
+	tween.tween_property(toast, "modulate:a", 1.0, 0.2)
+	tween.parallel().tween_property(toast, "offset_top", 70.0, 0.25) \
+		.set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+	tween.parallel().tween_property(toast, "offset_bottom", 150.0, 0.25) \
+		.set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+	tween.tween_interval(0.3)
+	# 出场：上飘 + 淡出 0.5s
 	tween.tween_property(toast, "modulate:a", 0.0, 0.5)
-	tween.parallel().tween_property(toast, "offset_top", 50.0, 0.5)
-	tween.parallel().tween_property(toast, "offset_bottom", 110.0, 0.5)
+	tween.parallel().tween_property(toast, "offset_top", 35.0, 0.5)
+	tween.parallel().tween_property(toast, "offset_bottom", 115.0, 0.5)
 	tween.tween_callback(toast.queue_free)
 
 func _on_intermission_started(wave_num: int, seconds: float) -> void:
