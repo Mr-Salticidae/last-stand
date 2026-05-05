@@ -78,6 +78,9 @@ var elite_score_bonus: float = 0.0
 var max_combo: int = 0
 var _combo_timer: float = 0.0
 const COMBO_WINDOW: float = 2.5  # N 秒内击杀延续连击，超时重置
+# 本波清空后延迟显示升级面板，让最后一只怪倒地动画播完再切 UI（_play_death_sequence
+# 总长 1.4s，0.6s 倒地后留 0.4s 缓冲，否则升级面板弹得太突兀）
+const WAVE_END_DELAY: float = 1.0
 var _run_start_time_msec: int = 0
 var _state: State = State.IDLE
 var _intermission_timer: float = 0.0
@@ -285,6 +288,10 @@ func _check_wave_cleared() -> void:
 		game_completed.emit(current_wave)
 		return
 	if auto_continue:
+		# 延迟让最后一只怪倒地动画播完再弹升级面板，避免突然切 UI
+		await get_tree().create_timer(WAVE_END_DELAY).timeout
+		if not is_inside_tree():
+			return  # 场景重载等异常路径
 		_request_upgrade_then_next()
 
 # 波次清空 → 弹升级面板（若存在）→ 面板关闭 → 下一波
