@@ -757,7 +757,9 @@ func _strike(distance: float) -> void:
 
 	var hit: bool = actual_dist <= attack_range and same_layer and _player and _player.has_method("take_damage")
 	if hit:
-		_player.take_damage(attack_damage, self)
+		# 难度系数：极限突破 1.6 让敌人伤害成倍提升
+		var dmg_mult: float = float(Settings.get_difficulty_param("enemy_damage_mult", 1.0))
+		_player.take_damage(attack_damage * dmg_mult, self)
 		AudioManager.play_enemy_attack_hit(global_position)
 
 	_state = State.COOLDOWN

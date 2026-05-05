@@ -117,8 +117,10 @@ func start_next_wave() -> void:
 	if wpm2 and wpm2.has_method("refill_all_reserves"):
 		wpm2.refill_all_reserves()
 	_state = State.INTERMISSION
-	_intermission_timer = intermission_duration
-	intermission_started.emit(current_wave, intermission_duration)
+	# 难度系数：极限突破缩短停顿增压迫，新兵报到延长停顿给反应时间
+	var inter_mult: float = float(Settings.get_difficulty_param("intermission_mult", 1.0))
+	_intermission_timer = intermission_duration * inter_mult
+	intermission_started.emit(current_wave, _intermission_timer)
 
 # 玩家重生时调用（死亡后 reload_current_scene 会销毁这个节点，但保留接口以备不拼 reload 的流程用）
 func reset() -> void:
@@ -161,18 +163,23 @@ func _spawn_current_wave() -> void:
 
 	_state = State.SPAWNING
 
-	var count: int = min(base_enemy_count + (current_wave - 1) * enemy_count_per_wave, max_enemies_per_wave)
+	# 数量：base + per_wave 增量后乘难度 count_mult，再 cap 到 max_enemies_per_wave
+	var count_mult: float = float(Settings.get_difficulty_param("enemy_count_mult", 1.0))
+	var count_raw: float = float(base_enemy_count + (current_wave - 1) * enemy_count_per_wave) * count_mult
+	var count: int = min(int(round(count_raw)), max_enemies_per_wave)
 	var health_tier: int = (current_wave - 1) / health_boost_every_n_waves
 	var health_mult: float = 1.0 + float(health_tier) * health_boost_per_tier
 
 	wave_started.emit(current_wave, count)
 	AudioManager.play_wave_start()
 
-	# Boss 波（每 boss_wave_period 波 1 只）优先级高于 Elite 波
-	var is_boss_wave: bool = boss_scene and current_wave > 0 and current_wave % boss_wave_period == 0
+	# Boss / Elite 周期：极限突破压缩周期（boss 每 10 波 / elite 每 3 波）
+	var actual_boss_period: int = int(Settings.get_difficulty_param("boss_wave_period", boss_wave_period))
+	var actual_elite_period: int = int(Settings.get_difficulty_param("elite_wave_period", elite_wave_period))
+	var is_boss_wave: bool = boss_scene and current_wave > 0 and current_wave % actual_boss_period == 0
 	var is_elite_wave: bool = (
 		elite_scene and current_wave > 0
-		and current_wave % elite_wave_period == 0
+		and current_wave % actual_elite_period == 0
 		and not is_boss_wave
 	)
 
@@ -212,11 +219,15 @@ func _spawn_at(sp: SpawnPoint, health_mult: float, forced_scene: PackedScene = n
 
 	var scene_to_spawn: PackedScene = forced_scene if forced_scene else _pick_enemy_scene()
 	var enemy: Enemy = scene_to_spawn.instantiate()
-	enemy.max_health *= health_mult
-	# 移速 bonus：仅给 grunt 和 brute（runner/elite/boss 已经定位清晰，不再加成）
+	# 难度系数：health 在波次 health_mult 之上再乘 difficulty health_mult
+	var diff_health_mult: float = float(Settings.get_difficulty_param("enemy_health_mult", 1.0))
+	enemy.max_health *= health_mult * diff_health_mult
+	# 移速 bonus：仅给 grunt 和 brute（runner/elite/boss 已经定位清晰，不再加成），
+	# 然后整体乘 difficulty speed_mult（极限突破 1.4 让 runner 超玩家步行）
 	if scene_to_spawn == enemy_scene or scene_to_spawn == brute_scene:
 		var speed_tier: int = current_wave / speed_bonus_every_n_waves
 		enemy.move_speed += float(speed_tier) * speed_bonus_per_tier
+	enemy.move_speed *= float(Settings.get_difficulty_param("enemy_speed_mult", 1.0))
 	# 设 transform 放在 add_child 前，保证 _ready 里读 global_transform 时就是 SpawnPoint 的姿态
 	# （enemy._ready 会记录 _initial_forward = -global_transform.basis.z）
 	enemy.transform = sp.global_transform
@@ -235,14 +246,17 @@ func _spawn_at(sp: SpawnPoint, health_mult: float, forced_scene: PackedScene = n
 func _pick_enemy_scene() -> PackedScene:
 	var runner_chance: float = 0.0
 	var brute_chance: float = 0.0
-	if runner_scene and current_wave >= runner_unlock_wave:
+	# 难度可提前 runner/brute 解锁波次（极限突破：runner 第 1 波 / brute 第 3 波）
+	var actual_runner_unlock: int = int(Settings.get_difficulty_param("runner_unlock_wave", runner_unlock_wave))
+	var actual_brute_unlock: int = int(Settings.get_difficulty_param("brute_unlock_wave", brute_unlock_wave))
+	if runner_scene and current_wave >= actual_runner_unlock:
 		runner_chance = minf(
-			runner_chance_base + float(current_wave - runner_unlock_wave) * runner_chance_per_wave,
+			runner_chance_base + float(current_wave - actual_runner_unlock) * runner_chance_per_wave,
 			runner_chance_max
 		)
-	if brute_scene and current_wave >= brute_unlock_wave:
+	if brute_scene and current_wave >= actual_brute_unlock:
 		brute_chance = minf(
-			brute_chance_base + float(current_wave - brute_unlock_wave) * brute_chance_per_wave,
+			brute_chance_base + float(current_wave - actual_brute_unlock) * brute_chance_per_wave,
 			brute_chance_max
 		)
 	var r: float = randf()

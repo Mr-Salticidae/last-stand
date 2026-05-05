@@ -17,7 +17,7 @@ const MAIN_MENU_SCENE: String = "res://scenes/main_menu.tscn"
 @onready var sens_slider: CustomSlider = $PageBody/LeftCol/ControlsGroup/SensRow/Slider
 @onready var sens_value: Label = $PageBody/LeftCol/ControlsGroup/SensRow/Value
 
-@onready var difficulty_cycle: CustomCycleButton = $PageBody/LeftCol/ControlsGroup/DifficultyRow/Cycle
+@onready var difficulty_cycle: CustomCycleButton = $PageBody/LeftCol/GameplayGroup/DifficultyRow/Cycle
 
 @onready var window_mode_cycle: CustomCycleButton = $PageBody/RightCol/DisplayGroup/WindowModeRow/Cycle
 @onready var resolution_cycle: CustomCycleButton = $PageBody/RightCol/DisplayGroup/ResolutionRow/Cycle

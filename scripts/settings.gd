@@ -34,27 +34,53 @@ const WINDOW_MODE_NAMES: Array[String] = ["窗口", "无边框", "全屏"]
 # spawn_rate_mult / drop_chance_mult 等）。enemy.gd / wave_manager.gd 等通过
 # Settings.get_difficulty_param(key, default) 读取，未配置的子参数走 default。
 const DIFFICULTY_PROFILES: Array[Dictionary] = [
-	{  # 0
-		"key": "easy",
-		"name_cn": "宽松",
-		"name_en": "EASY",
-		# AI 攻击欲望：同时进入 WINDUP 的最大敌人数
-		"max_concurrent_attackers": 1,
+	{  # 0 新兵报到（≈ v0.1 略低，新手友好）
+		"key": "recruit",
+		"name_cn": "新兵报到",
+		"name_en": "RECRUIT",
+		"max_concurrent_attackers": 1,    # AI 攻击欲望：同时进 WINDUP 的最大敌人数
+		"enemy_health_mult": 0.85,
+		"enemy_damage_mult": 0.7,
+		"enemy_speed_mult": 0.95,
+		"enemy_count_mult": 0.8,
+		"intermission_mult": 1.3,
+		"runner_unlock_wave": 3,
+		"brute_unlock_wave": 5,
+		"elite_wave_period": 5,
+		"boss_wave_period": 15,
 	},
-	{  # 1（默认）
+	{  # 1 日常训练（默认 = v0.1 + 25-30% 综合压力，回应 itch.io"难度过低"反馈）
 		"key": "standard",
-		"name_cn": "标准",
+		"name_cn": "日常训练",
 		"name_en": "STANDARD",
 		"max_concurrent_attackers": 2,
+		"enemy_health_mult": 1.25,
+		"enemy_damage_mult": 1.3,
+		"enemy_speed_mult": 1.1,
+		"enemy_count_mult": 1.3,
+		"intermission_mult": 0.85,
+		"runner_unlock_wave": 3,
+		"brute_unlock_wave": 5,
+		"elite_wave_period": 5,
+		"boss_wave_period": 15,
 	},
-	{  # 2
-		"key": "hardcore",
-		"name_cn": "拼命",
-		"name_en": "HARDCORE",
+	{  # 2 极限突破（runner 移速碾压玩家，必须冲刺/滑铲拉距，更早出 boss/elite）
+		"key": "breach",
+		"name_cn": "极限突破",
+		"name_en": "BREACH",
 		"max_concurrent_attackers": 3,
+		"enemy_health_mult": 1.7,
+		"enemy_damage_mult": 1.6,
+		"enemy_speed_mult": 1.4,           # runner 5.5×1.4=7.7m/s 超玩家步行
+		"enemy_count_mult": 1.5,
+		"intermission_mult": 0.6,
+		"runner_unlock_wave": 1,           # 第一波就出 runner
+		"brute_unlock_wave": 3,
+		"elite_wave_period": 3,
+		"boss_wave_period": 10,            # 提前 5 波出 boss
 	},
 ]
-const DIFFICULTY_NAMES_CN: Array[String] = ["宽松", "标准", "拼命"]
+const DIFFICULTY_NAMES_CN: Array[String] = ["新兵报到", "日常训练", "极限突破"]
 
 # ========== 关卡（地图）==========
 # key → 场景路径；level_select 和 main_menu 都从这里取
