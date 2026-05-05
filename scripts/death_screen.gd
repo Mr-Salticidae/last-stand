@@ -42,7 +42,7 @@ func _ready() -> void:
 func _setup_victory_bg() -> void:
 	_victory_overlay = ColorRect.new()
 	_victory_overlay.name = "VictoryOverlay"
-	_victory_overlay.color = Color(0.08, 0.04, 0.04, 0.0)  # 暖深红黑，alpha=0 不可见
+	_victory_overlay.color = Color(0.05, 0.03, 0.03, 0.0)  # 黑红基调（接近 stats_card bg 0.06, 0.04, 0.04）
 	_victory_overlay.anchor_right = 1.0
 	_victory_overlay.anchor_bottom = 1.0
 	_victory_overlay.mouse_filter = Control.MOUSE_FILTER_IGNORE
@@ -56,8 +56,8 @@ func _setup_victory_bg() -> void:
 	_victory_bg.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_COVERED
 	_victory_bg.anchor_right = 1.0
 	_victory_bg.anchor_bottom = 1.0
-	# modulate rgb 染暖红（拉向战场报告色调），alpha 0=不可见（_play_sequence fade 到 0.45）
-	_victory_bg.modulate = Color(0.85, 0.55, 0.4, 0.0)
+	# modulate rgb 染深红棕（与游戏黑红主调一致），alpha 0=不可见
+	_victory_bg.modulate = Color(0.5, 0.22, 0.18, 0.0)
 	_victory_bg.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	add_child(_victory_bg)
 	move_child(_victory_bg, 2)
@@ -119,15 +119,16 @@ func _on_game_completed(_wave: int) -> void:
 	_play_sequence()
 
 func _apply_victory_theme() -> void:
-	var victory_color: Color = Color(0.95, 0.78, 0.28, 1)  # 金色
+	# 凯旋强调色：用游戏标志红，与 EyebrowLabel/TitleEN 死亡版颜色一致，保持黑红主调
+	var victory_color: Color = Color(0.855, 0.18, 0.2, 1)
 	eyebrow_label.text = "// MISSION COMPLETE  ·  SECTOR HELD"
 	eyebrow_label.add_theme_color_override("font_color", victory_color)
 	title_label.text = "凯  旋  归  来"
-	# 字号 96 → 110（128 会突破 TitleLabel 容器 120px 高致重叠），outline 6 → 14 加张力
+	# 字号 96 → 110；颜色与 main_menu 米白(1, 0.918, 0.851)一致，黑 outline 加厚作凯旋张力
 	title_label.add_theme_font_size_override("font_size", 110)
-	title_label.add_theme_color_override("font_color", Color(1.0, 0.93, 0.7, 1))  # 暖米白偏金
-	title_label.add_theme_color_override("font_outline_color", Color(0.5, 0.28, 0.06, 0.95))  # 深金 outline
-	title_label.add_theme_constant_override("outline_size", 14)
+	title_label.add_theme_color_override("font_color", Color(1, 0.918, 0.851, 1))
+	title_label.add_theme_color_override("font_outline_color", Color(0, 0, 0, 0.85))
+	title_label.add_theme_constant_override("outline_size", 10)
 	title_en.text = "MISSION COMPLETE"
 	title_en.add_theme_color_override("font_color", victory_color)
 	var stats_eyebrow: Node = stats_card.get_node_or_null("StatsEyebrow")
@@ -222,7 +223,7 @@ func _play_sequence() -> void:
 		# Overlay 不透明深色完全遮盖游戏世界 + VictoryBg 染色氛围底图同时淡入
 		tween.tween_property(_victory_overlay, "color:a", 1.0, FADE_GRAY_DURATION) \
 			.set_trans(Tween.TRANS_QUAD)
-		tween.tween_property(_victory_bg, "modulate:a", 0.45, FADE_GRAY_DURATION) \
+		tween.tween_property(_victory_bg, "modulate:a", 0.35, FADE_GRAY_DURATION) \
 			.set_trans(Tween.TRANS_QUAD)
 	else:
 		tween.tween_method(
