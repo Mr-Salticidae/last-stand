@@ -18,6 +18,7 @@ const MAIN_MENU_SCENE: String = "res://scenes/main_menu.tscn"
 @onready var sens_value: Label = $PageBody/LeftCol/ControlsGroup/SensRow/Value
 
 @onready var difficulty_cycle: CustomCycleButton = $PageBody/LeftCol/GameplayGroup/DifficultyRow/Cycle
+@onready var gameplay_group: VBoxContainer = $PageBody/LeftCol/GameplayGroup
 
 @onready var window_mode_cycle: CustomCycleButton = $PageBody/RightCol/DisplayGroup/WindowModeRow/Cycle
 @onready var resolution_cycle: CustomCycleButton = $PageBody/RightCol/DisplayGroup/ResolutionRow/Cycle
@@ -53,9 +54,14 @@ func _ready() -> void:
 	sens_slider.value_changed.connect(_on_sens_changed)
 
 	# Gameplay: difficulty cycle
-	difficulty_cycle.options = PackedStringArray(Settings.DIFFICULTY_NAMES_CN)
-	difficulty_cycle.current_index = Settings.difficulty_idx
-	difficulty_cycle.value_changed.connect(_on_difficulty_changed)
+	# 战斗中（pause→settings 路径）隐藏难度选项，避免单局内数值跳变（已生成敌人不会刷新）
+	# 玩家想换难度需先退到主菜单，再进 settings 改
+	var in_combat: bool = get_tree().get_first_node_in_group("wave_manager") != null
+	gameplay_group.visible = not in_combat
+	if not in_combat:
+		difficulty_cycle.options = PackedStringArray(Settings.DIFFICULTY_NAMES_CN)
+		difficulty_cycle.current_index = Settings.difficulty_idx
+		difficulty_cycle.value_changed.connect(_on_difficulty_changed)
 
 	# Display: window mode + resolution（cycle）
 	window_mode_cycle.options = PackedStringArray(Settings.WINDOW_MODE_NAMES)
