@@ -7,10 +7,11 @@
 size = Vector3(1.5, 1.2, 1.2)
 
 [sub_resource type="BoxShape3D" id="BoxShape_runner_leg"]
-size = Vector3(0.5, 2.0, 0.5)
+size = Vector3(0.7, 2.0, 0.5)
 
-[sub_resource type="BoxShape3D" id="BoxShape_runner_shell"]
-size = Vector3(1.6, 0.5, 1.6)
+[sub_resource type="CylinderShape3D" id="CylinderShape_runner_shell"]
+radius = 0.8
+height = 0.5
 
 [node name="Enemy" instance=ExtResource("1_base")]
 move_speed = 5.5
@@ -41,18 +42,18 @@ visible = false
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0)
 
 [node name="CollisionShape3D" parent="BodyHitbox" index="0"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.4, 1.0, 0)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.45, 1.0, 0)
 shape = SubResource("BoxShape_runner_leg")
 
 [node name="CollisionShape3D2" type="CollisionShape3D" parent="BodyHitbox"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.4, 1.0, 0)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.45, 1.0, 0)
 shape = SubResource("BoxShape_runner_leg")
 
 [node name="HeadHitbox" parent="." index="4"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2.25, 0)
 
 [node name="CollisionShape3D" parent="HeadHitbox" index="0"]
-shape = SubResource("BoxShape_runner_shell")
+shape = SubResource("CylinderShape_runner_shell")
 
 [node name="model" parent="." instance=ExtResource("2_trilobite")]
 transform = Transform3D(-1, 0, 0, 0, 1, 0, 0, 0, -1, 0, 0, 0)

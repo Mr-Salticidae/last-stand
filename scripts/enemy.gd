@@ -174,24 +174,38 @@ func enable_hitbox_viz() -> void:
 			continue
 		var is_head: bool = (area_child as Node).name.to_lower().contains("head")
 		var color: Color = Color(0.2, 0.4, 1.0, 0.35) if is_head else Color(1.0, 0.3, 0.3, 0.35)
+		var mat: StandardMaterial3D = StandardMaterial3D.new()
+		mat.albedo_color = color
+		mat.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+		mat.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+		mat.cull_mode = BaseMaterial3D.CULL_DISABLED
 		for shape_child in area_child.get_children():
 			if not (shape_child is CollisionShape3D):
 				continue
 			var cs: CollisionShape3D = shape_child
-			if not (cs.shape is BoxShape3D):
+			var viz_mesh: Mesh = _make_viz_mesh_for_shape(cs.shape)
+			if viz_mesh == null:
 				continue
 			var viz: MeshInstance3D = MeshInstance3D.new()
-			var mesh: BoxMesh = BoxMesh.new()
-			mesh.size = (cs.shape as BoxShape3D).size
-			viz.mesh = mesh
+			viz.mesh = viz_mesh
 			viz.transform = cs.transform
-			var mat: StandardMaterial3D = StandardMaterial3D.new()
-			mat.albedo_color = color
-			mat.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
-			mat.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
-			mat.cull_mode = BaseMaterial3D.CULL_DISABLED
 			viz.material_override = mat
 			area_child.add_child(viz)
+
+# Box / Cylinder 支持（其他 shape 类型按需扩展）
+func _make_viz_mesh_for_shape(shape: Shape3D) -> Mesh:
+	if shape is BoxShape3D:
+		var bm: BoxMesh = BoxMesh.new()
+		bm.size = (shape as BoxShape3D).size
+		return bm
+	if shape is CylinderShape3D:
+		var cyl: CylinderShape3D = shape
+		var cm: CylinderMesh = CylinderMesh.new()
+		cm.top_radius = cyl.radius
+		cm.bottom_radius = cyl.radius
+		cm.height = cyl.height
+		return cm
+	return null
 
 # 递归收集子树里所有 MeshInstance3D 的 BaseMaterial3D 副本
 # 既支持基类 enemy.tscn 的 body/head 占位（surface_override material），
