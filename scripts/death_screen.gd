@@ -97,6 +97,12 @@ func _on_game_completed(_wave: int) -> void:
 		return
 	_active = true
 	_is_victory = true
+	# 立即锁玩家输入（移动/视角/开火）+ 解锁鼠标，避免胜利序列期间玩家继续操作
+	# 参考 upgrade_panel.show_panel 的模式
+	var player: Node = get_tree().get_first_node_in_group("player")
+	if player and "input_locked" in player:
+		player.input_locked = true
+	Input.set_mouse_mode(Input.MOUSE_MODE_VISIBLE)
 	_apply_victory_theme()
 	_fill_stats()
 	_play_sequence()
@@ -106,10 +112,11 @@ func _apply_victory_theme() -> void:
 	eyebrow_label.text = "// MISSION COMPLETE  ·  SECTOR HELD"
 	eyebrow_label.add_theme_color_override("font_color", victory_color)
 	title_label.text = "凯  旋  归  来"
-	title_label.add_theme_font_size_override("font_size", 128)  # 96 → 128 加大
+	# 字号 96 → 110（128 会突破 TitleLabel 容器 120px 高致重叠），outline 6 → 14 加张力
+	title_label.add_theme_font_size_override("font_size", 110)
 	title_label.add_theme_color_override("font_color", Color(1.0, 0.93, 0.7, 1))  # 暖米白偏金
 	title_label.add_theme_color_override("font_outline_color", Color(0.5, 0.28, 0.06, 0.95))  # 深金 outline
-	title_label.add_theme_constant_override("outline_size", 12)  # 6 → 12 加厚
+	title_label.add_theme_constant_override("outline_size", 14)
 	title_en.text = "MISSION COMPLETE"
 	title_en.add_theme_color_override("font_color", victory_color)
 	var stats_eyebrow: Node = stats_card.get_node_or_null("StatsEyebrow")
