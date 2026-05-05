@@ -372,7 +372,10 @@ func _spawn_explosion(world_pos: Vector3) -> void:
 			continue
 		if e.has_method("is_dead") and e.is_dead():
 			continue
-		var dist: float = (e.global_position - world_pos).length()
+		# 用敌人腰部高度（脚 + 1.0m）做距离检查，避免脚 origin 距 hit_pos 远但身体在范围内的漏判
+		# （hit_pos 通常在敌人身上 hitbox 表面 y=1~2.5，脚 y=0，差距可达 2m+）
+		var enemy_target: Vector3 = e.global_position + Vector3.UP * 1.0
+		var dist: float = (enemy_target - world_pos).length()
 		if dist > explosion_radius:
 			continue
 		var t: float = clampf(dist / explosion_radius, 0.0, 1.0)

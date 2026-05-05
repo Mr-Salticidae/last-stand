@@ -82,7 +82,7 @@ recoil_pitch_deg = 6.5
 bullet_spread_deg = 0.0
 is_legendary = true
 discard_on_empty = true
-explosion_radius = 5.0
+explosion_radius = 7.0
 explosion_damage = 80.0
 preview_texture = ExtResource("3_preview")
 
