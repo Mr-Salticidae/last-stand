@@ -42,6 +42,7 @@ const DIFFICULTY_PROFILES: Array[Dictionary] = [
 		"enemy_health_mult": 0.85,
 		"enemy_damage_mult": 0.7,
 		"enemy_speed_mult": 0.95,
+		"slow_enemy_speed_mult": 1.0,      # grunt/brute 等慢敌额外加速倍率（叠加 enemy_speed_mult 之上）
 		"enemy_count_mult": 0.8,
 		"intermission_mult": 1.3,
 		"runner_unlock_wave": 3,
@@ -57,6 +58,7 @@ const DIFFICULTY_PROFILES: Array[Dictionary] = [
 		"enemy_health_mult": 1.25,
 		"enemy_damage_mult": 1.3,
 		"enemy_speed_mult": 1.1,
+		"slow_enemy_speed_mult": 1.0,
 		"enemy_count_mult": 1.3,
 		"intermission_mult": 0.85,
 		"runner_unlock_wave": 3,
@@ -72,7 +74,8 @@ const DIFFICULTY_PROFILES: Array[Dictionary] = [
 		"enemy_health_mult": 1.7,
 		"enemy_damage_mult": 1.6,
 		"enemy_speed_mult": 1.4,           # runner 5.5×1.4=7.7m/s 超玩家步行
-		"enemy_count_mult": 1.5,
+		"slow_enemy_speed_mult": 1.4,      # grunt 3.5×1.4×1.4=6.86 / brute 2.0×1.4×1.4=3.92 m/s
+		"enemy_count_mult": 1.8,           # 1.5→1.8 前期就开始怪物潮（仍受 max_enemies_per_wave 20 cap）
 		"intermission_mult": 0.6,
 		"runner_unlock_wave": 1,           # 第一波就出 runner
 		"brute_unlock_wave": 3,

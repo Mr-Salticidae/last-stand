@@ -224,10 +224,14 @@ func _spawn_at(sp: SpawnPoint, health_mult: float, forced_scene: PackedScene = n
 	enemy.max_health *= health_mult * diff_health_mult
 	# 移速 bonus：仅给 grunt 和 brute（runner/elite/boss 已经定位清晰，不再加成），
 	# 然后整体乘 difficulty speed_mult（极限突破 1.4 让 runner 超玩家步行）
-	if scene_to_spawn == enemy_scene or scene_to_spawn == brute_scene:
+	# grunt/brute 在此之上再额外乘 slow_enemy_speed_mult（极限突破 1.4 让慢敌也有压迫）
+	var is_slow_enemy: bool = (scene_to_spawn == enemy_scene or scene_to_spawn == brute_scene)
+	if is_slow_enemy:
 		var speed_tier: int = current_wave / speed_bonus_every_n_waves
 		enemy.move_speed += float(speed_tier) * speed_bonus_per_tier
 	enemy.move_speed *= float(Settings.get_difficulty_param("enemy_speed_mult", 1.0))
+	if is_slow_enemy:
+		enemy.move_speed *= float(Settings.get_difficulty_param("slow_enemy_speed_mult", 1.0))
 	# 设 transform 放在 add_child 前，保证 _ready 里读 global_transform 时就是 SpawnPoint 的姿态
 	# （enemy._ready 会记录 _initial_forward = -global_transform.basis.z）
 	enemy.transform = sp.global_transform
