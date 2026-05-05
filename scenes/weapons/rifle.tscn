@@ -56,7 +56,7 @@ tracks/1/keys = {
 "times": PackedFloat32Array(0, 0.04, 0.18),
 "transitions": PackedFloat32Array(1, 1, 1),
 "update": 0,
-"values": [Vector3(0, 0, 0), Vector3(0.10, 0, 0), Vector3(0, 0, 0)]
+"values": [Vector3(0, 0, 0), Vector3(0.06, 0, 0), Vector3(0, 0, 0)]
 }
 
 [sub_resource type="AnimationLibrary" id="AnimLib_rifle"]
@@ -78,7 +78,7 @@ weapon_range = 100.0
 pellet_count = 1
 auto_fire = true
 unlocked = false
-recoil_pitch_deg = 1.8
+recoil_pitch_deg = 1.2
 bullet_spread_deg = 0.55
 preview_texture = ExtResource("3_preview")
 
