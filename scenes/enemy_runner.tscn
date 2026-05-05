@@ -1,27 +1,27 @@
-[gd_scene load_steps=5 format=3]
+[gd_scene format=3 uid="uid://bvipbvm7or3e2"]
 
 [ext_resource type="PackedScene" path="res://scenes/enemy.tscn" id="1_base"]
-[ext_resource type="PackedScene" path="res://assets/enemies_quaternius/Enemy_Trilobite.gltf" id="2_trilobite"]
+[ext_resource type="PackedScene" uid="uid://dao8wpqkk3orr" path="res://assets/enemies_quaternius/Enemy_Trilobite.gltf" id="2_trilobite"]
 
 [sub_resource type="BoxShape3D" id="BoxShape_runner_collision"]
 size = Vector3(1.5, 1.2, 1.2)
 
 [sub_resource type="BoxShape3D" id="BoxShape_runner_leg"]
-size = Vector3(0.7, 2.0, 0.5)
+size = Vector3(0.3633789, 2, 0.5)
 
 [sub_resource type="CylinderShape3D" id="CylinderShape_runner_shell"]
-radius = 0.8
 height = 0.5
+radius = 1.269043
 
-[node name="Enemy" instance=ExtResource("1_base")]
-move_speed = 5.5
+[node name="Enemy" unique_id=499098323 instance=ExtResource("1_base")]
 max_health = 40.0
-attack_damage = 6.0
-attack_windup = 0.3
-attack_cooldown = 0.9
+move_speed = 5.5
 health_pack_drop_chance = 0.15
 score_value = 150
 flank_offset_max = 2.5
+attack_damage = 6.0
+attack_windup = 0.3
+attack_cooldown = 0.9
 anim_idle = "Idle"
 anim_walk = "Walk"
 anim_run = "Run"
@@ -42,18 +42,19 @@ visible = false
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0)
 
 [node name="CollisionShape3D" parent="BodyHitbox" index="0"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.45, 1.0, 0)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.8025383, 0.9948664, 0)
 shape = SubResource("BoxShape_runner_leg")
 
-[node name="CollisionShape3D2" type="CollisionShape3D" parent="BodyHitbox"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.45, 1.0, 0)
+[node name="CollisionShape3D2" type="CollisionShape3D" parent="BodyHitbox" index="1" unique_id=1868457373]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.8137305, 1, 0)
 shape = SubResource("BoxShape_runner_leg")
 
 [node name="HeadHitbox" parent="." index="4"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2.25, 0)
 
 [node name="CollisionShape3D" parent="HeadHitbox" index="0"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0.40917468)
 shape = SubResource("CylinderShape_runner_shell")
 
-[node name="model" parent="." instance=ExtResource("2_trilobite")]
+[node name="model" parent="." index="6" unique_id=69346686 instance=ExtResource("2_trilobite")]
 transform = Transform3D(-1, 0, 0, 0, 1, 0, 0, 0, -1, 0, 0, 0)

@@ -177,9 +177,6 @@ func _spawn_current_wave() -> void:
 			_spawn_at(sp, health_mult, boss_scene)
 		elif i == 0 and is_elite_wave:
 			_spawn_at(sp, health_mult, elite_scene)
-		elif current_wave == 1 and runner_scene:
-			# TEMP DEBUG (v0.2 #11): 第一波全部强制 runner，朝向玩家+不动便于截图调试，验证后删除
-			_spawn_at(sp, health_mult, runner_scene, true)
 		else:
 			_spawn_at(sp, health_mult)
 		if spawn_stagger > 0.0 and i < count - 1:
@@ -191,8 +188,7 @@ func _spawn_current_wave() -> void:
 
 # 每只敌人独立 await 自己的 spawn_effect，互相不阻塞
 # forced_scene 指定时用该 scene（精英/boss 固定生成），否则按随机混合
-# debug_freeze=true 时敌人朝玩家站定不动（hitbox 调试用）
-func _spawn_at(sp: SpawnPoint, health_mult: float, forced_scene: PackedScene = null, debug_freeze: bool = false) -> void:
+func _spawn_at(sp: SpawnPoint, health_mult: float, forced_scene: PackedScene = null) -> void:
 	var smoke_dur: float = spawn_effect_duration * (1.6 if forced_scene else 1.0)
 	await sp.play_smoke_effect(smoke_dur)
 	if not is_inside_tree():
@@ -207,27 +203,12 @@ func _spawn_at(sp: SpawnPoint, health_mult: float, forced_scene: PackedScene = n
 		enemy.move_speed += float(speed_tier) * speed_bonus_per_tier
 	# 设 transform 放在 add_child 前，保证 _ready 里读 global_transform 时就是 SpawnPoint 的姿态
 	# （enemy._ready 会记录 _initial_forward = -global_transform.basis.z）
-	var player: Node3D = get_tree().get_first_node_in_group("player") as Node3D
-	if debug_freeze and player:
-		# debug 模式：spawn 朝向玩家（覆盖 sp 朝向）
-		var to_player: Vector3 = player.global_position - sp.global_transform.origin
-		to_player.y = 0
-		if to_player.length_squared() > 0.001:
-			enemy.transform = Transform3D(Basis.looking_at(to_player.normalized(), Vector3.UP), sp.global_transform.origin)
-		else:
-			enemy.transform = sp.global_transform
-	else:
-		enemy.transform = sp.global_transform
+	enemy.transform = sp.global_transform
 	get_tree().current_scene.add_child(enemy)
-	if debug_freeze:
-		# debug 模式：停 _physics_process 让敌人站定不动；flash 不恢复但 hitbox 调试可接受
-		enemy.set_physics_process(false)
-		# 同时打开 hitbox 可视化（红色=BodyHitbox，蓝色=HeadHitbox）方便对照视觉调
-		if enemy.has_method("enable_hitbox_viz"):
-			enemy.enable_hitbox_viz()
-	elif player:
-		# 生成即 aggro：波次敌人不等视野确认，直接朝玩家冲
-		# 否则大场地 SpawnPoint 距玩家 > sight_range(15) 时敌人会原地傻站
+	# 生成即 aggro：波次敌人不等视野确认，直接朝玩家冲
+	# 否则大场地 SpawnPoint 距玩家 > sight_range(15) 时敌人会原地傻站
+	var player: Node3D = get_tree().get_first_node_in_group("player") as Node3D
+	if player:
 		enemy._receive_alert(player.global_position)
 	enemy.died.connect(_on_enemy_died.bind(enemy))
 	_alive_enemies.append(enemy)
