@@ -29,7 +29,7 @@ extends Control
 	set(value):
 		hud_bot_left = value
 		_refresh_hud()
-@export var hud_bot_right: String = "v0.1.0 DEMO BUILD":
+@export var hud_bot_right: String = "v0.2.0 DEMO BUILD":
 	set(value):
 		hud_bot_right = value
 		_refresh_hud()
