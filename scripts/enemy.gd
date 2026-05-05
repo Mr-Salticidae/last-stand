@@ -240,8 +240,13 @@ func _physics_process(delta: float) -> void:
 		return
 
 	# 虚空清理：掉出关卡范围的敌人立即销毁
+	# 必须先 emit died 让 wave_manager 移除引用，否则 _alive_enemies 留 invalid 节点
+	# 永远不空 → 推不下一波 = 幽灵怪 progression blocker
 	if global_position.y < fall_death_y:
 		_release_attack_lock()
+		if not _is_dead:
+			_is_dead = true
+			died.emit()
 		queue_free()
 		return
 

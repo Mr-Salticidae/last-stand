@@ -136,6 +136,18 @@ func _process(delta: float) -> void:
 		if _combo_timer <= 0.0:
 			current_combo = 0
 			combo_changed.emit(0, true)
+	# 兜底：清理已 free 的敌人引用（防 fall_death_y / 异常 free 等漏发 died 信号路径），
+	# 防止 _alive_enemies 残留 invalid 引用导致 is_empty 永远 false → 幽灵怪 progression blocker
+	if _state == State.COMBAT and not _alive_enemies.is_empty():
+		var prev_size: int = _alive_enemies.size()
+		_alive_enemies = _alive_enemies.filter(func(e): return is_instance_valid(e))
+		if _alive_enemies.size() < prev_size:
+			wave_progress.emit(_alive_enemies.size())
+			if _alive_enemies.is_empty():
+				_state = State.IDLE
+				wave_completed.emit(current_wave)
+				if auto_continue:
+					_request_upgrade_then_next()
 
 func _spawn_current_wave() -> void:
 	if _spawn_points.is_empty() or enemy_scene == null:
