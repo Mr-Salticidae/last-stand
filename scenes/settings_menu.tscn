@@ -265,6 +265,39 @@ theme_override_fonts/font = ExtResource("9_jb5")
 theme_override_font_sizes/font_size = 18
 theme_override_colors/font_color = Color(0.855, 0.18, 0.2, 1)
 
+[node name="DifficultyRow" type="HBoxContainer" parent="PageBody/LeftCol/ControlsGroup"]
+custom_minimum_size = Vector2(0, 56)
+layout_mode = 2
+theme_override_constants/separation = 16
+
+[node name="LeftLabel" type="Label" parent="PageBody/LeftCol/ControlsGroup/DifficultyRow"]
+custom_minimum_size = Vector2(240, 0)
+layout_mode = 2
+text = "难度  /  DIFFICULTY"
+vertical_alignment = 1
+theme_override_fonts/font = ExtResource("10_n7")
+theme_override_font_sizes/font_size = 14
+theme_override_colors/font_color = Color(0.788, 0.718, 0.643, 1)
+
+[node name="Cycle" type="Control" parent="PageBody/LeftCol/ControlsGroup/DifficultyRow"]
+custom_minimum_size = Vector2(140, 32)
+layout_mode = 2
+size_flags_vertical = 4
+focus_mode = 2
+mouse_default_cursor_shape = 2
+script = ExtResource("4b_cyc")
+
+[node name="Caption" type="Label" parent="PageBody/LeftCol/ControlsGroup/DifficultyRow"]
+custom_minimum_size = Vector2(80, 0)
+layout_mode = 2
+size_flags_horizontal = 3
+text = "AI"
+horizontal_alignment = 0
+vertical_alignment = 1
+theme_override_fonts/font = ExtResource("10_n7")
+theme_override_font_sizes/font_size = 14
+theme_override_colors/font_color = Color(0.478, 0.416, 0.361, 1)
+
 [node name="RightCol" type="VBoxContainer" parent="PageBody"]
 custom_minimum_size = Vector2(750, 0)
 layout_mode = 2

@@ -17,6 +17,8 @@ const MAIN_MENU_SCENE: String = "res://scenes/main_menu.tscn"
 @onready var sens_slider: CustomSlider = $PageBody/LeftCol/ControlsGroup/SensRow/Slider
 @onready var sens_value: Label = $PageBody/LeftCol/ControlsGroup/SensRow/Value
 
+@onready var difficulty_cycle: CustomCycleButton = $PageBody/LeftCol/ControlsGroup/DifficultyRow/Cycle
+
 @onready var window_mode_cycle: CustomCycleButton = $PageBody/RightCol/DisplayGroup/WindowModeRow/Cycle
 @onready var resolution_cycle: CustomCycleButton = $PageBody/RightCol/DisplayGroup/ResolutionRow/Cycle
 @onready var vsync_toggle: CustomToggle = $PageBody/RightCol/DisplayGroup/VsyncRow/Toggle
@@ -49,6 +51,11 @@ func _ready() -> void:
 	sens_slider.step = 0.01
 	sens_slider.value = Settings.mouse_sensitivity
 	sens_slider.value_changed.connect(_on_sens_changed)
+
+	# Gameplay: difficulty cycle
+	difficulty_cycle.options = PackedStringArray(Settings.DIFFICULTY_NAMES_CN)
+	difficulty_cycle.current_index = Settings.difficulty_idx
+	difficulty_cycle.value_changed.connect(_on_difficulty_changed)
 
 	# Display: window mode + resolution（cycle）
 	window_mode_cycle.options = PackedStringArray(Settings.WINDOW_MODE_NAMES)
@@ -94,6 +101,9 @@ func _on_music_changed(v: float) -> void:
 func _on_sens_changed(v: float) -> void:
 	Settings.set_mouse_sensitivity(v)
 	_refresh_all_values()
+
+func _on_difficulty_changed(idx: int, _option: String) -> void:
+	Settings.set_difficulty_idx(idx)
 
 func _on_window_mode_changed(idx: int, _option: String) -> void:
 	Settings.set_window_mode(idx)
