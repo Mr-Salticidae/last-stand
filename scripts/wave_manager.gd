@@ -11,6 +11,7 @@ signal kill_count_changed(total_kills: int)                  # 累计击杀数�
 signal score_changed(total_score: int)                       # 累计得分变化（HUD / 存档）
 signal currency_changed(amount: int)                         # 可花费资金变化（升级消耗，不影响结算得分）
 signal combo_changed(count: int, broken: bool)               # 连击数变化或重置
+signal game_completed(wave: int)                             # 通关：到达 victory_wave 且本波清空时发出
 
 @export_group("Wave Scaling")
 @export var base_enemy_count: int = 4              # 第 1 波敌人数
@@ -30,6 +31,10 @@ signal combo_changed(count: int, broken: bool)               # 连击数变化�
 @export_group("Flow")
 @export var autostart_first_wave: bool = true      # true=场景启动即开始；false=等外部调 start_next_wave()
 @export var auto_continue: bool = true             # true=杀光自动进下一波；false=每波都要外部触发
+
+@export_group("Victory")
+# 完成此波次后触发通关结算（emit game_completed），不再推下一波。0=禁用通关，永远无限模式
+@export var victory_wave: int = 30
 
 @export_group("Weapon Unlock")
 # 波次到达 key 时解锁对应 weapon_id（weapon_manager.unlock_weapon 调用）
@@ -143,11 +148,7 @@ func _process(delta: float) -> void:
 		_alive_enemies = _alive_enemies.filter(func(e): return is_instance_valid(e))
 		if _alive_enemies.size() < prev_size:
 			wave_progress.emit(_alive_enemies.size())
-			if _alive_enemies.is_empty():
-				_state = State.IDLE
-				wave_completed.emit(current_wave)
-				if auto_continue:
-					_request_upgrade_then_next()
+			_check_wave_cleared()
 
 func _spawn_current_wave() -> void:
 	if _spawn_points.is_empty() or enemy_scene == null:
@@ -271,11 +272,20 @@ func _on_enemy_died(enemy) -> void:
 	wave_progress.emit(_alive_enemies.size())
 
 	# 仅在 COMBAT 态下才检查清空（SPAWNING 途中有敌人被秒也不该推进）
-	if _state == State.COMBAT and _alive_enemies.is_empty():
-		_state = State.IDLE
-		wave_completed.emit(current_wave)
-		if auto_continue:
-			_request_upgrade_then_next()
+	_check_wave_cleared()
+
+# 抽出 wave 清空判定 + 推波 / 通关分流（_on_enemy_died 和 _process 兜底共用）
+func _check_wave_cleared() -> void:
+	if _state != State.COMBAT or not _alive_enemies.is_empty():
+		return
+	_state = State.IDLE
+	wave_completed.emit(current_wave)
+	# 通关：到达 victory_wave 触发结算页，不再推下一波
+	if victory_wave > 0 and current_wave >= victory_wave:
+		game_completed.emit(current_wave)
+		return
+	if auto_continue:
+		_request_upgrade_then_next()
 
 # 波次清空 → 弹升级面板（若存在）→ 面板关闭 → 下一波
 func _request_upgrade_then_next() -> void:

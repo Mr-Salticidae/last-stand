@@ -15,6 +15,7 @@ extends CanvasLayer
 
 var _desaturate_mat: ShaderMaterial
 var _active: bool = false  # 序列进行中或等待重生输入
+var _is_victory: bool = false  # true=通关结算（金色文案+白幕+wave_start 音）；false=死亡（红文案+黑幕+倒地音）
 
 # 时间节拍（总时长 1.9s 到可交互）
 const FADE_GRAY_DURATION: float = 1.0
@@ -47,6 +48,11 @@ func _ready() -> void:
 	if player and player.has_signal("died"):
 		player.died.connect(_on_player_died)
 
+	# 监听通关（活到 wave_manager.victory_wave 默认 30）
+	var wm: Node = get_tree().get_first_node_in_group("wave_manager")
+	if wm and wm.has_signal("game_completed"):
+		wm.game_completed.connect(_on_game_completed)
+
 	respawn_button.pressed.connect(_on_respawn_pressed)
 	main_menu_button.pressed.connect(_on_main_menu_pressed)
 
@@ -64,6 +70,34 @@ func _on_player_died() -> void:
 	# 死亡瞬间从 WaveManager 拉数据填统计（先填好，稍后随 UI 一起淡入）
 	_fill_stats()
 	_play_sequence()
+
+# 通关：到达 victory_wave 且本波清空。改文案/颜色/幕色为胜利感，复用 _play_sequence 视觉
+func _on_game_completed(_wave: int) -> void:
+	if _active:
+		return
+	_active = true
+	_is_victory = true
+	_apply_victory_theme()
+	_fill_stats()
+	_play_sequence()
+
+func _apply_victory_theme() -> void:
+	var victory_color: Color = Color(0.95, 0.78, 0.28, 1)  # 金色
+	eyebrow_label.text = "// MISSION COMPLETE  ·  SECTOR HELD"
+	eyebrow_label.add_theme_color_override("font_color", victory_color)
+	title_label.text = "凯  旋  归  来"
+	title_en.text = "MISSION COMPLETE"
+	title_en.add_theme_color_override("font_color", victory_color)
+	var stats_eyebrow: Node = stats_card.get_node_or_null("StatsEyebrow")
+	if stats_eyebrow and stats_eyebrow is Label:
+		(stats_eyebrow as Label).text = "// SURVIVAL REPORT"
+		(stats_eyebrow as Label).add_theme_color_override("font_color", victory_color)
+	respawn_button.cn_label = "再战一局"
+	respawn_button.en_label = "REPLAY"
+	# 幕色改暖白（凯旋光感）替代死亡黑幕
+	var curtain: Color = Color(0.95, 0.92, 0.85, 1)
+	eyelid_top.color = curtain
+	eyelid_bottom.color = curtain
 
 func _fill_stats() -> void:
 	var wm: Node = get_tree().get_first_node_in_group("wave_manager")
@@ -135,15 +169,19 @@ func _save_record(wave: int, score: int, time: float, combo: int) -> void:
 	cfg.save(RECORD_PATH)
 
 func _play_sequence() -> void:
-	# 死亡瞬间播放倒地声 + 耳鸣双层音效，覆盖整个黑白化+闭眼+UI 淡入
-	AudioManager.play_player_death_audio()
+	# 胜利：wave_start 凯旋音（不黑白化，保留场景颜色）；死亡：倒地+耳鸣 + 黑白化
+	if _is_victory:
+		AudioManager.play_wave_start()
+	else:
+		AudioManager.play_player_death_audio()
 	# 阶段 1+2 并行：黑白滤镜淡入 + 闭眼黑幕合拢
 	# （两者同时播能让沉浸感更强：颜色被抽走的同时视野收窄）
 	var tween := create_tween().set_parallel(true)
-	tween.tween_method(
-		_set_desaturation,
-		0.0, 1.0, FADE_GRAY_DURATION
-	).set_trans(Tween.TRANS_QUAD)
+	if not _is_victory:
+		tween.tween_method(
+			_set_desaturation,
+			0.0, 1.0, FADE_GRAY_DURATION
+		).set_trans(Tween.TRANS_QUAD)
 	# 闭眼从 0.3s 后开始（稍晚于黑白化，错开节奏）
 	tween.tween_property(eyelid_top, "anchor_bottom", 0.5, EYELID_CLOSE_DURATION) \
 		.set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN).set_delay(0.3)
