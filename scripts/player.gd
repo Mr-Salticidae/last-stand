@@ -510,3 +510,14 @@ func _die() -> void:
 		.set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
 
 	died.emit()
+
+# 切后台返回兜底：Windows 失焦时 OS 会释放鼠标 capture，回来时 Godot 内部 mode 状态可能与 OS 错位。
+# 仅在游戏中（无 panel/menu/死亡接管）时强制重 apply CAPTURED；input_locked 表示有 panel 在管，让 panel 自己处理。
+# 同时 time_scale = 1.0 兜底，防 hit_pause 在失焦瞬间泄漏。
+func _notification(what: int) -> void:
+	if what != NOTIFICATION_APPLICATION_FOCUS_IN:
+		return
+	if _dead or input_locked:
+		return
+	Input.set_mouse_mode(Input.MOUSE_MODE_CAPTURED)
+	Engine.time_scale = 1.0

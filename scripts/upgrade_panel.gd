@@ -175,3 +175,13 @@ func _close_panel() -> void:
 		_player.input_locked = false
 	Input.set_mouse_mode(Input.MOUSE_MODE_CAPTURED)
 	panel_closed.emit()
+
+# 切后台返回兜底：Windows 失焦会被 OS 释放鼠标 capture，回来时 Godot 状态可能与 OS 错位；
+# 同时若失焦瞬间正好有 hit_pause 在进行，time_scale=0.3 可能未恢复。
+# panel 可见时焦点回来 → 强制重 apply 一遍 panel 期望状态。
+func _notification(what: int) -> void:
+	if what == NOTIFICATION_APPLICATION_FOCUS_IN and visible:
+		Input.set_mouse_mode(Input.MOUSE_MODE_VISIBLE)
+		if _player and "input_locked" in _player:
+			_player.input_locked = true
+		Engine.time_scale = 1.0

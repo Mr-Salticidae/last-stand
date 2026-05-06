@@ -296,3 +296,9 @@ func _to_main_menu() -> void:
 func _on_main_menu_pressed() -> void:
 	AudioManager.play_ui_click()
 	_to_main_menu()
+
+# 切后台返回兜底：序列激活期间焦点回来强制重 apply VISIBLE，防 Windows 失焦释放 capture 后状态错位。
+func _notification(what: int) -> void:
+	if what == NOTIFICATION_APPLICATION_FOCUS_IN and _active:
+		Input.set_mouse_mode(Input.MOUSE_MODE_VISIBLE)
+		Engine.time_scale = 1.0
