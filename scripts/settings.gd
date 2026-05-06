@@ -49,6 +49,7 @@ const DIFFICULTY_PROFILES: Array[Dictionary] = [
 		"brute_unlock_wave": 5,
 		"elite_wave_period": 5,
 		"boss_wave_period": 15,
+		"health_pack_lifetime": 90.0,      # 血包寿命（秒），过期前 5s bob 颤抖警告 + 0.4s scale fade
 	},
 	{  # 1 日常训练（默认 = v0.1 + 25-30% 综合压力，回应 itch.io"难度过低"反馈）
 		"key": "standard",
@@ -65,6 +66,7 @@ const DIFFICULTY_PROFILES: Array[Dictionary] = [
 		"brute_unlock_wave": 5,
 		"elite_wave_period": 5,
 		"boss_wave_period": 15,
+		"health_pack_lifetime": 60.0,
 	},
 	{  # 2 极限突破（runner 移速碾压玩家，必须冲刺/滑铲拉距，更早出 boss/elite）
 		"key": "breach",
@@ -81,6 +83,7 @@ const DIFFICULTY_PROFILES: Array[Dictionary] = [
 		"brute_unlock_wave": 3,
 		"elite_wave_period": 3,
 		"boss_wave_period": 10,            # 提前 5 波出 boss
+		"health_pack_lifetime": 30.0,      # 血包寿命短，紧迫感与压迫感统一
 	},
 ]
 const DIFFICULTY_NAMES_CN: Array[String] = ["新兵报到", "日常训练", "极限突破"]
