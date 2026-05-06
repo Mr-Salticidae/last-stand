@@ -56,7 +56,7 @@ git clone https://github.com/Mr-Salticidae/last-stand.git
 
 ## 开发状态
 
-当前版本 **v0.2.0** — 体感打磨 + 难度系统上线  
+当前版本 **v0.2.1** — 切后台焦点兜底 + 血包寿命机制 + 体感打磨  
 完整更新日志：[GitHub Releases](https://github.com/Mr-Salticidae/last-stand/releases) · [itch.io devlog](https://mr-salticidae.itch.io/last-stand/devlog)
 
 下一版 v0.3 计划：升级卡池扩充 / Boss 多模式 / 敌人模型替换。
