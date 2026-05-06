@@ -49,7 +49,12 @@ func _refresh() -> void:
 
 func _load_record() -> Dictionary:
 	var cfg := ConfigFile.new()
-	if cfg.load(RECORD_PATH) != OK:
+	var err: int = cfg.load(RECORD_PATH)
+	if err == ERR_FILE_NOT_FOUND:
+		return {"wave": 0, "score": 0, "time": 0.0, "combo": 0}
+	if err != OK:
+		# 文件损坏：备份原文件让玩家有机会找回，避免下次 save 覆盖
+		Settings.backup_corrupt_config(RECORD_PATH, err)
 		return {"wave": 0, "score": 0, "time": 0.0, "combo": 0}
 	return {
 		"wave": int(cfg.get_value(RECORD_SECTION, "wave", 0)),

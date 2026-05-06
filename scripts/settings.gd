@@ -124,10 +124,24 @@ func _ready() -> void:
 	# 灵敏度由 player 在 _input 时直接读 Settings.mouse_sensitivity，无需 push
 
 # ========== 持久化 ==========
+# 把损坏的 cfg 文件 rename 成 .corrupt.<unix>，避免下次 save 覆盖玩家旧数据。
+# 调用方应先用 ERR_FILE_NOT_FOUND 区分首次运行（首次运行不调此函数）。
+func backup_corrupt_config(path: String, err: int) -> void:
+	push_warning("ConfigFile load failed: %s (err=%d), backing up to .corrupt" % [path, err])
+	var backup_path: String = "%s.corrupt.%d" % [path, int(Time.get_unix_time_from_system())]
+	var rename_err: int = DirAccess.rename_absolute(path, backup_path)
+	if rename_err != OK:
+		push_error("backup_corrupt_config: rename %s -> %s failed (err=%d)" % [path, backup_path, rename_err])
+
 func load_settings() -> void:
 	var cfg := ConfigFile.new()
-	if cfg.load(CONFIG_PATH) != OK:
+	var err: int = cfg.load(CONFIG_PATH)
+	if err == ERR_FILE_NOT_FOUND:
 		return  # 首次运行，用默认值
+	if err != OK:
+		# settings 损坏不备份（设置可重设，价值低），仅警告
+		push_warning("Settings load failed: %s (err=%d), using defaults" % [CONFIG_PATH, err])
+		return
 	master_volume = float(cfg.get_value("audio", "master_volume", master_volume))
 	sfx_volume = float(cfg.get_value("audio", "sfx_volume", sfx_volume))
 	music_volume = float(cfg.get_value("audio", "music_volume", music_volume))

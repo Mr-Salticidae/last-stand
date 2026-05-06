@@ -1,5 +1,9 @@
 class_name Weapon extends Node3D
 
+# 头部 hitbox 倍率基数。与 scenes/enemy.tscn 里 head Hitbox 的 damage_multiplier 数据耦合，
+# 改这里要一并调 tscn；爆头阈值判定 + headshot_bonus 公式都从这里取。
+const HEADSHOT_BASE_MULT: float = 2.5
+
 # ========== 身份配置 ==========
 @export_group("Identity")
 @export var weapon_id: String = "pistol"      # 唯一 ID（HUD / 切换 / 解锁系统索引用）
@@ -167,10 +171,10 @@ func _fire_pellet(effective_spread: float) -> void:
 
 	var hit_pos: Vector3 = shoot_raycast.get_collision_point()
 	var collider: Object = shoot_raycast.get_collider()
-	# 判断命中类型：hitbox 带 damage_multiplier（头部 2.5，身体 1.0）
+	# 判断命中类型：hitbox 带 damage_multiplier（头部 = HEADSHOT_BASE_MULT，身体 1.0）
 	var is_headshot: bool = false
 	if collider is Hitbox:
-		is_headshot = (collider as Hitbox).damage_multiplier >= 2.0
+		is_headshot = (collider as Hitbox).damage_multiplier >= HEADSHOT_BASE_MULT
 	_spawn_hit_effect(hit_pos, is_headshot)
 
 	# 爆炸 AOE：墙体 / 敌人命中都触发；直接伤害仍照常结算（直接被命中的敌人吃 splash + direct 双份）
@@ -209,9 +213,9 @@ func _fire_pellet(effective_spread: float) -> void:
 		total_damage *= (1.0 + elite_damage_bonus)
 	if combo_damage_bonus > 0.0 and _get_combo() >= combo_damage_threshold:
 		total_damage *= (1.0 + combo_damage_bonus)
-	# 爆头额外倍率：hitbox 自身已经乘 damage_multiplier(2.5)，这里补乘 headshot_bonus 分量
+	# 爆头额外倍率：hitbox 自身已经乘 damage_multiplier(HEADSHOT_BASE_MULT)，这里补乘 headshot_bonus 分量
 	if is_headshot and headshot_bonus > 0.0:
-		total_damage *= (2.5 + headshot_bonus) / 2.5
+		total_damage *= (HEADSHOT_BASE_MULT + headshot_bonus) / HEADSHOT_BASE_MULT
 	collider.take_damage(total_damage)
 
 	# 只在 "这一发把它打死" 时发 kill，否则发 hit / headshot
