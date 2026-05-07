@@ -497,7 +497,6 @@ libraries/ = SubResource("AnimationLibrary_71j4m")
 
 [node name="WaveManager" type="Node" parent="." unique_id=1996363087 groups=["wave_manager"]]
 script = ExtResource("9_wave")
-victory_wave = 2
 enemy_scene = ExtResource("7_enemy")
 runner_scene = ExtResource("7_runner")
 brute_scene = ExtResource("7_brute")
