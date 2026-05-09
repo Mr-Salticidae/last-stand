@@ -10,6 +10,7 @@ size = Vector3(1.6, 1.0, 1.6)
 size = Vector3(0.8, 1.0, 0.8)
 
 [node name="Enemy" instance=ExtResource("1_base")]
+enemy_id = "brute"
 move_speed = 2.0
 max_health = 260.0
 attack_damage = 25.0

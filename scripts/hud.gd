@@ -10,6 +10,11 @@ extends CanvasLayer
 @onready var score_label: Label = $ScoreLabel
 @onready var combo_label: Label = $ComboLabel
 @onready var weapon_unlock_label: Label = $WeaponUnlockLabel
+@onready var speed_blur: RadialBlurOverlay = $RadialBlurOverlay
+# v0.3 视觉提示
+const LAST_ROUND_PULSE_HZ: float = 4.0
+const LAST_ROUND_AMMO_COLOR: Color = Color(1.0, 0.3, 0.25, 1)
+var _ammo_label_default_color: Color = Color.WHITE
 
 var _weapon: Weapon
 var _weapon_manager: Node
@@ -65,6 +70,8 @@ func _ready() -> void:
 			_on_weapon_changed(_weapon_manager.current_weapon)
 
 	score_label.text = "得分 0 · 资金 0"
+	# 缓存 ammo label 默认颜色，底牌进入区时改红，离开恢复
+	_ammo_label_default_color = ammo_label.modulate
 
 	# 玩家（血量）
 	_player = get_tree().get_first_node_in_group("player")
@@ -155,6 +162,9 @@ func _process(delta: float) -> void:
 		_reload_prompt_pulse_timer += delta
 		_reload_prompt_label.modulate.a = 0.75 + 0.25 * sin(_reload_prompt_pulse_timer * TAU / 0.8)
 
+	# v0.3 视觉提示：每帧根据 weapon / wm 状态驱动准心红环 / ammo 脉冲 / 速度线
+	_update_v03_overlays(delta)
+
 	# 波间倒计时文本更新
 	if _intermission_remaining > 0.0:
 		_intermission_remaining = max(0.0, _intermission_remaining - delta)
@@ -219,6 +229,10 @@ func _on_weapon_changed(weapon: Weapon) -> void:
 			_weapon.headshot_confirmed.disconnect(_on_headshot_confirmed)
 		if _weapon.kill_confirmed.is_connected(_on_kill_confirmed):
 			_weapon.kill_confirmed.disconnect(_on_kill_confirmed)
+		if _weapon.reload_burst_consumed.is_connected(_on_reload_burst_consumed):
+			_weapon.reload_burst_consumed.disconnect(_on_reload_burst_consumed)
+		if _weapon.last_round_fired.is_connected(_on_last_round_fired):
+			_weapon.last_round_fired.disconnect(_on_last_round_fired)
 	_weapon = weapon
 	if _weapon == null:
 		ammo_label.text = ""
@@ -229,6 +243,8 @@ func _on_weapon_changed(weapon: Weapon) -> void:
 	_weapon.hit_confirmed.connect(_on_hit_confirmed)
 	_weapon.headshot_confirmed.connect(_on_headshot_confirmed)
 	_weapon.kill_confirmed.connect(_on_kill_confirmed)
+	_weapon.reload_burst_consumed.connect(_on_reload_burst_consumed)
+	_weapon.last_round_fired.connect(_on_last_round_fired)
 	_on_ammo_changed(_weapon.current_ammo, _weapon.reserve_ammo, _weapon.max_ammo())
 
 # ammo 显示："弹匣 / 备弹"，e.g. "12 / 48"
@@ -358,6 +374,38 @@ func _on_kill_confirmed() -> void:
 	# 得分由 WaveManager 统一管理（score_changed 信号刷 label），这里只负责视觉反馈
 	if crosshair and crosshair.has_method("flash_kill"):
 		crosshair.flash_kill()
+
+# v0.3 新卡视觉反馈：聚焦到准心层（仿 hit/headshot/kill marker），不再用全屏闪
+func _on_reload_burst_consumed() -> void:
+	if crosshair and crosshair.has_method("flash_reload_burst"):
+		crosshair.flash_reload_burst()
+
+func _on_last_round_fired() -> void:
+	if crosshair and crosshair.has_method("flash_last_round"):
+		crosshair.flash_last_round()
+
+# 每帧驱动持续型视觉：准心红环 / ammo 红色脉冲 / 速度线 intensity
+func _update_v03_overlays(delta: float) -> void:
+	# 准心：战术换弹 pending 时画红环
+	if crosshair and _weapon and is_instance_valid(_weapon):
+		crosshair.reload_burst_ready = _weapon._reload_burst_pending
+	# Ammo label 底牌区脉冲（current_ammo > 0 且 ≤ last_round_count）
+	var in_last_round_zone: bool = false
+	if _weapon and is_instance_valid(_weapon) and _weapon_manager:
+		var lr_count: int = int(_weapon_manager.get("last_round_count"))
+		in_last_round_zone = lr_count > 0 and _weapon.current_ammo > 0 and _weapon.current_ammo <= lr_count
+	if in_last_round_zone:
+		var t_sec: float = Time.get_ticks_msec() / 1000.0
+		var pulse: float = 0.5 + 0.5 * sin(t_sec * LAST_ROUND_PULSE_HZ * TAU)
+		ammo_label.modulate = _ammo_label_default_color.lerp(LAST_ROUND_AMMO_COLOR, pulse)
+	else:
+		ammo_label.modulate = _ammo_label_default_color
+	# 径向运动模糊：杀戮节拍激活（player._combo_speed_active > 0）+ 实际在移动时启用
+	if speed_blur and _player and is_instance_valid(_player):
+		var combo_active: bool = "_combo_speed_active" in _player and _player._combo_speed_active > 0.0
+		var v_len: float = Vector2(_player.velocity.x, _player.velocity.z).length() if "velocity" in _player else 0.0
+		var moving: bool = v_len > 0.5
+		speed_blur.set_target(1.0 if (combo_active and moving) else 0.0)
 
 func _on_score_changed(score: int) -> void:
 	_total_score = score

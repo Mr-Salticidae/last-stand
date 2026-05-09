@@ -14,6 +14,7 @@ height = 0.5
 radius = 1.269043
 
 [node name="Enemy" unique_id=499098323 instance=ExtResource("1_base")]
+enemy_id = "runner"
 max_health = 40.0
 move_speed = 5.5
 health_pack_drop_chance = 0.15

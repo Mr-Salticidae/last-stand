@@ -15,6 +15,8 @@ class_name Enemy extends CharacterBody3D
 @export_group("Tier")
 @export var is_elite: bool = false                 # 精英：供 weapon "精英猎手"加成识别
 @export var is_boss: bool = false                  # BOSS：同上
+# 敌种 id：grunt / runner / brute / boss 等。"猎手本能"按 id 累计击杀加伤
+@export var enemy_id: String = "grunt"
 
 @export_group("AI")
 # 视野四重判定：水平距离 + 高度差 + 正前方夹角 + raycast 墙体遮挡
@@ -106,6 +108,8 @@ var _flash_cache: Array = []
 var _state: int = State.IDLE
 var _state_timer: float = 0.0
 var _tell_elapsed: float = 0.0
+# stagger 计时：> 0 期间敌人完全冻结（"重型压制"升级触发）
+var _stagger_timer: float = 0.0
 
 # 感知状态
 var _initial_forward: Vector3 = Vector3.FORWARD  # IDLE 朝向（_ready 时记录；SEARCH→IDLE 时更新）
@@ -258,6 +262,14 @@ func _physics_process(delta: float) -> void:
 		_flash_timer -= delta
 		if _flash_timer <= 0.0:
 			_restore_colors()
+
+	# Stagger：完全冻结 AI 与移动（玩家"重型压制"触发，仅 elite/boss）
+	# 闪红仍正常显示；fall_death_y 在前面已经处理过
+	if _stagger_timer > 0.0:
+		_stagger_timer -= delta
+		velocity = Vector3.ZERO
+		move_and_slide()
+		return
 
 	# 玩家可能还没 ready，延迟查找
 	if _player == null:
@@ -797,6 +809,18 @@ func take_damage(amount: float) -> void:
 
 	if current_health <= 0.0:
 		_die()
+
+# weapon "重型压制"升级触发：暂时冻结 AI 与移动，正在前摇的攻击被打断
+# 调用方应已确认 is_elite 或 is_boss（普通 grunt 不该被 stagger）
+func stagger(duration: float) -> void:
+	if _is_dead:
+		return
+	_stagger_timer = maxf(_stagger_timer, duration)
+	# 前摇被打断 → 攻击作废，转回 CHASE 让玩家拿到节奏空档
+	if _state == State.WINDUP:
+		_release_attack_lock()
+		_state = State.CHASE
+		_state_timer = 0.0
 
 func _flash_red() -> void:
 	for entry in _flash_cache:

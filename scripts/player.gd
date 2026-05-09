@@ -104,6 +104,17 @@ var jump_mult: float = 1.0        # 鹰跃：起跳初速度倍率
 var heal_mult: float = 1.0        # 战地医疗 / 不朽之躯：回血量倍率
 var max_air_jumps: int = 0        # 二段跳：空中额外跳次数（触地归零）
 var _air_jumps_used: int = 0
+# v0.3 新卡：杀戮节拍 / 战术突进
+var combo_speed_threshold: int = 9999  # combo ≥ 此值临时叠 combo_speed_bonus
+var combo_speed_bonus: float = 0.0     # 每 stack +0.15
+var _combo_speed_active: float = 0.0   # 每帧根据 combo 动态算出的实际加成
+var slide_burst_enabled: bool = false  # 战术突进：滑铲期间 invuln + 出滑铲触发 wm.slide_burst_timer
+var _was_sliding: bool = false         # 追踪 sliding 上一帧值，用于检测"出滑铲"瞬间
+# v0.3 视觉：杀戮节拍激活时 FOV +5°，lerp 进出
+const COMBO_SPEED_FOV_BONUS: float = 5.0
+const FOV_LERP_RATE: float = 6.0
+var _base_fov: float = 0.0  # _ready 缓存
+var _fov_extra: float = 0.0  # 当前 FOV 额外量（lerp 平滑）
 
 # 输入锁：升级面板等模态 UI 开启时置 true，屏蔽移动 / 视角 / 射击
 var input_locked: bool = false
@@ -133,6 +144,9 @@ func _ready():
 	current_health = max_health
 	# 延迟一帧发送，确保 HUD 已经连接 health_changed 后再同步初始值
 	call_deferred("emit_signal", "health_changed", current_health, max_health)
+	# 缓存 base FOV，杀戮节拍激活时叠加 _fov_extra
+	if camera_3d:
+		_base_fov = camera_3d.fov
 
 func _input(event: InputEvent) -> void:
 	# 隐藏调试热键 Ctrl+Shift+F：放在 _dead/input_locked 检查前，
@@ -273,8 +287,29 @@ func _physics_process(delta: float) -> void:
 	# Handle sliding
 	if sliding:
 		slide_timer -= delta
+		# 战术突进：滑铲期间维持 invuln（每帧刷到 0.1，结束时立即归零，不与正常受击 invuln 冲突）
+		if slide_burst_enabled:
+			_invuln_timer = maxf(_invuln_timer, 0.1)
 		if slide_timer <= 0:
 			sliding = false
+	# 战术突进：出滑铲瞬间触发 weapon_manager.slide_burst_timer = duration（射速 buff）
+	if _was_sliding and not sliding and slide_burst_enabled:
+		var wm_sb: Node = get_tree().get_first_node_in_group("weapon_manager")
+		if wm_sb and "slide_burst_duration" in wm_sb:
+			wm_sb.slide_burst_timer = wm_sb.slide_burst_duration
+	_was_sliding = sliding
+	# 杀戮节拍：combo ≥ 阈值时叠加 combo_speed_bonus 到移速（动态，不污染 base speed_mult）
+	# 同时驱动 FOV 增加（视觉提示），lerp 平滑
+	var wm_combo: Node = get_tree().get_first_node_in_group("wave_manager")
+	var combo_active: bool = wm_combo and "current_combo" in wm_combo and wm_combo.current_combo >= combo_speed_threshold and combo_speed_bonus > 0.0
+	if combo_active:
+		_combo_speed_active = combo_speed_bonus
+	else:
+		_combo_speed_active = 0.0
+	var fov_target: float = COMBO_SPEED_FOV_BONUS if combo_active else 0.0
+	_fov_extra = lerpf(_fov_extra, fov_target, clampf(delta * FOV_LERP_RATE, 0.0, 1.0))
+	if camera_3d and _base_fov > 0.0:
+		camera_3d.fov = _base_fov + _fov_extra
 	
 	# Handle headbob
 	if sprinting:
@@ -335,12 +370,14 @@ func _physics_process(delta: float) -> void:
 		direction = slide_world_direction
 		current_speed = (slide_timer + 0.1) * slide_speed
 		
+	# 杀戮节拍 _combo_speed_active 在 _physics_process 早期算好，叠到 speed_mult 上
+	var total_speed_mult: float = speed_mult * (1.0 + _combo_speed_active)
 	if direction:
-		velocity.x = direction.x * current_speed * speed_mult
-		velocity.z = direction.z * current_speed * speed_mult
+		velocity.x = direction.x * current_speed * total_speed_mult
+		velocity.z = direction.z * current_speed * total_speed_mult
 	else:
-		velocity.x = move_toward(velocity.x, 0, current_speed * speed_mult)
-		velocity.z = move_toward(velocity.z, 0, current_speed * speed_mult)
+		velocity.x = move_toward(velocity.x, 0, current_speed * total_speed_mult)
+		velocity.z = move_toward(velocity.z, 0, current_speed * total_speed_mult)
 		
 	# 击退冲量合成：放在玩家输入设定 velocity 之后，避免被 `velocity.x = dir.x * speed` 覆盖
 	if _knockback.length_squared() > 0.01:

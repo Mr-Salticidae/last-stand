@@ -1,10 +1,12 @@
-[gd_scene load_steps=9 format=3]
+[gd_scene load_steps=11 format=3]
 
 [ext_resource type="Script" path="res://scripts/hud.gd" id="1_hud"]
 [ext_resource type="Script" path="res://scripts/crosshair.gd" id="2_cross"]
 [ext_resource type="Shader" path="res://assets/shaders/damage_vignette.gdshader" id="3_bloodshader"]
 [ext_resource type="Script" path="res://scripts/threat_indicator.gd" id="4_threat"]
 [ext_resource type="PackedScene" path="res://scenes/weapon_bar.tscn" id="5_wbar"]
+[ext_resource type="Script" path="res://scripts/ui/radial_blur_overlay.gd" id="6_radial"]
+[ext_resource type="Shader" path="res://assets/shaders/radial_blur.gdshader" id="7_radialshader"]
 
 [sub_resource type="ShaderMaterial" id="ShaderMat_bloodvig"]
 shader = ExtResource("3_bloodshader")
@@ -19,6 +21,12 @@ shader_parameter/intensity = 0.0
 shader_parameter/blood_color = Color(0.15, 0.75, 0.25, 1)
 shader_parameter/inner_radius = 0.32
 shader_parameter/outer_radius = 0.78
+
+[sub_resource type="ShaderMaterial" id="ShaderMat_radialblur"]
+shader = ExtResource("7_radialshader")
+shader_parameter/intensity = 0.0
+shader_parameter/center_clear_radius = 0.18
+shader_parameter/blur_strength = 0.14
 
 [sub_resource type="StyleBoxFlat" id="HealthBarBG"]
 bg_color = Color(0.05, 0.04, 0.04, 0.7)
@@ -47,6 +55,14 @@ anchor_right = 1.0
 anchor_bottom = 1.0
 mouse_filter = 2
 color = Color(1, 1, 1, 1)
+
+[node name="RadialBlurOverlay" type="ColorRect" parent="."]
+material = SubResource("ShaderMat_radialblur")
+anchor_right = 1.0
+anchor_bottom = 1.0
+mouse_filter = 2
+color = Color(1, 1, 1, 1)
+script = ExtResource("6_radial")
 
 [node name="Crosshair" type="Control" parent="."]
 anchor_right = 1.0

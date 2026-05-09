@@ -56,6 +56,30 @@ const CARDS: Array[Dictionary] = [
 		"rarity": Rarity.LEGENDARY, "max_stack": 1, "base_cost": 2500},
 	{"id": "combo_rage", "name": "战斗狂热", "desc": "连击 ≥10 时伤害 +40%",
 		"rarity": Rarity.LEGENDARY, "max_stack": 1, "base_cost": 2500},
+	# --- v0.3 新稀有 7 张 ---
+	{"id": "crit_chance", "name": "穿甲弹", "desc": "命中 15% 概率造成 ×3 伤害",
+		"rarity": Rarity.RARE, "max_stack": 3, "base_cost": 800},
+	{"id": "weak_spot", "name": "猎手本能", "desc": "击杀同种敌人后对其下次伤害 +50%（最多叠 3 层）",
+		"rarity": Rarity.RARE, "max_stack": 1, "base_cost": 900},
+	{"id": "reload_burst", "name": "战术换弹", "desc": "换弹后下一发开火 ×3 伤害（每 stack 倍率 +1）",
+		"rarity": Rarity.RARE, "max_stack": 2, "base_cost": 800},
+	{"id": "last_round", "name": "底牌", "desc": "弹匣最后 1 发伤害 +200%（每 stack +1 发）",
+		"rarity": Rarity.RARE, "max_stack": 3, "base_cost": 700},
+	{"id": "momentum", "name": "游击战", "desc": "移动中伤害 +10%，静止时 -5%（每 stack 翻倍）",
+		"rarity": Rarity.RARE, "max_stack": 2, "base_cost": 800},
+	{"id": "dash_combo", "name": "杀戮节拍", "desc": "连击 ≥5 时移速 +15%（每 stack 累加）",
+		"rarity": Rarity.RARE, "max_stack": 3, "base_cost": 700},
+	{"id": "stagger", "name": "重型压制", "desc": "命中精英/BOSS 25% 概率打断 0.3s（每 stack 概率+25%、持续+0.1s）",
+		"rarity": Rarity.RARE, "max_stack": 2, "base_cost": 1000},
+	# --- v0.3 新传说 4 张 ---
+	{"id": "berserker", "name": "狂战士", "desc": "血量低于 30% 时所有伤害 +60%",
+		"rarity": Rarity.LEGENDARY, "max_stack": 1, "base_cost": 2500},
+	{"id": "vampiric", "name": "嗜血", "desc": "造成伤害的 5% 转化为治疗，单次击杀回血上限 5",
+		"rarity": Rarity.LEGENDARY, "max_stack": 1, "base_cost": 2500},
+	{"id": "slide_burst", "name": "战术突进", "desc": "滑铲期间无敌 + 滑铲结束后 1.5s 内射速 +40%",
+		"rarity": Rarity.LEGENDARY, "max_stack": 1, "base_cost": 2500},
+	{"id": "chain_kill", "name": "连锁处决", "desc": "1 秒内连续击杀 → 该击杀回 20 弹药 + 短暂无敌 0.5s",
+		"rarity": Rarity.LEGENDARY, "max_stack": 1, "base_cost": 2500},
 ]
 
 # ========== 运行时状态 ==========
@@ -293,6 +317,55 @@ func _apply_effect(id: String) -> void:
 			if wpm:
 				wpm.combo_damage_threshold = 10
 				wpm.combo_damage_bonus += 0.4
+		# --- v0.3 新稀有 ---
+		"crit_chance":
+			if wpm: wpm.crit_chance += 0.15
+		"weak_spot":
+			if wpm: wpm.weak_spot_enabled = true
+		"reload_burst":
+			# 换弹后首发 ×N 伤害：stack 1 = ×3，stack 2 = ×4
+			if wpm:
+				wpm.reload_burst_enabled = true
+				wpm.reload_burst_damage_mult = 2.0 + float(stack_count("reload_burst"))
+		"last_round":
+			# stack 数 = 影响"弹匣最后 N 发"
+			if wpm: wpm.last_round_count = stack_count("last_round")
+		"momentum":
+			# stack 1: +10/-5；stack 2: +20/-10
+			if wpm:
+				var ms: int = stack_count("momentum")
+				wpm.momentum_move_bonus = 0.10 * float(ms)
+				wpm.momentum_static_penalty = 0.05 * float(ms)
+		"dash_combo":
+			# 阈值固定 5；每 stack +15% 移速（叠 3 = +45%）
+			if player:
+				player.combo_speed_threshold = 5
+				player.combo_speed_bonus = 0.15 * float(stack_count("dash_combo"))
+		"stagger":
+			# stack 1: 25%/0.3s; stack 2: 50%/0.4s
+			if wpm:
+				var st: int = stack_count("stagger")
+				wpm.stagger_chance = 0.25 * float(st)
+				wpm.stagger_duration = 0.2 + 0.1 * float(st)
+		# --- v0.3 新传说 ---
+		"berserker":
+			if wpm: wpm.berserker_active = true
+		"vampiric":
+			if wpm:
+				wpm.vampiric_rate = 0.05
+				wpm.vampiric_cap_per_kill = 5.0
+		"slide_burst":
+			if wpm:
+				wpm.slide_burst_active = true
+				wpm.slide_burst_duration = 1.5
+				wpm.slide_burst_fire_rate_bonus = 0.4
+			if player: player.slide_burst_enabled = true
+		"chain_kill":
+			if wpm:
+				wpm.chain_kill_active = true
+				wpm.chain_kill_window = 1.0
+				wpm.chain_kill_ammo_refund = 20
+				wpm.chain_kill_invuln = 0.5
 
 func _grant_max_health(player: Node, delta: float) -> void:
 	if player == null:

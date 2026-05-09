@@ -13,6 +13,7 @@ size = Vector3(2.0, 1.8, 1.0)
 size = Vector3(1.4, 0.9, 1.0)
 
 [node name="Enemy" instance=ExtResource("1_base")]
+enemy_id = "grunt"
 anim_idle = "Idle"
 anim_walk = "Walk"
 anim_run = "Run"

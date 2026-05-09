@@ -56,6 +56,8 @@ var is_reloading: bool = false
 var _shoot_cooldown: float = 0.0
 # 长按空仓时只播一次哔声：每次松开-按下由 manager 调 notify_trigger_pressed() 重置
 var _dry_fire_played_this_press: bool = false
+# 战术换弹 v0.3：换弹完成后置 true，下一发开火消费（每 weapon 自有，不跨武器共享）
+var _reload_burst_pending: bool = false
 
 # ========== 信号 ==========
 # ammo_changed 三参版：current / reserve / 最终 mag 容量（受 mag_size_mult 影响）
@@ -70,6 +72,9 @@ signal kill_confirmed
 signal depleted
 # 每次成功开火（pellet 散射前）发一次：武器附属脚本（如 barrel_spinner）用来驱动加速 / 后坐反馈
 signal shot_fired
+# v0.3 视觉反馈：HUD 监听这两个信号触发屏幕闪光（暴伤瞬间反馈）
+signal reload_burst_consumed   # 战术换弹首发触发（白闪）
+signal last_round_fired         # 弹匣最后 N 发开火（橙闪）
 
 func _ready() -> void:
 	# 从 manager 拿共享的 raycast 引用
@@ -134,13 +139,18 @@ func try_shoot() -> bool:
 		return false
 
 	current_ammo -= 1
-	# 冷却：基础 fire_rate × 倍率；杀戮狂热期间进一步缩短
+	# 冷却：基础 fire_rate × 倍率；杀戮狂热 / 战术换弹 / 战术突进 期间进一步缩短
 	var fire_rate_mult: float = _buff("fire_rate_mult", 1.0)
 	var kill_rage_timer: float = _buff("kill_rage_timer", 0.0)
 	var kill_rage_fr_bonus: float = _buff("kill_rage_fire_rate_bonus", 0.0)
 	var cooldown: float = fire_rate * fire_rate_mult
 	if kill_rage_timer > 0.0 and kill_rage_fr_bonus > 0.0:
 		cooldown /= (1.0 + kill_rage_fr_bonus)
+	# 战术突进：出滑铲后窗口期内射速 buff
+	var sb_timer: float = _buff("slide_burst_timer", 0.0)
+	var sb_bonus: float = _buff("slide_burst_fire_rate_bonus", 0.0)
+	if sb_timer > 0.0 and sb_bonus > 0.0:
+		cooldown /= (1.0 + sb_bonus)
 	_shoot_cooldown = cooldown
 	AudioManager.play_shot(weapon_id)
 
@@ -157,8 +167,18 @@ func try_shoot() -> bool:
 	# 散弹枪 / 多 pellet 武器：每颗独立散布锥 + 独立伤害结算
 	var spread_mult: float = _buff("spread_mult", 1.0)
 	var effective_spread: float = bullet_spread_deg * spread_mult
+	# 开火前快照（_fire_pellet 多次调用都会读到同一份 pending / last_round 状态）
+	var was_reload_burst: bool = _reload_burst_pending
+	var lr_count: int = int(_buff("last_round_count", 0))
+	var was_last_round: bool = lr_count > 0 and current_ammo < lr_count
 	for p in pellet_count:
 		_fire_pellet(effective_spread)
+	# 战术换弹 pending flag：一次开火（含散弹多 pellet）算 1 发，开完即消费 + 通知 HUD
+	if was_reload_burst:
+		_reload_burst_pending = false
+		reload_burst_consumed.emit()
+	if was_last_round:
+		last_round_fired.emit()
 
 	ammo_changed.emit(current_ammo, reserve_ammo, max_ammo())
 
@@ -212,7 +232,7 @@ func _fire_pellet(effective_spread: float) -> void:
 	if ammo_save_chance > 0.0 and randf() < ammo_save_chance:
 		current_ammo = mini(current_ammo + 1, max_ammo())
 
-	# 伤害计算：base * damage_mult × (elite bonus) × (combo bonus) × (headshot bonus)
+	# 伤害计算：base * damage_mult × (各种 mult)
 	var damage_mult: float = _buff("damage_mult", 1.0)
 	var elite_damage_bonus: float = _buff("elite_damage_bonus", 0.0)
 	var combo_damage_threshold: int = int(_buff("combo_damage_threshold", 9999))
@@ -220,6 +240,37 @@ func _fire_pellet(effective_spread: float) -> void:
 	var headshot_bonus: float = _buff("headshot_bonus", 0.0)
 
 	var total_damage: float = damage * damage_mult
+	# v0.3 新卡 mult ↓
+	# 穿甲弹：暴击概率（注：try_shoot 已扣 1 弹，current_ammo 是开火后值）
+	var crit_chance: float = _buff("crit_chance", 0.0)
+	if crit_chance > 0.0 and randf() < crit_chance:
+		total_damage *= 3.0
+	# 底牌：开火后 current_ammo < last_round_count 即触发（last_round_count=1 → 最后一发；=2 → 最后两发）
+	var last_round_count: int = int(_buff("last_round_count", 0))
+	if last_round_count > 0 and current_ammo < last_round_count:
+		total_damage *= 3.0
+	# 游击战：玩家移动 +bonus，静止 -penalty
+	var momentum_move_bonus: float = _buff("momentum_move_bonus", 0.0)
+	var momentum_static_penalty: float = _buff("momentum_static_penalty", 0.0)
+	if (momentum_move_bonus > 0.0 or momentum_static_penalty > 0.0) and _player:
+		var v_xz: float = Vector2(_player.velocity.x, _player.velocity.z).length()
+		if v_xz > 0.5:
+			total_damage *= (1.0 + momentum_move_bonus)
+		else:
+			total_damage *= (1.0 - momentum_static_penalty)
+	# 狂战士：玩家血量比例 < 30% 时伤害 +60%
+	var berserker_active: bool = _buff("berserker_active", false)
+	if berserker_active and _player and "current_health" in _player and "max_health" in _player:
+		if _player.max_health > 0.0 and _player.current_health / _player.max_health < 0.3:
+			total_damage *= 1.6
+	# 猎手本能：按 enemy_id 累计击杀加伤
+	var weak_spot_enabled: bool = _buff("weak_spot_enabled", false)
+	if weak_spot_enabled and _manager and target_enemy and "enemy_id" in target_enemy:
+		var ws_kills: Dictionary = _manager.weak_spot_kills
+		var ws_stacks: int = int(ws_kills.get(target_enemy.enemy_id, 0))
+		if ws_stacks > 0:
+			total_damage *= (1.0 + 0.5 * float(ws_stacks))
+	# v0.3 新卡 mult ↑
 	if elite_damage_bonus > 0.0 and target_enemy and _is_special_enemy(target_enemy):
 		total_damage *= (1.0 + elite_damage_bonus)
 	if combo_damage_bonus > 0.0 and _get_combo() >= combo_damage_threshold:
@@ -227,6 +278,19 @@ func _fire_pellet(effective_spread: float) -> void:
 	# 爆头额外倍率：hitbox 自身已经乘 damage_multiplier(HEADSHOT_BASE_MULT)，这里补乘 headshot_bonus 分量
 	if is_headshot and headshot_bonus > 0.0:
 		total_damage *= (HEADSHOT_BASE_MULT + headshot_bonus) / HEADSHOT_BASE_MULT
+	# 战术换弹：换弹后下一发开火吃 ×N 暴伤（消费 pending flag）
+	# 注意：散弹枪 _fire_pellet 一次开火多次调用 → 多 pellet 都吃这个 buff，因为 flag 只在第一发被消费
+	# 但散弹一次开火逻辑上算 1 发，所以"多 pellet 都吃 mult"才符合卡描述（"换弹后下一发开火"）
+	# 解决：让 try_shoot 而非 _fire_pellet 消费 flag。这里只读不消费，try_shoot 末尾消费
+	if _reload_burst_pending:
+		var rb_mult: float = _buff("reload_burst_damage_mult", 0.0)
+		if rb_mult > 1.0:
+			total_damage *= rb_mult
+	# 重型压制：命中精英/BOSS 概率打断（伤害判定前后都行，这里放伤害前免得 stagger 死的怪）
+	var stagger_chance: float = _buff("stagger_chance", 0.0)
+	if stagger_chance > 0.0 and target_enemy and _is_special_enemy(target_enemy):
+		if target_enemy.has_method("stagger") and randf() < stagger_chance:
+			target_enemy.stagger(_buff("stagger_duration", 0.0))
 	collider.take_damage(total_damage)
 
 	# 只在 "这一发把它打死" 时发 kill，否则发 hit / headshot
@@ -248,6 +312,31 @@ func _fire_pellet(effective_spread: float) -> void:
 			_player.heal(kill_heal_amount)
 		if kill_rage_duration > 0.0 and _manager:
 			_manager.set("kill_rage_timer", kill_rage_duration)
+		# v0.3 新卡 kill 触发 ↓
+		# 嗜血：伤害 X% 转治疗，单次回血上限封顶
+		var vampiric_rate: float = _buff("vampiric_rate", 0.0)
+		if vampiric_rate > 0.0 and _player and _player.has_method("heal"):
+			var vampiric_cap: float = _buff("vampiric_cap_per_kill", 9999.0)
+			_player.heal(minf(total_damage * vampiric_rate, vampiric_cap))
+		# 连锁处决：上次击杀 X 秒内再击杀 → 回弹 + 短暂无敌
+		var chain_active: bool = _buff("chain_kill_active", false)
+		if chain_active and _manager:
+			var now_t: float = Time.get_ticks_msec() / 1000.0
+			var last_t: float = float(_manager.get("_last_kill_time"))
+			var window: float = _buff("chain_kill_window", 0.0)
+			if now_t - last_t <= window:
+				var refund: int = int(_buff("chain_kill_ammo_refund", 0))
+				current_ammo = mini(current_ammo + refund, max_ammo())
+				ammo_changed.emit(current_ammo, reserve_ammo, max_ammo())
+				var iv: float = _buff("chain_kill_invuln", 0.0)
+				if _player and "_invuln_timer" in _player:
+					_player._invuln_timer = maxf(_player._invuln_timer, iv)
+			_manager.set("_last_kill_time", now_t)
+		# 猎手本能：按敌种累计击杀（cap 在 manager 内部）
+		if _manager and target_enemy and "enemy_id" in target_enemy:
+			if _manager.has_method("record_weak_spot_kill"):
+				_manager.record_weak_spot_kill(target_enemy.enemy_id)
+		# v0.3 新卡 kill 触发 ↑
 	elif not was_dead:
 		if is_headshot:
 			headshot_confirmed.emit()
@@ -298,6 +387,9 @@ func _finish_reload() -> void:
 	is_reloading = false
 	ammo_changed.emit(current_ammo, reserve_ammo, max_ammo())
 	reload_finished.emit()
+	# 战术换弹：装弹完成 → 下一发开火 ×N 伤害（"无脑泼水"反对策：连发武器只是 1 发奖励，单发武器价值最大化）
+	if _buff("reload_burst_enabled", false):
+		_reload_burst_pending = true
 
 # 击杀瞬间 0.08s 慢动作（Engine.time_scale=0.3），Doom / Warframe 风格肉感反馈
 # 用 ignore_time_scale=true 的 timer 确保在 time_scale 缩放期间计时准确

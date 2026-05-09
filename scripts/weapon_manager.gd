@@ -60,6 +60,43 @@ var kill_rage_timer: float = 0.0        # 杀戮狂热剩余生效时间（weapo
 var combo_damage_threshold: int = 9999  # 战斗狂热：combo ≥ 此值触发伤害加成
 var combo_damage_bonus: float = 0.0     # 战斗狂热伤害加成（0.4 = +40%）
 var elite_damage_bonus: float = 0.0     # 精英猎手：对 elite/boss 伤害加成
+# ----- v0.3 新卡 buff -----
+var crit_chance: float = 0.0            # 穿甲弹：命中暴击概率（每 stack +0.15）
+const CRIT_DAMAGE_MULT: float = 3.0     # 穿甲弹暴击倍率（固定 ×3）
+var weak_spot_enabled: bool = false     # 猎手本能：是否启用按 enemy_id 累计加伤
+var weak_spot_kills: Dictionary = {}    # enemy_id -> int 击杀计数（cap WEAK_SPOT_MAX_STACKS）
+const WEAK_SPOT_PER_STACK: float = 0.5  # 每层 +50% 伤害
+const WEAK_SPOT_MAX_STACKS: int = 3
+var reload_burst_enabled: bool = false  # 战术换弹：换弹后下一发暴伤
+var reload_burst_damage_mult: float = 0.0  # 该暴伤倍率（stack 1 = 3.0, stack 2 = 4.0）
+var last_round_count: int = 0           # 底牌：弹匣最后 N 发触发暴伤（每 stack +1）
+const LAST_ROUND_DAMAGE_MULT: float = 3.0  # 底牌伤害倍率
+var momentum_move_bonus: float = 0.0    # 游击战：移动中伤害加成
+var momentum_static_penalty: float = 0.0  # 游击战：静止伤害惩罚
+var stagger_chance: float = 0.0         # 重型压制：命中精英/BOSS 触发概率（每 stack +0.25）
+var stagger_duration: float = 0.0       # 重型压制：打断持续秒数（每 stack +0.1，初始 0.3）
+# 传说
+var berserker_active: bool = false      # 狂战士：血量 < 0.3 时伤害 +60%
+const BERSERKER_HP_THRESHOLD: float = 0.3
+const BERSERKER_DAMAGE_MULT: float = 1.6
+var vampiric_rate: float = 0.0          # 嗜血：伤害的 X% 转化为治疗
+var vampiric_cap_per_kill: float = 0.0  # 嗜血单次回血上限（防极限档低血杂兵滚雪球）
+var slide_burst_active: bool = false    # 战术突进：滑铲无敌 + 出滑铲射速 buff
+var slide_burst_duration: float = 0.0   # 出滑铲后射速 buff 持续秒数
+var slide_burst_fire_rate_bonus: float = 0.0  # 出滑铲后射速加成
+var slide_burst_timer: float = 0.0      # 当前剩余 buff 秒数（player 出滑铲时刷新）
+var chain_kill_active: bool = false     # 连锁处决：1 秒内连杀回弹 + 短暂无敌
+var chain_kill_window: float = 0.0
+var chain_kill_ammo_refund: int = 0
+var chain_kill_invuln: float = 0.0
+var _last_kill_time: float = -INF       # 上次击杀时刻（chain_kill 用）
+
+# weapon.gd 击杀同种敌人时调用，封装 stack cap 逻辑（避免 weapon 引用 const）
+func record_weak_spot_kill(eid: String) -> void:
+	if not weak_spot_enabled or eid == "":
+		return
+	var stacks: int = int(weak_spot_kills.get(eid, 0))
+	weak_spot_kills[eid] = mini(stacks + 1, WEAK_SPOT_MAX_STACKS)
 
 func _ready() -> void:
 	add_to_group("weapon_manager")
@@ -118,6 +155,9 @@ func _process(delta: float) -> void:
 	# 杀戮狂热计时器（所有武器共享）
 	if kill_rage_timer > 0.0:
 		kill_rage_timer -= delta
+	# 战术突进 buff timer（所有武器共享；战术换弹改用 weapon 自身的 _reload_burst_pending）
+	if slide_burst_timer > 0.0:
+		slide_burst_timer -= delta
 
 	if current_weapon == null:
 		return
