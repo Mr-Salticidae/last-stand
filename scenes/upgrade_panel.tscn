@@ -354,6 +354,25 @@ icon = "✕"
 cn_label = "锁定"
 en_label = "LOCK"
 
+[node name="RefreshButton" type="Control" parent="Center/Panel"]
+custom_minimum_size = Vector2(460, 72)
+layout_mode = 1
+anchors_preset = 7
+anchor_left = 0.5
+anchor_top = 1.0
+anchor_right = 0.5
+anchor_bottom = 1.0
+offset_left = -470.0
+offset_top = -98.0
+offset_right = -10.0
+offset_bottom = -26.0
+focus_mode = 2
+mouse_default_cursor_shape = 2
+script = ExtResource("3_btn")
+code = "RR"
+cn_label = "刷新"
+en_label = "REROLL [100 CR]"
+
 [node name="ContinueButton" type="Control" parent="Center/Panel"]
 custom_minimum_size = Vector2(460, 72)
 layout_mode = 1
@@ -362,9 +381,9 @@ anchor_left = 0.5
 anchor_top = 1.0
 anchor_right = 0.5
 anchor_bottom = 1.0
-offset_left = -230.0
+offset_left = 10.0
 offset_top = -98.0
-offset_right = 230.0
+offset_right = 470.0
 offset_bottom = -26.0
 focus_mode = 2
 mouse_default_cursor_shape = 2

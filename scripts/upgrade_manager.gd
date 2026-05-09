@@ -7,6 +7,10 @@ extends Node
 # ========== 稀有度 ==========
 enum Rarity { COMMON, RARE, LEGENDARY }
 
+# ========== 商店刷新 ==========
+# 每波刷新成本递增（100→200→400→800…），下波重置；防止 currency 溢出时无限刷传说
+const REROLL_BASE_COST: int = 100
+
 # ========== 卡池（P0 共 19 张） ==========
 # 字段：id / name / desc / rarity / max_stack / base_cost
 # 价格 = base_cost * pow(1.4, 已叠层数)
@@ -58,12 +62,14 @@ const CARDS: Array[Dictionary] = [
 var stacks: Dictionary = {}       # id -> int 已叠层数
 var locked_ids: Array[String] = []  # 当前面板锁定的 id（不参与 reroll）
 var current_draw: Array[String] = []  # 当前面板的 3 张 id
-var purchased_this_round: Array[String] = []  # 本波已购买的 id，draw_cards 时清空
+var purchased_this_round: Array[String] = []  # 本波已购买的 id，prepare_new_round() 清空
+var reroll_count: int = 0  # 本波已刷新次数，prepare_new_round() 归零
 # 全局 buff：由 enemy.gd 读取
 var drop_chance_bonus: float = 0.0
 
 signal draw_refreshed                 # 抽卡后通知面板刷新 UI
 signal card_purchased(id: String)     # 买到一张 → 刷新单张 UI（锁按钮状态、价格）
+signal rerolled                       # 商店刷新成功 → 面板更新刷新按钮成本/可点态
 
 # ========== API ==========
 # 每次场景重载 / 回主菜单都必须 reset，否则死亡重开会继承上局升级
@@ -72,7 +78,14 @@ func reset() -> void:
 	locked_ids.clear()
 	current_draw.clear()
 	purchased_this_round.clear()
+	reroll_count = 0
 	drop_chance_bonus = 0.0
+
+# 进入新一波商店前调：清"本波已购"标记 + 重置刷新计数
+# 与 draw_cards 解耦，让 reroll 时不会清掉 purchased_this_round（防止刷出已买卡又重买）
+func prepare_new_round() -> void:
+	purchased_this_round.clear()
+	reroll_count = 0
 
 func get_card(id: String) -> Dictionary:
 	for c in CARDS:
@@ -106,31 +119,46 @@ func toggle_lock(id: String) -> void:
 	else:
 		locked_ids.append(id)
 
-# 波次结束时调：保留锁定的 id，其余从池内重新抽取
-# wave 越大，稀有/传说权重越高
+# 抽卡：保留锁定的 id 在 *原槽位*，其余从池内重新抽取（wave 越大稀有/传说权重越高）
+# 不清 purchased_this_round / reroll_count（那由 prepare_new_round() 管），
+# 这样 reroll 复用本函数时不会让"本波已购"卡再次进池被重买
+# 锁定槽位保留：reroll 时玩家锁定的中间卡不能"跳到第 1 位"，否则视觉像被换了
 func draw_cards(wave: int) -> Array[String]:
-	# 新一波次开始：清空"本波已购买"标记
-	purchased_this_round.clear()
-	var new_draw: Array[String] = []
-	# 保留锁定且未叠满的
+	# 清理已叠满的锁定 id（lock 没意义了）
 	for id in locked_ids.duplicate():
 		if is_maxed(id):
 			locked_ids.erase(id)
-		else:
-			new_draw.append(id)
-	# 剩余槽位从未叠满 && 不在当前面板的卡池里按权重抽
+	# 准备 3 个槽位（"" 表示空待抽）
+	var slots: Array[String] = ["", "", ""]
+	# 步骤 1：上一轮 current_draw 中"被锁"的，按 *原槽位* 保留
+	for i in mini(current_draw.size(), 3):
+		var pid: String = current_draw[i]
+		if pid in locked_ids:
+			slots[i] = pid
+	# 步骤 2：剩余空槽从未叠满 && 本波未购 && 已在槽位的卡池里按权重抽
 	var pool: Array = []
 	for c in CARDS:
 		if is_maxed(c.id):
 			continue
-		if c.id in new_draw:
+		if is_purchased_this_round(c.id):
+			continue
+		if c.id in slots:
 			continue
 		pool.append(c)
 	var weights: Dictionary = _compute_rarity_weights(wave)
-	while new_draw.size() < 3 and not pool.is_empty():
+	for i in 3:
+		if slots[i] != "":
+			continue
+		if pool.is_empty():
+			break
 		var picked: Dictionary = _weighted_pick(pool, weights)
-		new_draw.append(picked.id)
+		slots[i] = picked.id
 		pool.erase(picked)
+	# 紧凑化：pool 不足导致的空槽去掉（render 端按 size() 隐藏多余槽位）
+	var new_draw: Array[String] = []
+	for s in slots:
+		if s != "":
+			new_draw.append(s)
 	current_draw = new_draw
 	draw_refreshed.emit()
 	return new_draw
@@ -152,6 +180,37 @@ func _weighted_pick(pool: Array, rarity_weights: Dictionary) -> Dictionary:
 		if r <= 0.0:
 			return c
 	return pool.back()
+
+# 当前刷新成本：100 * 2^reroll_count → 100 / 200 / 400 / 800 / 1600 …
+func get_reroll_cost() -> int:
+	return REROLL_BASE_COST * (1 << reroll_count)
+
+# 卡池是否还有可换出的新卡（pool 空 → 刷新无意义，按钮应禁用）
+# 与 draw_cards 的 pool 构造规则保持一致：未叠满 + 本波未购 + 不在当前面板
+func can_reroll() -> bool:
+	for c in CARDS:
+		if is_maxed(c.id):
+			continue
+		if is_purchased_this_round(c.id):
+			continue
+		if c.id in current_draw:
+			continue
+		return true
+	return false
+
+# 商店刷新：扣 currency → 复用 draw_cards 重抽 → reroll_count++
+# 返回 true=刷新成功；false=钱不够
+func try_reroll(wave: int) -> bool:
+	var cost: int = get_reroll_cost()
+	var wm: Node = get_tree().get_first_node_in_group("wave_manager")
+	if wm == null or int(wm.currency) < cost:
+		return false
+	wm.currency -= cost
+	wm.currency_changed.emit(wm.currency)
+	reroll_count += 1
+	draw_cards(wave)
+	rerolled.emit()
+	return true
 
 # 返回 true=购买成功并已应用效果；false=钱不够 / 已叠满 / 本波已买
 func try_purchase(id: String) -> bool:

@@ -10,11 +10,13 @@ signal panel_closed
 @onready var score_label: Label = $Center/Panel/ScoreLabel
 @onready var cards_hbox: HBoxContainer = $Center/Panel/CardsHBox
 @onready var continue_btn: ChamferButton = $Center/Panel/ContinueButton
+@onready var refresh_btn: ChamferButton = $Center/Panel/RefreshButton
 @onready var card_slots: Array[Control] = [
 	$Center/Panel/CardsHBox/Card0,
 	$Center/Panel/CardsHBox/Card1,
 	$Center/Panel/CardsHBox/Card2,
 ]
+var card_sweeps: Array[SweepOverlay] = []
 
 # 稀有度染色（设计 palette 里 RED/CREAM/ORANGE 系，蓝色保留作功能区分，跨色系最直观）
 const RARITY_COLORS: Dictionary = {
@@ -43,12 +45,17 @@ func _ready() -> void:
 	# 暂停时仍响应输入 / 渲染
 	process_mode = Node.PROCESS_MODE_ALWAYS
 	continue_btn.pressed.connect(_on_continue_pressed)
+	refresh_btn.pressed.connect(_on_refresh_pressed)
 	for i in card_slots.size():
 		var slot: Control = card_slots[i]
 		var buy_btn: SecondaryButton = slot.get_node("BuyButton")
 		var lock_btn: SecondaryButton = slot.get_node("LockButton")
 		buy_btn.pressed.connect(_on_buy_pressed.bind(i))
 		lock_btn.pressed.connect(_on_lock_pressed.bind(i))
+		# reroll 扫光蒙版（运行时挂到 slot 上，z_index=10 盖在内容之上）
+		var sweep := SweepOverlay.new()
+		slot.add_child(sweep)
+		card_sweeps.append(sweep)
 	# 订阅 score 变化实时刷新按钮状态（买完后余额不够的灰掉）
 	UpgradeManager.card_purchased.connect(_on_card_purchased)
 
@@ -60,7 +67,8 @@ func show_panel(wave_num: int) -> void:
 	if _player and "input_locked" in _player:
 		_player.input_locked = true
 	Input.set_mouse_mode(Input.MOUSE_MODE_VISIBLE)
-	# 抽卡 → 刷新 UI
+	# 进入新一波商店：先重置波次状态（清"本波已购"+ 刷新计数归零），再抽卡
+	UpgradeManager.prepare_new_round()
 	UpgradeManager.draw_cards(wave_num)
 	_refresh_all()
 	visible = true
@@ -78,6 +86,17 @@ func _refresh_all() -> void:
 		else:
 			# 可选卡不足 3 张时隐藏多余槽位
 			slot.visible = false
+	_refresh_reroll_button(currency)
+
+func _refresh_reroll_button(currency: int) -> void:
+	var cost: int = UpgradeManager.get_reroll_cost()
+	# pool 空（19 张卡都已叠满 / 已买 / 已在面板）时禁用，文案区分原因便于玩家理解
+	if not UpgradeManager.can_reroll():
+		refresh_btn.en_label = "POOL EMPTY"
+		refresh_btn.disabled = true
+	else:
+		refresh_btn.en_label = "REROLL [%d CR]" % cost
+		refresh_btn.disabled = currency < cost
 
 func _render_card_slot(slot: Control, card_id: String) -> void:
 	var card: Dictionary = UpgradeManager.get_card(card_id)
@@ -164,6 +183,22 @@ func _flash_card(slot: Control, card: Dictionary) -> void:
 	tween.tween_property(slot, "border_color", rarity_color, 0.10)
 	tween.tween_property(slot, "border_color", flash_color, 0.08)
 	tween.tween_property(slot, "border_color", purchased_color, 0.20)
+
+func _on_refresh_pressed() -> void:
+	AudioManager.play_ui_click()
+	# 记录旧 draw 才能判断"哪些槽位真的换了"，只对换了的播 sweep
+	var prev_draw: Array[String] = UpgradeManager.current_draw.duplicate()
+	if UpgradeManager.try_reroll(_current_wave):
+		_refresh_all()
+		var new_draw: Array[String] = UpgradeManager.current_draw
+		for i in card_slots.size():
+			if i >= new_draw.size() or i >= card_sweeps.size():
+				continue
+			var changed: bool = i >= prev_draw.size() or prev_draw[i] != new_draw[i]
+			if changed:
+				card_sweeps[i].play()
+	# panel 不关，焦点留在按钮上会持续点亮；reroll 后释放焦点（同 [feedback_godot_button_focus_release]）
+	refresh_btn.release_focus()
 
 func _on_continue_pressed() -> void:
 	AudioManager.play_ui_click()
