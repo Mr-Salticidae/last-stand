@@ -54,6 +54,8 @@ var current_ammo: int
 var reserve_ammo: int
 var is_reloading: bool = false
 var _shoot_cooldown: float = 0.0
+# 长按空仓时只播一次哔声：每次松开-按下由 manager 调 notify_trigger_pressed() 重置
+var _dry_fire_played_this_press: bool = false
 
 # ========== 信号 ==========
 # ammo_changed 三参版：current / reserve / 最终 mag 容量（受 mag_size_mult 影响）
@@ -112,13 +114,22 @@ func on_equipped() -> void:
 		shoot_raycast.target_position = Vector3(0, 0, -weapon_range)
 	ammo_changed.emit(current_ammo, reserve_ammo, max_ammo())
 
+# manager 在每次 just_pressed("shoot") 时调用一次，重置空仓哔声 latch
+# 这样连发武器长按只在第一帧播 dry_fire，松开-按下能再次触发
+func notify_trigger_pressed() -> void:
+	_dry_fire_played_this_press = false
+
 # manager 调用。返回 true 表示成功开火
 func try_shoot() -> bool:
 	if is_reloading or _shoot_cooldown > 0.0:
 		return false
 	# 打空自动装弹（玩家尝试开火但弹匣空，且备弹还有）；同时播空仓击发音作听觉反馈
+	# 连发武器（auto_fire）长按空仓会每 fire_rate cd 播一次 → 听起来像长哔；
+	# 用 _dry_fire_played_this_press 锁定，每次松开-按下时由 manager 调 notify_trigger_pressed 重置
 	if current_ammo <= 0:
-		AudioManager.play_dry_fire()
+		if not _dry_fire_played_this_press:
+			AudioManager.play_dry_fire()
+			_dry_fire_played_this_press = true
 		try_reload()
 		return false
 

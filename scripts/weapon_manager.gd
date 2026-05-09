@@ -130,6 +130,9 @@ func _process(delta: float) -> void:
 
 	# 切换动画期间禁开火，但 sway/bob 继续算（避免 0.3s 内画面僵硬感）
 	if not _switching:
+		# 每次按下重置 weapon 的 dry_fire latch（连发武器长按空仓只播一次哔，松开-按下能再触发）
+		if Input.is_action_just_pressed("shoot"):
+			current_weapon.notify_trigger_pressed()
 		if current_weapon.auto_fire:
 			if Input.is_action_pressed("shoot"):
 				current_weapon.try_shoot()
