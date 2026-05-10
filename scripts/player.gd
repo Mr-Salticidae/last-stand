@@ -110,6 +110,9 @@ var combo_speed_bonus: float = 0.0     # 每 stack +0.15
 var _combo_speed_active: float = 0.0   # 每帧根据 combo 动态算出的实际加成
 var slide_burst_enabled: bool = false  # 战术突进：滑铲期间 invuln + 出滑铲触发 wm.slide_burst_timer
 var _was_sliding: bool = false         # 追踪 sliding 上一帧值，用于检测"出滑铲"瞬间
+# v0.3 PR-B 羁绊（synergy_manager.gd 写入）
+var synergy_slide_speed_bonus: float = 0.0   # 闪电战：滑铲速度 +50%
+var synergy_invuln_after_slide: float = 0.0  # 闪电战：滑铲结束后短暂无敌秒数（叠加到 _invuln_timer）
 # v0.3 视觉：杀戮节拍激活时 FOV +5°，lerp 进出
 const COMBO_SPEED_FOV_BONUS: float = 5.0
 const FOV_LERP_RATE: float = 6.0
@@ -297,6 +300,9 @@ func _physics_process(delta: float) -> void:
 		var wm_sb: Node = get_tree().get_first_node_in_group("weapon_manager")
 		if wm_sb and "slide_burst_duration" in wm_sb:
 			wm_sb.slide_burst_timer = wm_sb.slide_burst_duration
+	# 闪电战羁绊：出滑铲瞬间延长无敌（与 slide_burst 解耦，单独条件触发）
+	if _was_sliding and not sliding and synergy_invuln_after_slide > 0.0:
+		_invuln_timer = maxf(_invuln_timer, synergy_invuln_after_slide)
 	_was_sliding = sliding
 	# 杀戮节拍：combo ≥ 阈值时叠加 combo_speed_bonus 到移速（动态，不污染 base speed_mult）
 	# 同时驱动 FOV 增加（视觉提示），lerp 平滑
@@ -368,7 +374,8 @@ func _physics_process(delta: float) -> void:
 	if sliding:
 		# 用世界空间快照而非 transform.basis * input_dir，确保 body 旋转不改变 slide 方向
 		direction = slide_world_direction
-		current_speed = (slide_timer + 0.1) * slide_speed
+		# 闪电战羁绊：滑铲速度 +50%（synergy_slide_speed_bonus 默认 0.0 → 不影响）
+		current_speed = (slide_timer + 0.1) * slide_speed * (1.0 + synergy_slide_speed_bonus)
 		
 	# 杀戮节拍 _combo_speed_active 在 _physics_process 早期算好，叠到 speed_mult 上
 	var total_speed_mult: float = speed_mult * (1.0 + _combo_speed_active)

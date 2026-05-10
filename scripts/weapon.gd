@@ -144,8 +144,13 @@ func try_shoot() -> bool:
 	var kill_rage_timer: float = _buff("kill_rage_timer", 0.0)
 	var kill_rage_fr_bonus: float = _buff("kill_rage_fire_rate_bonus", 0.0)
 	var cooldown: float = fire_rate * fire_rate_mult
-	if kill_rage_timer > 0.0 and kill_rage_fr_bonus > 0.0:
-		cooldown /= (1.0 + kill_rage_fr_bonus)
+	if kill_rage_timer > 0.0:
+		var fr_b: float = kill_rage_fr_bonus
+		# 节拍枪手羁绊：combo>=5 时额外 +20% 射速（常量同 wm.SYNERGY_PACEKEEPER_*）
+		if _buff("synergy_pacekeeper", false) and _get_combo() >= 5:
+			fr_b += 0.20
+		if fr_b > 0.0:
+			cooldown /= (1.0 + fr_b)
 	# 战术突进：出滑铲后窗口期内射速 buff
 	var sb_timer: float = _buff("slide_burst_timer", 0.0)
 	var sb_bonus: float = _buff("slide_burst_fire_rate_bonus", 0.0)
@@ -242,13 +247,23 @@ func _fire_pellet(effective_spread: float) -> void:
 	var total_damage: float = damage * damage_mult
 	# v0.3 新卡 mult ↓
 	# 穿甲弹：暴击概率（注：try_shoot 已扣 1 弹，current_ammo 是开火后值）
-	var crit_chance: float = _buff("crit_chance", 0.0)
+	# 暴风穿透羁绊：crit 概率叠加 synergy_crit_bonus（+0.10）
+	var crit_chance: float = _buff("crit_chance", 0.0) + _buff("synergy_crit_bonus", 0.0)
 	if crit_chance > 0.0 and randf() < crit_chance:
 		total_damage *= 3.0
+		# 暴风穿透羁绊：暴击命中触发 0.2s stagger（任何敌人，不限精英）
+		if _buff("synergy_crit_stagger", false) and target_enemy and target_enemy.has_method("stagger"):
+			target_enemy.stagger(0.2)
 	# 底牌：开火后 current_ammo < last_round_count 即触发（last_round_count=1 → 最后一发；=2 → 最后两发）
+	# 弹匣艺术家羁绊：last_round 触发时也吃 reload_burst_damage_mult（首末双爆）
 	var last_round_count: int = int(_buff("last_round_count", 0))
 	if last_round_count > 0 and current_ammo < last_round_count:
-		total_damage *= 3.0
+		var lr_mult: float = 3.0
+		if _buff("synergy_mag_art", false):
+			var rb_for_lr: float = _buff("reload_burst_damage_mult", 0.0)
+			if rb_for_lr > 1.0:
+				lr_mult *= rb_for_lr
+		total_damage *= lr_mult
 	# 游击战：玩家移动 +bonus，静止 -penalty
 	var momentum_move_bonus: float = _buff("momentum_move_bonus", 0.0)
 	var momentum_static_penalty: float = _buff("momentum_static_penalty", 0.0)
@@ -259,17 +274,23 @@ func _fire_pellet(effective_spread: float) -> void:
 		else:
 			total_damage *= (1.0 - momentum_static_penalty)
 	# 狂战士：玩家血量比例 < 30% 时伤害 +60%
+	# 永恒战神羁绊：阈值 +0.20（30% → 50%）
 	var berserker_active: bool = _buff("berserker_active", false)
 	if berserker_active and _player and "current_health" in _player and "max_health" in _player:
-		if _player.max_health > 0.0 and _player.current_health / _player.max_health < 0.3:
+		var bersk_thresh: float = 0.3 + _buff("synergy_berserker_threshold_bonus", 0.0)
+		if _player.max_health > 0.0 and _player.current_health / _player.max_health < bersk_thresh:
 			total_damage *= 1.6
 	# 猎手本能：按 enemy_id 累计击杀加伤
+	# 死神低语羁绊：weak_spot 触发时额外 ×1.3
 	var weak_spot_enabled: bool = _buff("weak_spot_enabled", false)
 	if weak_spot_enabled and _manager and target_enemy and "enemy_id" in target_enemy:
 		var ws_kills: Dictionary = _manager.weak_spot_kills
 		var ws_stacks: int = int(ws_kills.get(target_enemy.enemy_id, 0))
 		if ws_stacks > 0:
-			total_damage *= (1.0 + 0.5 * float(ws_stacks))
+			var ws_mult: float = 1.0 + 0.5 * float(ws_stacks)
+			if _buff("synergy_reaper_whisper", false):
+				ws_mult *= 1.3
+			total_damage *= ws_mult
 	# v0.3 新卡 mult ↑
 	if elite_damage_bonus > 0.0 and target_enemy and _is_special_enemy(target_enemy):
 		total_damage *= (1.0 + elite_damage_bonus)
@@ -306,17 +327,29 @@ func _fire_pellet(effective_spread: float) -> void:
 			AudioManager.play_headshot()
 		_do_hit_pause()
 		# 升级系统：击杀回血 + 杀戮狂热刷新计时（写到 manager，所有武器共享）
-		var kill_heal_amount: float = _buff("kill_heal_amount", 0.0)
+		# 死神之舞羁绊：kill_heal +3
+		var kill_heal_amount: float = _buff("kill_heal_amount", 0.0) + _buff("synergy_kill_heal_bonus", 0.0)
 		var kill_rage_duration: float = _buff("kill_rage_duration", 0.0)
 		if kill_heal_amount > 0.0 and _player and _player.has_method("heal"):
 			_player.heal(kill_heal_amount)
 		if kill_rage_duration > 0.0 and _manager:
-			_manager.set("kill_rage_timer", kill_rage_duration)
+			# 节拍枪手羁绊：combo>=5 时 kill_rage 持续 ×1.66
+			var krd: float = kill_rage_duration
+			if _buff("synergy_pacekeeper", false) and _get_combo() >= 5:
+				krd *= 1.66
+			_manager.set("kill_rage_timer", krd)
+		# 死神领域羁绊：combo>=10 时所有击杀回 10 弹 + 刷 kill_rage_timer（即使没买 kill_rage 也能回弹）
+		if _buff("synergy_reaper_realm", false) and _get_combo() >= 10:
+			current_ammo = mini(current_ammo + 10, max_ammo())
+			ammo_changed.emit(current_ammo, reserve_ammo, max_ammo())
+			if kill_rage_duration > 0.0 and _manager:
+				_manager.set("kill_rage_timer", kill_rage_duration)
 		# v0.3 新卡 kill 触发 ↓
 		# 嗜血：伤害 X% 转治疗，单次回血上限封顶
-		var vampiric_rate: float = _buff("vampiric_rate", 0.0)
+		# 永恒战神羁绊：vampiric_rate +0.05；死神之舞羁绊：vampiric_cap +3
+		var vampiric_rate: float = _buff("vampiric_rate", 0.0) + _buff("synergy_vampiric_rate_bonus", 0.0)
 		if vampiric_rate > 0.0 and _player and _player.has_method("heal"):
-			var vampiric_cap: float = _buff("vampiric_cap_per_kill", 9999.0)
+			var vampiric_cap: float = _buff("vampiric_cap_per_kill", 9999.0) + _buff("synergy_vampiric_cap_bonus", 0.0)
 			_player.heal(minf(total_damage * vampiric_rate, vampiric_cap))
 		# 连锁处决：上次击杀 X 秒内再击杀 → 回弹 + 短暂无敌
 		var chain_active: bool = _buff("chain_kill_active", false)

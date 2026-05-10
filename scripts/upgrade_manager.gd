@@ -104,6 +104,9 @@ func reset() -> void:
 	purchased_this_round.clear()
 	reroll_count = 0
 	drop_chance_bonus = 0.0
+	# 羁绊：清空 active 并把已加 buff 退回（autoload 不会销毁，跨局必须手动 reset）
+	if Engine.has_singleton("SynergyManager") or has_node("/root/SynergyManager"):
+		SynergyManager.reset()
 
 # 进入新一波商店前调：清"本波已购"标记 + 重置刷新计数
 # 与 draw_cards 解耦，让 reroll 时不会清掉 purchased_this_round（防止刷出已买卡又重买）
@@ -252,6 +255,9 @@ func try_purchase(id: String) -> bool:
 	# 买完自动解锁这张（锁定的意义是"没买"保留，买了没必要锁）
 	locked_ids.erase(id)
 	_apply_effect(id)
+	# 羁绊检查：每次卡牌叠层后扫描，新激活的会发 synergy_activated 给 HUD toast
+	if has_node("/root/SynergyManager"):
+		SynergyManager.check_active()
 	card_purchased.emit(id)
 	return true
 

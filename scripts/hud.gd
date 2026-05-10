@@ -144,6 +144,10 @@ func _ready() -> void:
 		_wave_manager.combo_changed.connect(_on_combo_changed)
 		wave_label.text = "待命中"
 
+	# v0.3 PR-B 羁绊系统：监听激活信号 → 屏幕中央漂浮 toast
+	if has_node("/root/SynergyManager"):
+		SynergyManager.synergy_activated.connect(_on_synergy_activated)
+
 func _process(delta: float) -> void:
 	if _blood_intensity > 0.0:
 		_blood_intensity = max(0.0, _blood_intensity - BLOOD_FADE_RATE * delta)
@@ -356,6 +360,99 @@ func _show_wave_cleared_toast(wave_num: int) -> void:
 	tween.parallel().tween_property(toast, "offset_top", 35.0, 0.5)
 	tween.parallel().tween_property(toast, "offset_bottom", 115.0, 0.5)
 	tween.tween_callback(toast.queue_free)
+
+# v0.3 PR-B 羁绊激活 toast：屏幕中央偏上漂浮 1.5s
+# "羁绊激活" 副标题 + 名字主标题；稀有金色，史诗紫色
+# 触发于商店面板激活瞬间，UI 仍在显示，所以 toast 用 layer 90 盖在 panel(20) 之上
+# 队列化：同时激活多个羁绊时依次播放，避免 toast 重叠
+var _synergy_toast_queue: Array[String] = []
+var _synergy_toast_playing: bool = false
+
+func _on_synergy_activated(id: String) -> void:
+	_synergy_toast_queue.append(id)
+	_try_play_next_synergy_toast()
+
+func _try_play_next_synergy_toast() -> void:
+	if _synergy_toast_playing or _synergy_toast_queue.is_empty():
+		return
+	var next_id: String = _synergy_toast_queue.pop_front()
+	_synergy_toast_playing = true
+	_show_synergy_toast(next_id)
+
+func _show_synergy_toast(id: String) -> void:
+	var s: Dictionary = SynergyManager.get_synergy(id)
+	if s.is_empty():
+		_synergy_toast_playing = false
+		_try_play_next_synergy_toast()
+		return
+	var is_epic: bool = int(s.tier) == SynergyManager.Tier.EPIC
+	var main_color: Color = Color(0.85, 0.55, 1.0, 1) if is_epic else Color(1.0, 0.78, 0.32, 1)
+	var outline_color: Color = Color(0.20, 0.05, 0.30, 0.95) if is_epic else Color(0.35, 0.18, 0.04, 0.95)
+
+	# 容器：CenterContainer 居中，里面 VBoxContainer 上下两行
+	var holder := Control.new()
+	holder.anchor_left = 0.5
+	holder.anchor_right = 0.5
+	holder.anchor_top = 0.0
+	holder.anchor_bottom = 0.0
+	holder.offset_left = -300
+	holder.offset_right = 300
+	holder.offset_top = 200
+	holder.offset_bottom = 320
+	holder.modulate.a = 0.0
+	holder.mouse_filter = Control.MOUSE_FILTER_IGNORE
+
+	var subtitle := Label.new()
+	subtitle.text = "// 羁绊激活 · SYNERGY UNLOCKED"
+	subtitle.add_theme_font_size_override("font_size", 18)
+	subtitle.add_theme_color_override("font_color", main_color)
+	subtitle.add_theme_color_override("font_outline_color", outline_color)
+	subtitle.add_theme_constant_override("outline_size", 4)
+	subtitle.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	subtitle.anchor_left = 0.0
+	subtitle.anchor_right = 1.0
+	subtitle.anchor_top = 0.0
+	subtitle.anchor_bottom = 0.0
+	subtitle.offset_top = 0
+	subtitle.offset_bottom = 30
+	holder.add_child(subtitle)
+
+	var title := Label.new()
+	title.text = ("★  %s  ★" if is_epic else "◆  %s  ◆") % str(s.name)
+	title.add_theme_font_size_override("font_size", 64)
+	title.add_theme_color_override("font_color", main_color)
+	title.add_theme_color_override("font_outline_color", outline_color)
+	title.add_theme_constant_override("outline_size", 10)
+	title.add_theme_color_override("font_shadow_color", Color(0, 0, 0, 0.65))
+	title.add_theme_constant_override("shadow_offset_y", 4)
+	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	title.anchor_left = 0.0
+	title.anchor_right = 1.0
+	title.anchor_top = 0.0
+	title.anchor_bottom = 0.0
+	title.offset_top = 30
+	title.offset_bottom = 110
+	holder.add_child(title)
+
+	add_child(holder)
+
+	# 入场：淡入 + 上滑（与"区域肃清"toast 风格一致）
+	var tween: Tween = create_tween()
+	tween.tween_property(holder, "modulate:a", 1.0, 0.25)
+	tween.parallel().tween_property(holder, "offset_top", 220.0, 0.30) \
+		.set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+	tween.parallel().tween_property(holder, "offset_bottom", 340.0, 0.30) \
+		.set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+	tween.tween_interval(0.7)
+	tween.tween_property(holder, "modulate:a", 0.0, 0.5)
+	tween.parallel().tween_property(holder, "offset_top", 180.0, 0.5)
+	tween.parallel().tween_property(holder, "offset_bottom", 300.0, 0.5)
+	tween.tween_callback(holder.queue_free)
+	# 队列：当前 toast 播完 → 标记空闲 → 触发下一个
+	tween.tween_callback(func() -> void:
+		_synergy_toast_playing = false
+		_try_play_next_synergy_toast()
+	)
 
 func _on_intermission_started(wave_num: int, seconds: float) -> void:
 	_intermission_next_wave = wave_num

@@ -90,6 +90,25 @@ var chain_kill_window: float = 0.0
 var chain_kill_ammo_refund: int = 0
 var chain_kill_invuln: float = 0.0
 var _last_kill_time: float = -INF       # 上次击杀时刻（chain_kill 用）
+# ----- v0.3 PR-B 羁绊 buff（synergy_manager.gd 写入，weapon.gd 通过 _buff 读取） -----
+# 字段命名 synergy_* 前缀；都是叠加型（多羁绊触发同字段会累加），bool 型走 enable/disable 单触发
+var synergy_crit_bonus: float = 0.0          # 暴风穿透：叠加到 crit_chance（+0.10）
+var synergy_crit_stagger: bool = false       # 暴风穿透：暴击命中触发 0.2s stagger（任何敌人，不限精英）
+var synergy_kill_heal_bonus: float = 0.0     # 死神之舞：叠加到 kill_heal_amount（+3）
+var synergy_vampiric_cap_bonus: float = 0.0  # 死神之舞 / 永恒战神：叠加到 vampiric_cap_per_kill
+var synergy_pacekeeper: bool = false         # 节拍枪手：combo>=5 时 kill_rage 增强（duration ×1.66 + 射速 +20%）
+var synergy_reaper_whisper: bool = false     # 死神低语：weak_spot 触发时额外 ×1.3
+var synergy_mag_art: bool = false            # 弹匣艺术家：last_round 也吃 reload_burst_damage_mult
+var synergy_berserker_threshold_bonus: float = 0.0  # 永恒战神：berserker 阈值 +0.20（0.3→0.5）
+var synergy_vampiric_rate_bonus: float = 0.0 # 永恒战神：叠加 vampiric_rate（+0.05）
+var synergy_reaper_realm: bool = false       # 死神领域：combo>=10 时所有击杀回 10 弹 + 刷 kill_rage_timer
+const SYNERGY_PACEKEEPER_COMBO: int = 5
+const SYNERGY_PACEKEEPER_DURATION_MULT: float = 1.66
+const SYNERGY_PACEKEEPER_FR_BONUS: float = 0.20
+const SYNERGY_REAPER_WHISPER_MULT: float = 1.3
+const SYNERGY_CRIT_STAGGER_DURATION: float = 0.2
+const SYNERGY_REAPER_REALM_COMBO: int = 10
+const SYNERGY_REAPER_REALM_AMMO: int = 10
 
 # weapon.gd 击杀同种敌人时调用，封装 stack cap 逻辑（避免 weapon 引用 const）
 func record_weak_spot_kill(eid: String) -> void:
