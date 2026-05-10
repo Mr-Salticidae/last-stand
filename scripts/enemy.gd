@@ -95,7 +95,7 @@ var _current_anim: String = ""
 # CHASE: 追击玩家，每帧 look_at + 视野检测；丢失视野 → SEARCH
 # SEARCH: 走向最后已知位置，到达后 linger 秒 → IDLE；期间重新看到 → CHASE
 # WINDUP / COOLDOWN: 攻击子循环，独立于感知
-enum State { IDLE, CHASE, SEARCH, WINDUP, COOLDOWN }
+enum State { IDLE, CHASE, SEARCH, WINDUP, COOLDOWN, RETREAT, LUNGE }
 
 # ========== 运行时状态 ==========
 var current_health: float
@@ -145,6 +145,61 @@ const _FLANK_CLOSE_DIST: float = 3.0
 const _SEPARATION_RADIUS: float = 0.9
 const _SEPARATION_STRENGTH: float = 5.0
 
+# v0.4-B B4：Runner 穿插行为参数（仅极限档启用）
+# RUNNER_FLANK_DISTANCE：Runner 目标点 = 玩家身后 N 米
+# RUNNER_FLANK_NAV_TOLERANCE：身后目标 snap 到 navmesh 容差，超过此值视为"身后不可达"fallback
+const RUNNER_FLANK_DISTANCE: float = 3.5
+const RUNNER_FLANK_NAV_TOLERANCE: float = 2.0
+# v0.4-B B1：Grunt 包抄行为参数（仅极限档启用）
+# 每只 grunt _ready 时随机抽 ±120° 内的角度作为"自己的包抄方位"，生命周期内不变
+# 目标点 = 玩家位置 + (玩家面向方向 旋转 grunt_angle) × GRUNT_FLANK_RADIUS
+# ±120° 覆盖玩家前 240° 弧（侧后包入），跟 runner 的"身后 180°"形成层次
+const GRUNT_FLANK_RADIUS: float = 5.0
+const GRUNT_FLANK_ANGLE_MAX_DEG: float = 120.0
+const GRUNT_FLANK_NAV_TOLERANCE: float = 2.5
+var _grunt_flank_angle_rad: float = 0.0  # _ready 时随机分配
+# v0.4-B B3：撤退反扑（brute/elite，仅极限档启用）
+# HP 跌破 50% 时一次性触发：后撤 1s（远离玩家方向，速度 ×0.8）→ CHASE → 下次 windup ×0.7 报复
+const _RETREAT_DURATION: float = 1.0
+const _RETREAT_HP_THRESHOLD: float = 0.5
+const _RETREAT_SPEED_MULT: float = 0.8
+const _RETREAT_WINDUP_SPEEDUP: float = 0.7
+var _has_retreated: bool = false              # 一次 lifetime 只反扑一次
+var _retreat_attack_speedup: bool = false     # RETREAT 结束后下次 windup ×0.7 标志位
+
+# v0.4-B B7：所有近战敌人 LUNGE 冲撞攻击（boss 除外，仅极限档启用）
+# WINDUP 抬手时锁定玩家位置 → strike 不再瞬时点判定，进入 LUNGE 朝锁定方向高速冲 0.3s
+# 玩家 windup 时侧移 → LUNGE 冲到的位置玩家不在 → 落空（必须侧闪而非后退）
+# LUNGE 期间持续检测玩家碰撞，命中后 hit_radius 内即触发伤害
+const _LUNGE_DURATION: float = 0.3
+const _LUNGE_SPEED_MULT: float = 2.5            # 冲撞速度 = move_speed × 2.5
+const _LUNGE_HIT_RADIUS: float = 1.2            # 持续命中检测半径
+var _lunge_direction: Vector3 = Vector3.ZERO
+var _lunge_did_hit: bool = false
+
+# v0.4-B B5-A：Boss phase 系统（仅 boss + 极限档启用）
+# Phase 1 (HP > 60%)：现有近战行为
+# Phase 2 (30% < HP ≤ 60%)：每 10s 召唤 2 只 grunt 增援
+# Phase 3 (HP ≤ 30%)：狂暴——move_speed ×1.4，attack_windup ×0.6
+const BOSS_PHASE2_HP_THRESHOLD: float = 0.6
+const BOSS_PHASE3_HP_THRESHOLD: float = 0.3
+const BOSS_SUMMON_INTERVAL: float = 10.0
+const BOSS_SUMMON_COUNT: int = 2
+const BOSS_SUMMON_RADIUS: float = 3.0           # 召唤位置 = boss 周围 3m
+const BOSS_PHASE3_SPEED_MULT: float = 1.4
+const BOSS_PHASE3_WINDUP_MULT: float = 0.6
+const BOSS_SUMMON_SCENE: PackedScene = preload("res://scenes/enemy_grunt.tscn")
+# v0.4-B B5-B：Boss 远程投射物（防"玩家爬塔顶 boss 够不到"）
+# CD 2s（用户测试反馈频率提高），距离 > 8m 才 fire，起手等 2s 给玩家近战感受
+const BOSS_RANGED_COOLDOWN: float = 2.0
+const BOSS_RANGED_MIN_DISTANCE: float = 8.0
+const BOSS_PROJECTILE_DAMAGE_MULT: float = 0.6
+const BOSS_PROJECTILE_SCENE: PackedScene = preload("res://scenes/boss_projectile.tscn")
+var _boss_phase: int = 1
+var _boss_summon_timer: float = 0.0
+var _boss_phase3_applied: bool = false           # Phase 3 狂暴 buff 已应用标记
+var _boss_ranged_timer: float = BOSS_RANGED_COOLDOWN  # 起手 4s CD（不立刻 fire）
+
 signal died
 
 func _ready() -> void:
@@ -153,6 +208,10 @@ func _ready() -> void:
 	# 每只敌人独立随机侧翼偏移（含符号），让同方向来的多只自然分左/中/右
 	if flank_offset_max > 0.0:
 		_lateral_offset = randf_range(-flank_offset_max, flank_offset_max)
+	# v0.4-B B1：grunt 包抄角度（±120° 内随机抽，整个 lifetime 不变，让 N 只 grunt 自然分布在玩家周围弧上）
+	if enemy_id == "grunt":
+		var max_rad: float = deg_to_rad(GRUNT_FLANK_ANGLE_MAX_DEG)
+		_grunt_flank_angle_rad = randf_range(-max_rad, max_rad)
 
 	# 记录初始朝向作为 IDLE 姿态（world.tscn 里的 transform 决定敌人开局面朝哪）
 	_initial_forward = -global_transform.basis.z
@@ -283,6 +342,24 @@ func _physics_process(delta: float) -> void:
 	to_player.y = 0.0
 	var distance: float = to_player.length()
 
+	# v0.4-B B5-A：Boss Phase 2 召唤计时（与 state 解耦，CHASE/WINDUP/COOLDOWN/RETREAT 都跑）
+	if is_boss and _boss_phase == 2:
+		_boss_summon_timer -= delta
+		if _boss_summon_timer <= 0.0:
+			_summon_grunts(BOSS_SUMMON_COUNT)
+			_boss_summon_timer = BOSS_SUMMON_INTERVAL
+
+	# v0.4-B B5-B：Boss 远程投射物（仅 boss + 极限档）
+	# CHASE/COOLDOWN 中、距离 > 8m、视野通畅时 fire；防"玩家爬塔顶 boss 够不到"
+	# WINDUP/LUNGE/RETREAT 不 fire（专心近战，避免边挥拳边喷球的视觉混乱）
+	if is_boss and _player != null and bool(Settings.get_difficulty_param("enable_advanced_ai", false)):
+		_boss_ranged_timer -= delta
+		if _boss_ranged_timer <= 0.0 and (_state == State.CHASE or _state == State.COOLDOWN):
+			var ranged_dist: float = global_position.distance_to(_player.global_position)
+			if ranged_dist > BOSS_RANGED_MIN_DISTANCE and _can_see_player(true):
+				_fire_ranged_projectile()
+				_boss_ranged_timer = BOSS_RANGED_COOLDOWN
+
 	match _state:
 		State.IDLE:
 			_tick_idle()
@@ -294,6 +371,10 @@ func _physics_process(delta: float) -> void:
 			_tick_windup(delta, distance)
 		State.COOLDOWN:
 			_tick_cooldown(delta)
+		State.RETREAT:
+			_tick_retreat(delta)
+		State.LUNGE:
+			_tick_lunge(delta)
 
 	# 飞行型跳过 navmesh-based stuck detection 和敌人互推（飞行单位无地面约束）
 	if not is_flying:
@@ -478,6 +559,22 @@ func _apply_enemy_separation() -> void:
 # 近身 _FLANK_CLOSE_DIST 内偏移归零，避免最后扑击时绕路
 # 玩家大幅移动（>_LATERAL_REFRESH_DIST）时重新随机偏移方向
 func _compute_chase_target(to_player: Vector3, distance: float) -> Vector3:
+	# v0.4-B B4：Runner 穿插（仅极限档启用），目标 = 玩家身后 3.5m
+	# 近身（<_FLANK_CLOSE_DIST）取消穿插直扑收尾，避免最后扑击时绕路
+	if enemy_id == "runner" and distance >= _FLANK_CLOSE_DIST:
+		if bool(Settings.get_difficulty_param("enable_advanced_ai", false)):
+			var rf_target: Vector3 = _compute_runner_flank_target()
+			if rf_target != Vector3.ZERO:
+				return rf_target
+			# 身后被墙挡 / nav 不可达 → fallback 到下面的标准侧翼逻辑
+	# v0.4-B B1：Grunt 包抄（仅极限档启用），目标 = 玩家周围 5m 圆环上的固定角度位置
+	# 每只 grunt 角度在 _ready 已随机分配（±120°），N 只 grunt 自然分布在 240° 弧上
+	if enemy_id == "grunt" and distance >= _FLANK_CLOSE_DIST:
+		if bool(Settings.get_difficulty_param("enable_advanced_ai", false)):
+			var gf_target: Vector3 = _compute_grunt_flank_target()
+			if gf_target != Vector3.ZERO:
+				return gf_target
+
 	if flank_offset_max <= 0.0 or distance < _FLANK_CLOSE_DIST:
 		return _player.global_position
 	# 刷新偏移：首帧或玩家位置漂移过远
@@ -491,6 +588,46 @@ func _compute_chase_target(to_player: Vector3, distance: float) -> Vector3:
 	to_player_dir = to_player_dir.normalized()
 	var right: Vector3 = Vector3.UP.cross(to_player_dir)
 	return _player.global_position + right * _lateral_offset
+
+# v0.4-B B4：Runner 穿插目标点 = 玩家身后 RUNNER_FLANK_DISTANCE 米
+# 身后向量取 player.global_transform.basis.z（Godot Z+ 是身后，Z- 是前向）
+# 用 NavigationServer 检查目标是否在 navmesh 范围内（超 RUNNER_FLANK_NAV_TOLERANCE 视为不可达 → fallback）
+# 不缓存：玩家朝向变化时让 nav repath 自然处理（_NAV_REPATH_TARGET_DELTA=3m 容差能吸收小幅变化）
+func _compute_runner_flank_target() -> Vector3:
+	if _player == null:
+		return Vector3.ZERO
+	var player_back: Vector3 = _player.global_transform.basis.z
+	player_back.y = 0.0
+	if player_back.length_squared() < 0.001:
+		return Vector3.ZERO
+	player_back = player_back.normalized()
+	var target: Vector3 = _player.global_position + player_back * RUNNER_FLANK_DISTANCE
+	# Snap 到 navmesh 上离 target 最近的点；如果 snap 距 target 太远说明身后是墙/虚空，fallback
+	var map_rid: RID = get_world_3d().navigation_map
+	var snapped: Vector3 = NavigationServer3D.map_get_closest_point(map_rid, target)
+	if snapped.distance_to(target) > RUNNER_FLANK_NAV_TOLERANCE:
+		return Vector3.ZERO
+	return snapped
+
+# v0.4-B B1：Grunt 包抄目标 = 玩家周围圆环固定角度位置
+# 玩家朝向作为基准（-basis.z），向左/右旋转 _grunt_flank_angle_rad 度（_ready 随机分配 ±120°）
+# N 只 grunt 各自独立角度 → 自然分布在玩家前 240° 弧上 → 玩家枪线难以同时覆盖
+# nav_snap 不可达（距离 > tolerance）→ 返回 ZERO 让 caller fallback 到现有 _lateral_offset
+func _compute_grunt_flank_target() -> Vector3:
+	if _player == null:
+		return Vector3.ZERO
+	var player_forward: Vector3 = -_player.global_transform.basis.z
+	player_forward.y = 0.0
+	if player_forward.length_squared() < 0.001:
+		return Vector3.ZERO
+	player_forward = player_forward.normalized()
+	var direction: Vector3 = player_forward.rotated(Vector3.UP, _grunt_flank_angle_rad)
+	var target: Vector3 = _player.global_position + direction * GRUNT_FLANK_RADIUS
+	var map_rid: RID = get_world_3d().navigation_map
+	var snapped: Vector3 = NavigationServer3D.map_get_closest_point(map_rid, target)
+	if snapped.distance_to(target) > GRUNT_FLANK_NAV_TOLERANCE:
+		return Vector3.ZERO
+	return snapped
 
 # 飞行型直线追击：水平方向直奔目标，y 方向由 _physics_process 末尾的高度跟随控制
 # 不走 navmesh = 无视墙壁绕路、无视高低差，能直达 watchtower / 浮岛上的玩家
@@ -640,7 +777,17 @@ func _tick_windup(delta: float, distance: float) -> void:
 			entry[0].albedo_color = ATTACK_TELL_COLOR * pulse + entry[1] * (1.0 - pulse)
 
 	if _state_timer <= 0.0:
-		_strike(distance)
+		# v0.4-B B7：所有近战敌人（boss 除外）改 LUNGE 冲撞，强制玩家"看抬手就侧闪"
+		# boss 仍走 _strike 瞬时点判定（体型大动作慢，Lunge 视觉怪）
+		# 仅极限档启用 LUNGE，其他档位保持原 _strike 逻辑
+		var use_lunge: bool = (
+			not is_boss
+			and bool(Settings.get_difficulty_param("enable_advanced_ai", false))
+		)
+		if use_lunge:
+			_enter_lunge()
+		else:
+			_strike(distance)
 
 func _tick_cooldown(delta: float) -> void:
 	velocity.x = 0.0
@@ -734,10 +881,108 @@ func _receive_alert(player_pos: Vector3) -> void:
 		_state = State.CHASE
 		# 故意不再次 _alert_nearby_enemies() — 切断传播链
 
+# ---------- Boss Phase（B5-A） ----------
+# Phase 切换在 take_damage 末尾调；HP 阈值穿越时单向推进 phase（不能回退）
+# Phase 2 进入时立即召唤一次（满足"刚跌破 60% 立刻看到增援"反馈）
+# Phase 3 进入时立即应用狂暴 buff（move_speed ×1.4 + attack_windup 在 _enter_windup 应用 ×0.6）
+func _check_boss_phase_transition() -> void:
+	if max_health <= 0.0:
+		return
+	var hp_pct: float = current_health / max_health
+	if _boss_phase == 1 and hp_pct <= BOSS_PHASE2_HP_THRESHOLD:
+		_boss_phase = 2
+		_boss_summon_timer = 0.0  # 立刻召唤一次
+	if _boss_phase <= 2 and hp_pct <= BOSS_PHASE3_HP_THRESHOLD:
+		_boss_phase = 3
+		if not _boss_phase3_applied:
+			move_speed *= BOSS_PHASE3_SPEED_MULT
+			_boss_phase3_applied = true
+
+# v0.4-B B5-B：Boss 发射远程投射物
+# 起始位置：boss 头顶（EYE_HEIGHT + 0.3）；目标 = 玩家胸部（PLAYER_TARGET_HEIGHT）
+# 投射物 6 m/s 慢速 + 玩家 sprint 8 m/s 能跑过，但站定 / 后退跑不过（必须侧移闪）
+# 伤害 = attack_damage × 0.6（boss 极限档 50×1.6×1.30×0.6 ≈ 62/发）
+func _fire_ranged_projectile() -> void:
+	if _player == null:
+		return
+	var p: BossProjectile = BOSS_PROJECTILE_SCENE.instantiate() as BossProjectile
+	if p == null:
+		return
+	var spawn_pos: Vector3 = global_position + Vector3.UP * (EYE_HEIGHT + 0.3)
+	var target_pos: Vector3 = _player.global_position + Vector3.UP * PLAYER_TARGET_HEIGHT
+	var to_target: Vector3 = target_pos - spawn_pos
+	get_tree().current_scene.add_child(p)
+	p.global_position = spawn_pos
+	p.set_direction(to_target)
+	# 难度系数：极限档 enemy_damage_mult 1.6 让远程伤害也跟近战一样涨
+	var dmg_mult: float = float(Settings.get_difficulty_param("enemy_damage_mult", 1.0))
+	p.set_damage(attack_damage * dmg_mult * BOSS_PROJECTILE_DAMAGE_MULT)
+	AudioManager.play_enemy_windup(global_position)  # 复用前摇音效作"喷球"提示
+
+# 召唤 N 只 grunt 在 boss 周围圆环上，纳入 wave_manager 的"必须杀完"列表
+# 让 boss 在场期间持续掉血（不只杀 boss 本体），强化 phase 2 压力感
+func _summon_grunts(count: int) -> void:
+	if count <= 0:
+		return
+	var wm: Node = get_tree().get_first_node_in_group("wave_manager")
+	for i in count:
+		var g: Enemy = BOSS_SUMMON_SCENE.instantiate() as Enemy
+		if g == null:
+			continue
+		var angle: float = float(i) / float(count) * TAU + randf_range(-0.3, 0.3)
+		var spawn_offset: Vector3 = Vector3(cos(angle), 0.0, sin(angle)) * BOSS_SUMMON_RADIUS
+		g.transform = global_transform
+		g.global_position = global_position + spawn_offset
+		get_tree().current_scene.add_child(g)
+		# 注册到 wave_manager 让本波 progress 包含召唤的小弟（玩家必须杀完才能过波）
+		if wm and wm.has_method("register_summoned_enemy"):
+			wm.register_summoned_enemy(g)
+
+# ---------- 撤退反扑（B3） ----------
+# 进入 RETREAT 状态：后撤 1s，结束后切 CHASE + 下次 windup ×0.7
+# 让出攻击锁让其他敌人接手，避免 retreat 期间锁位浪费
+func _enter_retreat() -> void:
+	_state = State.RETREAT
+	_state_timer = _RETREAT_DURATION
+	_has_retreated = true
+	_release_attack_lock()
+	velocity.x = 0.0
+	velocity.z = 0.0
+
+# RETREAT tick：朝远离玩家方向直线后撤（不走 navmesh，1s 距离短不易撞墙）
+# timer 到 0 → CHASE，置 _retreat_attack_speedup 让下次 windup 应用 ×0.7
+func _tick_retreat(delta: float) -> void:
+	_state_timer -= delta
+	if _state_timer <= 0.0 or _player == null:
+		_state = State.CHASE
+		_retreat_attack_speedup = true
+		velocity.x = 0.0
+		velocity.z = 0.0
+		return
+	var away: Vector3 = global_position - _player.global_position
+	away.y = 0.0
+	if away.length_squared() < 0.001:
+		velocity.x = 0.0
+		velocity.z = 0.0
+		return
+	away = away.normalized()
+	look_at(global_position + away, Vector3.UP)
+	velocity.x = away.x * move_speed * _RETREAT_SPEED_MULT
+	velocity.z = away.z * move_speed * _RETREAT_SPEED_MULT
+
 # ---------- 攻击 ----------
-func _enter_windup() -> void:
+# v0.4-B B2：from_sync=true 表示由其他敌人同步广播触发，避免无限递归（被同步的不再广播）
+func _enter_windup(from_sync: bool = false) -> void:
 	_state = State.WINDUP
-	_state_timer = attack_windup
+	# v0.4-B B3：撤退反扑后下次 windup ×0.7（更快出招报复）
+	var w: float = attack_windup
+	if _retreat_attack_speedup:
+		w *= _RETREAT_WINDUP_SPEEDUP
+		_retreat_attack_speedup = false
+	# v0.4-B B5-A：Boss Phase 3 狂暴 windup ×0.6（与 retreat speedup 乘法叠加）
+	if is_boss and _boss_phase >= 3:
+		w *= BOSS_PHASE3_WINDUP_MULT
+	_state_timer = w
 	_tell_elapsed = 0.0
 	velocity.x = 0.0
 	velocity.z = 0.0
@@ -747,6 +992,85 @@ func _enter_windup() -> void:
 	# 强制从头播 attack 动画一次，避免 _update_anim 每帧检测 is_playing 误重启
 	_play_anim(anim_attack, true)
 	AudioManager.play_enemy_windup(global_position)
+	# v0.4-B B2：协同攻击同步——通知 attack_range 内同种敌人也 windup
+	# 玩家闪避一个会被另两个同时打中（破"打一只闪一下走"无脑节奏）
+	# max_concurrent_attackers 仍生效（最多同时 3 个 windup），同步只是"换成同帧"
+	if not from_sync and bool(Settings.get_difficulty_param("enable_advanced_ai", false)):
+		_broadcast_sync_windup()
+
+# v0.4-B B2：广播同步 windup 给同种 enemy（在 1.2× attack_range 容差内）
+# 容差 1.2× 让"刚走到边界"的同伴也能搭车一起 windup（差几厘米不算就太苛刻）
+func _broadcast_sync_windup() -> void:
+	if _player == null:
+		return
+	for e in get_tree().get_nodes_in_group("enemy"):
+		if e == self or not (e is Enemy):
+			continue
+		var other: Enemy = e
+		if other._is_dead or other._state != State.CHASE:
+			continue
+		if other.enemy_id != enemy_id:
+			continue  # 只同种敌人同步（grunt 同步 grunt，runner 同步 runner）
+		var pd: float = other.global_position.distance_to(_player.global_position)
+		if pd > other.attack_range * 1.2:
+			continue
+		if other._can_claim_attack_lock():
+			if not _active_attackers.has(other):
+				_active_attackers.append(other)
+			other._enter_windup(true)  # from_sync=true，不再次广播
+
+# v0.4-B B7：进入 LUNGE 冲撞——锁定 windup 末尾时玩家位置，朝该方向高速冲 _LUNGE_DURATION 秒
+# 玩家 windup 期间侧移 → LUNGE 冲到的位置玩家不在 → 落空（迫使侧闪而非后退）
+# 玩家 windup 期间后退 → LUNGE 冲撞距离覆盖到 → 仍命中
+# 玩家 windup 期间站定 → 必命中
+func _enter_lunge() -> void:
+	if _state != State.WINDUP:
+		return
+	# 恢复颜色（同 _strike 开头）+ 释放攻击锁让其他敌人接手
+	if _flash_timer <= 0.0:
+		_restore_colors()
+	_release_attack_lock()
+	# 玩家不在了 → 跳过 lunge 直接 cooldown
+	if _player == null:
+		_state = State.COOLDOWN
+		_state_timer = attack_cooldown + attack_miss_bonus_cooldown
+		return
+	var to_player: Vector3 = _player.global_position - global_position
+	to_player.y = 0.0
+	if to_player.length_squared() < 0.001:
+		_state = State.COOLDOWN
+		_state_timer = attack_cooldown + attack_miss_bonus_cooldown
+		return
+	_lunge_direction = to_player.normalized()
+	_state = State.LUNGE
+	_state_timer = _LUNGE_DURATION
+	_lunge_did_hit = false
+	look_at(global_position + _lunge_direction, Vector3.UP)
+	AudioManager.play_enemy_attack_hit(global_position)  # 复用打击音效作为 lunge 启动音
+
+# LUNGE tick：朝锁定方向高速直线冲 + 持续命中检测
+# 期间不能转向（玩家侧移闪避的关键）；timer 到 0 / 已命中 → COOLDOWN
+func _tick_lunge(delta: float) -> void:
+	_state_timer -= delta
+	# 持续命中检测：玩家进入 _LUNGE_HIT_RADIUS 即触发伤害（每次 lunge 只命中一次）
+	if not _lunge_did_hit and _player != null and _player.has_method("take_damage"):
+		var d: Vector3 = _player.global_position - global_position
+		var height_ok: bool = absf(d.y) <= max_attack_height_diff
+		d.y = 0.0
+		if height_ok and d.length() <= _LUNGE_HIT_RADIUS:
+			_lunge_did_hit = true
+			var dmg_mult: float = float(Settings.get_difficulty_param("enemy_damage_mult", 1.0))
+			_player.take_damage(attack_damage * dmg_mult, self)
+	# Timer 结束 → COOLDOWN（命中省 miss 奖励 cooldown）
+	if _state_timer <= 0.0:
+		_state = State.COOLDOWN
+		_state_timer = attack_cooldown + (0.0 if _lunge_did_hit else attack_miss_bonus_cooldown)
+		velocity.x = 0.0
+		velocity.z = 0.0
+		return
+	# 高速冲撞（不转向）
+	velocity.x = _lunge_direction.x * move_speed * _LUNGE_SPEED_MULT
+	velocity.z = _lunge_direction.z * move_speed * _LUNGE_SPEED_MULT
 
 func _strike(distance: float) -> void:
 	# 守卫：只有 WINDUP 状态才能 strike
@@ -767,7 +1091,10 @@ func _strike(distance: float) -> void:
 		d.y = 0.0
 		actual_dist = d.length()
 
-	var hit: bool = actual_dist <= attack_range and same_layer and _player and _player.has_method("take_damage")
+	# v0.4-B Fix C: strike 距离容差 ×1.25——windup 期间敌人停下不动，玩家走位让 strike MISS
+	# 容差 1.25 让"刚走出 attack_range"也算命中（视觉合理：敌人挥拳手臂能甩 25%）
+	var strike_range: float = attack_range * 1.25
+	var hit: bool = actual_dist <= strike_range and same_layer and _player and _player.has_method("take_damage")
 	if hit:
 		# 难度系数：极限突破 1.6 让敌人伤害成倍提升
 		var dmg_mult: float = float(Settings.get_difficulty_param("enemy_damage_mult", 1.0))
@@ -809,6 +1136,16 @@ func take_damage(amount: float) -> void:
 
 	if current_health <= 0.0:
 		_die()
+	# v0.4-B B3：撤退反扑（brute/elite，仅极限档启用）
+	# 受击后 HP 跌破 50% 一次性触发：后撤 1s + 下次 windup ×0.7 报复
+	# 若已在 RETREAT/WINDUP 中或已反扑过则跳过
+	elif not _has_retreated and bool(Settings.get_difficulty_param("enable_advanced_ai", false)):
+		if (enemy_id == "brute" or enemy_id == "elite") and _state != State.RETREAT:
+			if max_health > 0.0 and current_health / max_health < _RETREAT_HP_THRESHOLD:
+				_enter_retreat()
+	# v0.4-B B5-A：Boss phase 切换（仅 boss + 极限档）
+	if is_boss and not _is_dead and bool(Settings.get_difficulty_param("enable_advanced_ai", false)):
+		_check_boss_phase_transition()
 
 # weapon "重型压制"升级触发：暂时冻结 AI 与移动，正在前摇的攻击被打断
 # 调用方应已确认 is_elite 或 is_boss（普通 grunt 不该被 stagger）

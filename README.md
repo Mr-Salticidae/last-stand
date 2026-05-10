@@ -56,10 +56,10 @@ git clone https://github.com/Mr-Salticidae/last-stand.git
 
 ## 开发状态
 
-当前版本 **v0.3.0** — 卡池扩充 ×3 + 哈迪斯式羁绊系统 + 商店刷新 + 视觉反馈  
+当前版本 **v0.4.0** — 极限档难度大改 + 数值平衡 + AI 行为升级 + Boss 多 phase + 方向感知移速  
 完整更新日志：[GitHub Releases](https://github.com/Mr-Salticidae/last-stand/releases) · [itch.io devlog](https://mr-salticidae.itch.io/last-stand/devlog)
 
-下一版 v0.4 计划：敌人模型替换 + Boss 多模式 + B 站实机视频引流。
+下一版 v0.5 计划：敌人模型美术替换 + B 站实机视频引流。
 
 ## 反馈
 

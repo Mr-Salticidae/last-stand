@@ -15,6 +15,10 @@ var current_speed = 5.0
 const walking_speed = 5.0
 const sprinting_speed = 8.0
 const crouching_speed = 3.0
+# v0.4-A 方向感知速度：前=1.0 / 横=0.85 / 后=0.65（介于 CS 0.51 和三角洲 0.70 之间）
+# 平滑插值（基于 input_dir.y 的前向投影），避免离散切换；后退禁 sprint + 禁滑铲
+const STRAFE_SPEED_MULT: float = 0.85
+const BACKWARD_SPEED_MULT: float = 0.65
 
 # Slide vars
 # slide_world_direction：滑铲方向锁定到世界空间（启动瞬间确定），过程中不随身体旋转变化。
@@ -245,7 +249,8 @@ func _physics_process(delta: float) -> void:
 		# 触发宽容：不严格要求 sprinting=true，只要 current_speed > walking_speed*0.95
 		# （在跑步状态，含松开 sprint 后 lerp 减速窗口）+ 有移动方向就触发，玩家反馈
 		# "滑铲不好用出来"主因是 sprint 必须按住时机太严
-		if current_speed > walking_speed * 0.95 and input_dir != Vector2.ZERO:
+		# v0.4-A 方向感知：滑铲必须前向触发（input.y < 0），后退冲刺禁了滑铲也一并禁
+		if current_speed > walking_speed * 0.95 and input_dir.y < 0.0:
 			sliding = true
 			slide_timer = slide_timer_max
 			slide_world_direction = (transform.basis * Vector3(input_dir.x, 0, input_dir.y)).normalized()
@@ -259,7 +264,9 @@ func _physics_process(delta: float) -> void:
 		
 		standing_collision_shape.disabled = false
 		crouching_collision_shape.disabled = true
-		if Input.is_action_pressed("sprint"):
+		# v0.4-A 方向感知：后退方向（input.y > 0）禁 sprint，玩家想后退快只能掉头跑
+		var can_sprint: bool = input_dir.y <= 0.0
+		if Input.is_action_pressed("sprint") and can_sprint:
 			# Sprinting
 			current_speed = lerp(current_speed, sprinting_speed, delta * lerp_speed)
 			walking = false
@@ -378,7 +385,12 @@ func _physics_process(delta: float) -> void:
 		current_speed = (slide_timer + 0.1) * slide_speed * (1.0 + synergy_slide_speed_bonus)
 		
 	# 杀戮节拍 _combo_speed_active 在 _physics_process 早期算好，叠到 speed_mult 上
-	var total_speed_mult: float = speed_mult * (1.0 + _combo_speed_active)
+	# v0.4-A 方向感知：基于 input.y 的前向投影平滑插值（前 1.0 / 横 0.85 / 后 0.65）
+	# 滑铲期间不应用（slide_world_direction 已锁定瞬间速度，方向感知会跟滑铲方向不一致）
+	var dir_mult: float = 1.0
+	if not sliding:
+		dir_mult = _directional_speed_mult(input_dir)
+	var total_speed_mult: float = speed_mult * (1.0 + _combo_speed_active) * dir_mult
 	if direction:
 		velocity.x = direction.x * current_speed * total_speed_mult
 		velocity.z = direction.z * current_speed * total_speed_mult
@@ -398,6 +410,19 @@ func _physics_process(delta: float) -> void:
 
 # 三次射线检测决定能否攀爬：ledge 顶 → 净空 → 中间墙面
 # 都通过则把玩家 tween 到 ledge 上方
+# v0.4-A 方向感知速度：input_dir.y 范围 -1（前）~ +1（后）
+# 平滑插值：前向投影 = -dir.y → 1.0 = 纯前 / 0.0 = 纯横 / -1.0 = 纯后
+# 输出：前 1.0 → 横 STRAFE_SPEED_MULT → 后 BACKWARD_SPEED_MULT
+# 例：左前 (-1, -1) normalized 后投影 0.707 → 1.0 + (1-0.707)/(1-0)*(0.85-1.0) = 0.96
+func _directional_speed_mult(dir: Vector2) -> float:
+	if dir == Vector2.ZERO:
+		return 1.0
+	var fwd_dot: float = -dir.normalized().y  # 1=纯前, 0=纯横, -1=纯后
+	if fwd_dot >= 0.0:
+		return lerp(STRAFE_SPEED_MULT, 1.0, fwd_dot)
+	else:
+		return lerp(STRAFE_SPEED_MULT, BACKWARD_SPEED_MULT, -fwd_dot)
+
 func _try_mantle() -> void:
 	if mantling or is_on_floor():
 		return

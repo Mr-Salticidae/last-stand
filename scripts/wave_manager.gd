@@ -167,8 +167,11 @@ func _spawn_current_wave() -> void:
 	var count_mult: float = float(Settings.get_difficulty_param("enemy_count_mult", 1.0))
 	var count_raw: float = float(base_enemy_count + (current_wave - 1) * enemy_count_per_wave) * count_mult
 	var count: int = min(int(round(count_raw)), max_enemies_per_wave)
-	var health_tier: int = (current_wave - 1) / health_boost_every_n_waves
-	var health_mult: float = 1.0 + float(health_tier) * health_boost_per_tier
+	# v0.4-A：极限档可 override 节奏；其他档位用 @export 默认值（5 / 0.35）
+	var hb_every: int = int(Settings.get_difficulty_param("health_boost_every_n_waves_override", health_boost_every_n_waves))
+	var hb_per: float = float(Settings.get_difficulty_param("health_boost_per_tier_override", health_boost_per_tier))
+	var health_tier: int = (current_wave - 1) / maxi(hb_every, 1)
+	var health_mult: float = 1.0 + float(health_tier) * hb_per
 
 	wave_started.emit(current_wave, count)
 	AudioManager.play_wave_start()
@@ -226,12 +229,26 @@ func _spawn_at(sp: SpawnPoint, health_mult: float, forced_scene: PackedScene = n
 	# 然后整体乘 difficulty speed_mult（极限突破 1.4 让 runner 超玩家步行）
 	# grunt/brute 在此之上再额外乘 slow_enemy_speed_mult（极限突破 1.4 让慢敌也有压迫）
 	var is_slow_enemy: bool = (scene_to_spawn == enemy_scene or scene_to_spawn == brute_scene)
+	# v0.4-A：极限档 override speed_bonus 周期（默认 3，极限档 2）
+	var sb_every: int = int(Settings.get_difficulty_param("speed_bonus_every_n_waves_override", speed_bonus_every_n_waves))
 	if is_slow_enemy:
-		var speed_tier: int = current_wave / speed_bonus_every_n_waves
+		var speed_tier: int = current_wave / maxi(sb_every, 1)
 		enemy.move_speed += float(speed_tier) * speed_bonus_per_tier
 	enemy.move_speed *= float(Settings.get_difficulty_param("enemy_speed_mult", 1.0))
 	if is_slow_enemy:
 		enemy.move_speed *= float(Settings.get_difficulty_param("slow_enemy_speed_mult", 1.0))
+	# v0.4-A：新机制 - 敌人 attack_damage 随波次 tier 增长（仅极限档启用，dmg_every 默认 9999=禁用）
+	# 与 enemy.gd:773 的 enemy_damage_mult 乘法叠加（base × wave_tier × difficulty_mult）
+	var dmg_every: int = int(Settings.get_difficulty_param("damage_boost_every_n_waves", 9999))
+	var dmg_per: float = float(Settings.get_difficulty_param("damage_boost_per_tier", 0.0))
+	if dmg_every > 0 and dmg_per > 0.0:
+		var dmg_tier: int = (current_wave - 1) / dmg_every
+		enemy.attack_damage *= 1.0 + float(dmg_tier) * dmg_per
+	# v0.4-B 方案1：极限档非 boss 敌人 attack_range +bonus（让 B1 包抄真的能打到溜怪的玩家）
+	# Boss 已有自己的 range（2.5m），不动；其他敌人 1.6 → 2.0
+	var range_bonus: float = float(Settings.get_difficulty_param("attack_range_bonus", 0.0))
+	if range_bonus > 0.0 and not enemy.is_boss:
+		enemy.attack_range += range_bonus
 	# 设 transform 放在 add_child 前，保证 _ready 里读 global_transform 时就是 SpawnPoint 的姿态
 	# （enemy._ready 会记录 _initial_forward = -global_transform.basis.z）
 	enemy.transform = sp.global_transform
@@ -270,6 +287,15 @@ func _pick_enemy_scene() -> PackedScene:
 	if runner_chance > 0.0 and r < brute_chance + runner_chance:
 		return runner_scene
 	return enemy_scene
+
+# v0.4-B B5-A：Boss 召唤增援接口——把召唤的小弟纳入本波 alive 列表
+# 玩家必须杀完召唤的 grunt 才能过波，强化 Phase 2 持续压力（不只杀 boss 本体）
+func register_summoned_enemy(enemy: Enemy) -> void:
+	if enemy == null or _alive_enemies.has(enemy):
+		return
+	enemy.died.connect(_on_enemy_died.bind(enemy))
+	_alive_enemies.append(enemy)
+	wave_progress.emit(_alive_enemies.size())
 
 func _on_enemy_died(enemy) -> void:
 	_alive_enemies.erase(enemy)

@@ -84,6 +84,19 @@ const DIFFICULTY_PROFILES: Array[Dictionary] = [
 		"elite_wave_period": 3,
 		"boss_wave_period": 10,            # 提前 5 波出 boss
 		"health_pack_lifetime": 30.0,      # 血包寿命短，紧迫感与压迫感统一
+		# v0.4-A 数值曲线陡化（朋友测试反馈：v0.3 PR-A1+PR-B 把玩家上限拉高，11-12 波后无双割草）
+		# 仅极限档 override 这几条，新兵/日常档保持 wave_manager.gd @export 默认值
+		"health_boost_every_n_waves_override": 3,    # 5 → 3 波一升 HP tier
+		"health_boost_per_tier_override": 0.50,      # 每 tier +35% → +50%
+		"speed_bonus_every_n_waves_override": 2,     # 3 → 2 波一升 grunt/brute 移速
+		"damage_boost_every_n_waves": 5,             # 新机制：每 5 波敌人 attack_damage +30%
+		"damage_boost_per_tier": 0.30,               # 配合"敌人碰一下要痛"原则（朋友说"敌人碰不到我"AI 是其一，伤害也得保险）
+		# v0.4-B AI 行为升级总开关（仅极限档启用包抄/穿插/协同/撤退反扑等高级 AI）
+		# 朋友是进阶 FPS 玩家反馈，普通玩家档位保持简单 AI
+		"enable_advanced_ai": true,
+		# v0.4-B 方案1.5：极限档非 boss 敌人 attack_range +0.7m（grunt/runner/brute 1.6 → 2.3）
+		# 0.4 测下来玩家仍能溜怪，加大到 0.7 让"挥拳够 2.3m"形成真威胁
+		"attack_range_bonus": 0.7,
 	},
 ]
 const DIFFICULTY_NAMES_CN: Array[String] = ["新兵报到", "日常训练", "极限突破"]

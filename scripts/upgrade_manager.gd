@@ -35,7 +35,7 @@ const CARDS: Array[Dictionary] = [
 	{"id": "heal_boost", "name": "战地医疗", "desc": "血包治疗量 +40%",
 		"rarity": Rarity.COMMON, "max_stack": 3, "base_cost": 250},
 	# --- 稀有（6） ---
-	{"id": "kill_heal", "name": "杀戮回血", "desc": "击杀敌人恢复 5 点生命",
+	{"id": "kill_heal", "name": "杀戮回血", "desc": "击杀敌人恢复 3 点生命",
 		"rarity": Rarity.RARE, "max_stack": 3, "base_cost": 800},
 	{"id": "kill_rage", "name": "杀戮狂热", "desc": "击杀后 3 秒内射速 +30%",
 		"rarity": Rarity.RARE, "max_stack": 2, "base_cost": 800},
@@ -74,11 +74,11 @@ const CARDS: Array[Dictionary] = [
 	# --- v0.3 新传说 4 张 ---
 	{"id": "berserker", "name": "狂战士", "desc": "血量低于 30% 时所有伤害 +60%",
 		"rarity": Rarity.LEGENDARY, "max_stack": 1, "base_cost": 2500},
-	{"id": "vampiric", "name": "嗜血", "desc": "造成伤害的 5% 转化为治疗，单次击杀回血上限 5",
+	{"id": "vampiric", "name": "嗜血", "desc": "造成伤害的 5% 转化为治疗，单次击杀回血上限 2",
 		"rarity": Rarity.LEGENDARY, "max_stack": 1, "base_cost": 2500},
 	{"id": "slide_burst", "name": "战术突进", "desc": "滑铲期间无敌 + 滑铲结束后 1.5s 内射速 +40%",
 		"rarity": Rarity.LEGENDARY, "max_stack": 1, "base_cost": 2500},
-	{"id": "chain_kill", "name": "连锁处决", "desc": "1 秒内连续击杀 → 该击杀回 20 弹药 + 短暂无敌 0.5s",
+	{"id": "chain_kill", "name": "连锁处决", "desc": "1 秒内连续击杀 → 该击杀回 5 弹药 + 短暂无敌 0.3s",
 		"rarity": Rarity.LEGENDARY, "max_stack": 1, "base_cost": 2500},
 ]
 
@@ -294,7 +294,8 @@ func _apply_effect(id: String) -> void:
 			if player: player.heal_mult += 0.40
 		# --- 稀有 ---
 		"kill_heal":
-			if wpm: wpm.kill_heal_amount += 5.0
+			# v0.4-A：每 stack +5 → +3，max 3 stack 9/次（原 15/次过高，朋友吐槽生存压力消失）
+			if wpm: wpm.kill_heal_amount += 3.0
 		"kill_rage":
 			if wpm:
 				wpm.kill_rage_duration = 3.0
@@ -357,9 +358,10 @@ func _apply_effect(id: String) -> void:
 		"berserker":
 			if wpm: wpm.berserker_active = true
 		"vampiric":
+			# v0.4-A：cap 5 → 2（朋友吐槽"根本不缺血"，回血主力削弱；rate 不动）
 			if wpm:
 				wpm.vampiric_rate = 0.05
-				wpm.vampiric_cap_per_kill = 5.0
+				wpm.vampiric_cap_per_kill = 2.0
 		"slide_burst":
 			if wpm:
 				wpm.slide_burst_active = true
@@ -367,11 +369,12 @@ func _apply_effect(id: String) -> void:
 				wpm.slide_burst_fire_rate_bonus = 0.4
 			if player: player.slide_burst_enabled = true
 		"chain_kill":
+			# v0.4-A：回弹 20 → 5（破"永不缺弹"），无敌 0.5 → 0.3（仍能保命，不能"无脑冲怪堆"）
 			if wpm:
 				wpm.chain_kill_active = true
 				wpm.chain_kill_window = 1.0
-				wpm.chain_kill_ammo_refund = 20
-				wpm.chain_kill_invuln = 0.5
+				wpm.chain_kill_ammo_refund = 5
+				wpm.chain_kill_invuln = 0.3
 
 func _grant_max_health(player: Node, delta: float) -> void:
 	if player == null:

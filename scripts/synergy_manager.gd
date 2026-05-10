@@ -22,7 +22,7 @@ const SYNERGIES: Array[Dictionary] = [
 	{
 		"id": "reaper_dance",
 		"name": "死神之舞",
-		"desc": "击杀回血 +3，嗜血单次上限 +3",
+		"desc": "击杀回血 +1，嗜血单次上限 +1",
 		"tier": Tier.RARE,
 		"cards": ["kill_heal", "vampiric"],
 	},
@@ -58,7 +58,7 @@ const SYNERGIES: Array[Dictionary] = [
 	{
 		"id": "eternal_warrior",
 		"name": "永恒战神",
-		"desc": "狂战士触发阈值 30% → 50%，嗜血率 +5%",
+		"desc": "狂战士触发阈值 30% → 50%，嗜血率 +2%",
 		"tier": Tier.EPIC,
 		"cards": ["berserker", "immortal", "vampiric"],
 	},
@@ -146,9 +146,10 @@ func _apply_synergy(id: String) -> void:
 				wpm.synergy_crit_bonus += 0.10
 				wpm.synergy_crit_stagger = true
 		"reaper_dance":
+			# v0.4-A：+3 → +1（朋友吐槽生存压力消失，回血主力削弱）
 			if wpm:
-				wpm.synergy_kill_heal_bonus += 3.0
-				wpm.synergy_vampiric_cap_bonus += 3.0
+				wpm.synergy_kill_heal_bonus += 1.0
+				wpm.synergy_vampiric_cap_bonus += 1.0
 		"pacekeeper":
 			if wpm:
 				wpm.synergy_pacekeeper = true
@@ -163,9 +164,10 @@ func _apply_synergy(id: String) -> void:
 				player.synergy_slide_speed_bonus += 0.5
 				player.synergy_invuln_after_slide += 0.8
 		"eternal_warrior":
+			# v0.4-A：vampiric_rate_bonus +5% → +2%（嗜血削弱链条配套）
 			if wpm:
 				wpm.synergy_berserker_threshold_bonus += 0.20
-				wpm.synergy_vampiric_rate_bonus += 0.05
+				wpm.synergy_vampiric_rate_bonus += 0.02
 		"reaper_realm":
 			if wpm:
 				wpm.synergy_reaper_realm = true
@@ -181,8 +183,8 @@ func _remove_synergy(id: String) -> void:
 				wpm.synergy_crit_stagger = false
 		"reaper_dance":
 			if wpm:
-				wpm.synergy_kill_heal_bonus -= 3.0
-				wpm.synergy_vampiric_cap_bonus -= 3.0
+				wpm.synergy_kill_heal_bonus -= 1.0
+				wpm.synergy_vampiric_cap_bonus -= 1.0
 		"pacekeeper":
 			if wpm:
 				wpm.synergy_pacekeeper = false
@@ -199,7 +201,7 @@ func _remove_synergy(id: String) -> void:
 		"eternal_warrior":
 			if wpm:
 				wpm.synergy_berserker_threshold_bonus -= 0.20
-				wpm.synergy_vampiric_rate_bonus -= 0.05
+				wpm.synergy_vampiric_rate_bonus -= 0.02
 		"reaper_realm":
 			if wpm:
 				wpm.synergy_reaper_realm = false
