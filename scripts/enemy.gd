@@ -104,6 +104,9 @@ var _player: Node3D
 var _flash_timer: float = 0.0
 # 每个元素 = [material, original_color]；受击闪红 / 攻击预警共用这份副本
 var _flash_cache: Array = []
+# DOOM 风 2D 精灵敌人：视觉是 Sprite3D 而非 MeshInstance3D，没有材质 albedo
+# 可改，闪红/预警改 modulate。每个元素 = [Sprite3D, original_modulate]
+var _flash_sprites: Array = []
 
 var _state: int = State.IDLE
 var _state_timer: float = 0.0
@@ -210,6 +213,20 @@ const _FLY_WEAVE_FADE_RANGE: float = 6.0  # 距离从 _FLANK_CLOSE_DIST 到 +6m 
 var _fly_weave_t: float = 0.0
 var _fly_weave_phase: float = 0.0  # _ready 随机，让多只飞球相位错开不同步
 
+# DOOM 单面精灵程序动效：靠浮动/呼吸/受击挤压/死亡溶解让静态扁片"活"起来
+# （试点结论：静态精灵太简陋，先验证加动效后是否成立，再决定走精灵还是回 3D）
+var _juice_sprite: Sprite3D = null
+var _juice_base_pos: Vector3 = Vector3.ZERO
+var _juice_base_scale: Vector3 = Vector3.ONE
+var _juice_t: float = 0.0
+var _juice_hit_timer: float = 0.0
+const _JUICE_BOB_AMP: float = 0.13
+const _JUICE_BOB_HZ: float = 0.9
+const _JUICE_BREATH_AMT: float = 0.045
+const _JUICE_BREATH_HZ: float = 0.65
+const _JUICE_HIT_DURATION: float = 0.18
+const _JUICE_WINDUP_GROW: float = 0.16
+
 signal died
 
 func _ready() -> void:
@@ -238,6 +255,12 @@ func _ready() -> void:
 
 	# GLTF 自带 AnimationPlayer 一般在 model 子树里，递归找
 	_anim_player = find_child("AnimationPlayer", true, false) as AnimationPlayer
+
+	# 精灵敌人：抓首个 Sprite3D 作程序动效目标，记录基准 transform（动效在其之上叠加）
+	if not _flash_sprites.is_empty():
+		_juice_sprite = _flash_sprites[0][0]
+		_juice_base_pos = _juice_sprite.position
+		_juice_base_scale = _juice_sprite.scale
 
 func _find_player() -> void:
 	_player = get_tree().get_first_node_in_group("player") as Node3D
@@ -302,6 +325,9 @@ func _collect_flash_cache_from(node: Node) -> void:
 						var unique_mat: BaseMaterial3D = (mat as BaseMaterial3D).duplicate()
 						mi.set_surface_override_material(i, unique_mat)
 						_flash_cache.append([unique_mat, unique_mat.albedo_color])
+		elif child is Sprite3D:
+			var spr: Sprite3D = child
+			_flash_sprites.append([spr, spr.modulate])
 		_collect_flash_cache_from(child)
 
 # 供 HUD 威胁指示器查询：当前是否在攻击前摇（即将出拳）
@@ -429,6 +455,7 @@ func _physics_process(delta: float) -> void:
 	elif not is_on_floor():
 		velocity += get_gravity() * delta
 
+	_update_sprite_juice(delta)
 	_update_anim()
 	move_and_slide()
 
@@ -450,6 +477,29 @@ func _update_anim() -> void:
 		State.COOLDOWN:
 			target = anim_idle
 	_play_anim(target)
+
+# 单面精灵程序动效：基准 transform 上叠加 浮动 + 呼吸缩放 + 受击挤压 + 前摇胀大
+# 不碰 modulate（那归受击闪红/攻击预警系统所有）。死亡动效另由 _play_death_sequence 接管
+func _update_sprite_juice(delta: float) -> void:
+	if _juice_sprite == null:
+		return
+	_juice_t += delta
+	if _juice_hit_timer > 0.0:
+		_juice_hit_timer -= delta
+	var ph: float = _fly_weave_phase
+	var bob: float = sin((_juice_t + ph) * TAU * _JUICE_BOB_HZ) * _JUICE_BOB_AMP
+	var breath: float = 1.0 + sin((_juice_t + ph) * TAU * _JUICE_BREATH_HZ) * _JUICE_BREATH_AMT
+	var scale_mod: Vector3 = Vector3(breath, breath, breath)
+	# 受击挤压：横撑纵压，快速衰减（被打"咯噔"一下）
+	if _juice_hit_timer > 0.0:
+		var k: float = _juice_hit_timer / _JUICE_HIT_DURATION
+		scale_mod *= Vector3(1.0 + 0.28 * k, 1.0 - 0.22 * k, 1.0 + 0.28 * k)
+	# 攻击前摇：随 windup 进度逐渐胀大，强化"要出手"预兆（叠加在颜色脉冲之上）
+	if _state == State.WINDUP and attack_windup > 0.0:
+		var wp: float = clampf(1.0 - _state_timer / attack_windup, 0.0, 1.0)
+		scale_mod *= 1.0 + _JUICE_WINDUP_GROW * wp
+	_juice_sprite.position = _juice_base_pos + Vector3(0.0, bob, 0.0)
+	_juice_sprite.scale = _juice_base_scale * scale_mod
 
 func _play_anim(anim_name: String, force: bool = false) -> void:
 	if _anim_player == null or anim_name.is_empty():
@@ -804,8 +854,7 @@ func _tick_windup(delta: float, distance: float) -> void:
 	# 脉冲警示色
 	if _flash_timer <= 0.0:
 		var pulse: float = 0.55 + 0.45 * sin(_tell_elapsed * attack_tell_pulse_hz * TAU)
-		for entry in _flash_cache:
-			entry[0].albedo_color = ATTACK_TELL_COLOR * pulse + entry[1] * (1.0 - pulse)
+		_apply_overlay_pulse(pulse)
 
 	if _state_timer <= 0.0:
 		# v0.4-B B7：所有近战敌人（boss 除外）改 LUNGE 冲撞，强制玩家"看抬手就侧闪"
@@ -1018,8 +1067,7 @@ func _enter_windup(from_sync: bool = false) -> void:
 	velocity.x = 0.0
 	velocity.z = 0.0
 	if _flash_timer <= 0.0:
-		for entry in _flash_cache:
-			entry[0].albedo_color = ATTACK_TELL_COLOR
+		_apply_overlay_solid(ATTACK_TELL_COLOR)
 	# 强制从头播 attack 动画一次，避免 _update_anim 每帧检测 is_playing 误重启
 	_play_anim(anim_attack, true)
 	AudioManager.play_enemy_windup(global_position)
@@ -1156,6 +1204,7 @@ func take_damage(amount: float) -> void:
 		return
 	current_health -= amount
 	_flash_red()
+	_juice_hit_timer = _JUICE_HIT_DURATION
 
 	# 痛感告警：IDLE / SEARCH 中被击中立即切 CHASE 并告警
 	# （被打中说明玩家在附近，即使视野没看到也该反击）
@@ -1191,13 +1240,27 @@ func stagger(duration: float) -> void:
 		_state_timer = 0.0
 
 func _flash_red() -> void:
-	for entry in _flash_cache:
-		entry[0].albedo_color = Color(2.0, 0.2, 0.2)
+	_apply_overlay_solid(Color(2.0, 0.2, 0.2))
 	_flash_timer = flash_duration
+
+# 视觉反馈层同时驱动 3D 材质(albedo)与 2D 精灵(modulate)，各调用点不再各自遍历
+func _apply_overlay_solid(c: Color) -> void:
+	for entry in _flash_cache:
+		entry[0].albedo_color = c
+	for s in _flash_sprites:
+		s[0].modulate = c
+
+func _apply_overlay_pulse(pulse: float) -> void:
+	for entry in _flash_cache:
+		entry[0].albedo_color = ATTACK_TELL_COLOR * pulse + entry[1] * (1.0 - pulse)
+	for s in _flash_sprites:
+		s[0].modulate = ATTACK_TELL_COLOR * pulse + s[1] * (1.0 - pulse)
 
 func _restore_colors() -> void:
 	for entry in _flash_cache:
 		entry[0].albedo_color = entry[1]
+	for s in _flash_sprites:
+		s[0].modulate = s[1]
 
 func _die() -> void:
 	_is_dead = true
@@ -1226,7 +1289,14 @@ func _die() -> void:
 # 倒地序列：优先用 GLTF 自带 death 动画，没有则 fallback 到 tween rotation。
 # 统一 1.4s 后 queue_free（足够 Mech Pack Death + Sci-Fi TurnOff 播完）
 func _play_death_sequence() -> void:
-	if _anim_player and not anim_death.is_empty() and _anim_player.has_animation(anim_death):
+	if _juice_sprite != null:
+		# 精灵死亡：缩小 + 上飘 + 淡出溶解（root 旋转对 billboard 无效，必须动精灵本身）
+		var stw: Tween = create_tween()
+		stw.set_parallel(true)
+		stw.tween_property(_juice_sprite, "scale", _juice_base_scale * 0.05, 0.45).set_ease(Tween.EASE_IN)
+		stw.tween_property(_juice_sprite, "position", _juice_base_pos + Vector3(0.0, 0.7, 0.0), 0.45)
+		stw.tween_property(_juice_sprite, "modulate:a", 0.0, 0.45)
+	elif _anim_player and not anim_death.is_empty() and _anim_player.has_animation(anim_death):
 		_anim_player.play(anim_death)
 	else:
 		var tween: Tween = create_tween()
