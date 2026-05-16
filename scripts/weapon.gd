@@ -102,9 +102,11 @@ func max_ammo() -> int:
 	return maxi(1, int(round(float(mag_size) * mult)))
 
 # ========== 切换 / 备弹 API（weapon_manager 调用） ==========
-# 备弹补满（intermission 阶段调）
+# 波间补给（intermission 阶段调）：备弹补满 + 弹匣上满
+# 玩家反馈：只补备弹还要手动上膛，每波后多一步无意义操作
 func refill_reserve() -> void:
 	reserve_ammo = reserve_max
+	current_ammo = max_ammo()
 	ammo_changed.emit(current_ammo, reserve_ammo, max_ammo())
 
 # 武器被切走：取消装填、清开火 cd

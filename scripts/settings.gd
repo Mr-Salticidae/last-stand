@@ -73,8 +73,10 @@ const DIFFICULTY_PROFILES: Array[Dictionary] = [
 		"name_cn": "极限突破",
 		"name_en": "BREACH",
 		"max_concurrent_attackers": 3,
-		"enemy_health_mult": 1.7,
-		"enemy_damage_mult": 1.6,
+		# v0.5：两位玩家反馈极限档仍偏松。主要靠 AI 质变（漂浮球灵活化 + boss 穷追）补强，
+		# 数值仅小幅上调，避免纯堆系数（实战体验 > 数据上限）
+		"enemy_health_mult": 1.9,
+		"enemy_damage_mult": 1.75,
 		"enemy_speed_mult": 1.4,           # runner 5.5×1.4=7.7m/s 超玩家步行
 		"slow_enemy_speed_mult": 1.4,      # grunt 3.5×1.4×1.4=6.86 / brute 2.0×1.4×1.4=3.92 m/s
 		"enemy_count_mult": 1.8,           # 1.5→1.8 前期就开始怪物潮（仍受 max_enemies_per_wave 20 cap）

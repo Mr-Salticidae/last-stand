@@ -39,8 +39,9 @@ const CARDS: Array[Dictionary] = [
 		"rarity": Rarity.RARE, "max_stack": 3, "base_cost": 800},
 	{"id": "kill_rage", "name": "杀戮狂热", "desc": "击杀后 3 秒内射速 +30%",
 		"rarity": Rarity.RARE, "max_stack": 2, "base_cost": 800},
-	{"id": "ammo_save", "name": "弹药节省", "desc": "命中时 15% 概率不消耗弹药",
-		"rarity": Rarity.RARE, "max_stack": 2, "base_cost": 800},
+	# 玩家反馈：原 RARE/可叠 2 层(30%)太强且太好拿，升金色单卡封顶
+	{"id": "ammo_save", "name": "弹药节省", "desc": "命中时 25% 概率不消耗弹药",
+		"rarity": Rarity.LEGENDARY, "max_stack": 1, "base_cost": 2500},
 	{"id": "drop_boost", "name": "战场拾荒", "desc": "血包掉落率 +30%",
 		"rarity": Rarity.RARE, "max_stack": 2, "base_cost": 700},
 	{"id": "jump_boost", "name": "鹰跃", "desc": "跳跃力 +15%",
@@ -301,7 +302,7 @@ func _apply_effect(id: String) -> void:
 				wpm.kill_rage_duration = 3.0
 				wpm.kill_rage_fire_rate_bonus += 0.30
 		"ammo_save":
-			if wpm: wpm.ammo_save_chance += 0.15
+			if wpm: wpm.ammo_save_chance += 0.25
 		"drop_boost":
 			drop_chance_bonus += 0.30
 		"jump_boost":

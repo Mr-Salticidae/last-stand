@@ -192,13 +192,23 @@ const BOSS_SUMMON_SCENE: PackedScene = preload("res://scenes/enemy_grunt.tscn")
 # v0.4-B B5-B：Boss 远程投射物（防"玩家爬塔顶 boss 够不到"）
 # CD 2s（用户测试反馈频率提高），距离 > 8m 才 fire，起手等 2s 给玩家近战感受
 const BOSS_RANGED_COOLDOWN: float = 2.0
-const BOSS_RANGED_MIN_DISTANCE: float = 8.0
+# 8 → 6：穷追的 boss 很快进近战，>8m 窗口太窄玩家根本没见过紫球；放宽射程门槛
+const BOSS_RANGED_MIN_DISTANCE: float = 6.0
 const BOSS_PROJECTILE_DAMAGE_MULT: float = 0.6
 const BOSS_PROJECTILE_SCENE: PackedScene = preload("res://scenes/boss_projectile.tscn")
 var _boss_phase: int = 1
 var _boss_summon_timer: float = 0.0
 var _boss_phase3_applied: bool = false           # Phase 3 狂暴 buff 已应用标记
 var _boss_ranged_timer: float = BOSS_RANGED_COOLDOWN  # 起手 4s CD（不立刻 fire）
+
+# 飞行型（Elite）雷霆走位：CHASE 中朝玩家逼近时叠加垂直于视线的正弦横摆，
+# 让小体型飞球成为难打的灵活目标（而非直线肉盾）。近身线性淡出确保仍能收尾扑击。
+# 玩家反馈："漂浮球体型不该是肉盾，灵活+低血才显得弹道收束升级有用"
+const _FLY_WEAVE_AMPLITUDE: float = 3.2
+const _FLY_WEAVE_HZ: float = 0.9
+const _FLY_WEAVE_FADE_RANGE: float = 6.0  # 距离从 _FLANK_CLOSE_DIST 到 +6m 之间摆幅线性 0→满
+var _fly_weave_t: float = 0.0
+var _fly_weave_phase: float = 0.0  # _ready 随机，让多只飞球相位错开不同步
 
 signal died
 
@@ -212,6 +222,7 @@ func _ready() -> void:
 	if enemy_id == "grunt":
 		var max_rad: float = deg_to_rad(GRUNT_FLANK_ANGLE_MAX_DEG)
 		_grunt_flank_angle_rad = randf_range(-max_rad, max_rad)
+	_fly_weave_phase = randf() * TAU
 
 	# 记录初始朝向作为 IDLE 姿态（world.tscn 里的 transform 决定敌人开局面朝哪）
 	_initial_forward = -global_transform.basis.z
@@ -469,6 +480,10 @@ func _tick_chase(distance: float, to_player: Vector3, height_diff: float) -> voi
 	# 只有墙遮挡才会让敌人"丢失视野"切 SEARCH
 	if _can_see_player(true):
 		_last_known_player_pos = _player.global_position
+	elif is_boss:
+		# Boss 永不"索敌索不着"：一旦交战就持续锁定玩家真实位置穷追，绝不切 SEARCH
+		# 破"躲墙角清完小兵拿 AK 把沙包 boss 突突死"的体验（玩家反馈）
+		_last_known_player_pos = _player.global_position
 	else:
 		var new_target: Vector3 = _last_known_player_pos
 		# 只有 search_target 大幅变动才 reset arrived；target 稳定时保持 linger 状态
@@ -497,7 +512,7 @@ func _tick_chase(distance: float, to_player: Vector3, height_diff: float) -> voi
 
 	# 飞行型直线追击（不走 navmesh，破除高地无敌点）；地面型用 nav path + 散兵线偏移
 	if is_flying:
-		_move_flying_toward(_player.global_position, move_speed)
+		_move_flying_toward(_compute_fly_chase_target(distance), move_speed)
 	else:
 		_move_along_nav_path(_compute_chase_target(to_player, distance), move_speed)
 
@@ -628,6 +643,22 @@ func _compute_grunt_flank_target() -> Vector3:
 	if snapped.distance_to(target) > GRUNT_FLANK_NAV_TOLERANCE:
 		return Vector3.ZERO
 	return snapped
+
+# 飞行型雷霆走位目标：玩家位置 + 垂直视线的正弦横摆
+# 远处摆幅满（难打的灵活目标），近身（< _FLANK_CLOSE_DIST）线性收敛到 0 让它能收尾扑击
+func _compute_fly_chase_target(distance: float) -> Vector3:
+	var base: Vector3 = _player.global_position
+	if distance < _FLANK_CLOSE_DIST:
+		return base
+	_fly_weave_t += get_physics_process_delta_time()
+	var to_p: Vector3 = base - global_position
+	to_p.y = 0.0
+	if to_p.length_squared() < 0.001:
+		return base
+	var right: Vector3 = Vector3.UP.cross(to_p.normalized())
+	var fade: float = clampf((distance - _FLANK_CLOSE_DIST) / _FLY_WEAVE_FADE_RANGE, 0.0, 1.0)
+	var offset: float = sin((_fly_weave_t + _fly_weave_phase) * TAU * _FLY_WEAVE_HZ) * _FLY_WEAVE_AMPLITUDE * fade
+	return base + right * offset
 
 # 飞行型直线追击：水平方向直奔目标，y 方向由 _physics_process 末尾的高度跟随控制
 # 不走 navmesh = 无视墙壁绕路、无视高低差，能直达 watchtower / 浮岛上的玩家
