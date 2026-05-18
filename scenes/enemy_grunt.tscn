@@ -1,27 +1,24 @@
-[gd_scene load_steps=4 format=3]
+[gd_scene format=3 uid="uid://csssd7fxy7xsi"]
 
 [ext_resource type="PackedScene" path="res://scenes/enemy.tscn" id="1_base"]
-[ext_resource type="PackedScene" path="res://assets/enemies_mech/Mike.gltf" id="2_mike"]
+[ext_resource type="Texture2D" uid="uid://drndf3lplgtb5" path="res://assets/sprites/enemies/grunt.png" id="2_sprite"]
 
 [sub_resource type="BoxShape3D" id="BoxShape_grunt_collision"]
-size = Vector3(1.0, 1.6, 1.0)
+size = Vector3(0.85, 2, 0.85)
 
-[sub_resource type="BoxShape3D" id="BoxShape_grunt_body"]
-size = Vector3(2.0, 1.8, 1.0)
+[sub_resource type="BoxShape3D" id="BoxShape_grunt_torso"]
+size = Vector3(1.05, 1.5, 0.6)
 
-[sub_resource type="BoxShape3D" id="BoxShape_grunt_head"]
-size = Vector3(1.4, 0.9, 1.0)
+[sub_resource type="BoxShape3D" id="BoxShape_grunt_legs"]
+size = Vector3(0.45, 0.75, 0.55)
+
+[sub_resource type="SphereShape3D" id="SphereShape_grunt_head"]
+radius = 0.28314975
 
 [node name="Enemy" instance=ExtResource("1_base")]
-enemy_id = "grunt"
-anim_idle = "Idle"
-anim_walk = "Walk"
-anim_run = "Run"
-anim_attack = "Punch"
-anim_death = "Death"
 
 [node name="CollisionShape3D" parent="." index="0"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.8, 0)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1, 0)
 shape = SubResource("BoxShape_grunt_collision")
 
 [node name="body" parent="." index="1"]
@@ -31,16 +28,26 @@ visible = false
 visible = false
 
 [node name="BodyHitbox" parent="." index="3"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.9, 0)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0)
 
 [node name="CollisionShape3D" parent="BodyHitbox" index="0"]
-shape = SubResource("BoxShape_grunt_body")
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.48, 0)
+shape = SubResource("BoxShape_grunt_torso")
+
+[node name="CollisionShape3D2" type="CollisionShape3D" parent="BodyHitbox" index="1"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.37, 0)
+shape = SubResource("BoxShape_grunt_legs")
 
 [node name="HeadHitbox" parent="." index="4"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2.25, 0)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0)
 
 [node name="CollisionShape3D" parent="HeadHitbox" index="0"]
-shape = SubResource("BoxShape_grunt_head")
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2.46, 0)
+shape = SubResource("SphereShape_grunt_head")
 
-[node name="model" parent="." instance=ExtResource("2_mike")]
-transform = Transform3D(-0.5, 0, 0, 0, 0.5, 0, 0, 0, -0.5, 0, 0, 0)
+[node name="Sprite" type="Sprite3D" parent="." index="6"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.4, 0)
+pixel_size = 0.003104
+billboard = 1
+alpha_cut = 1
+texture = ExtResource("2_sprite")

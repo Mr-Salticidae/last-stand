@@ -7,7 +7,7 @@
 [ext_resource type="FontVariation" path="res://assets/fonts/font_jbmono_500.tres" id="5_jb5"]
 [ext_resource type="FontVariation" path="res://assets/fonts/font_notosc_900.tres" id="6_n9"]
 
-[node name="LevelSelect" type="Control" unique_id=1015149830]
+[node name="LevelSelect" type="Control"]
 layout_mode = 3
 anchors_preset = 15
 anchor_right = 1.0
@@ -16,10 +16,10 @@ grow_horizontal = 2
 grow_vertical = 2
 script = ExtResource("1_lvl")
 
-[node name="AtmosphereBackground" parent="." unique_id=79386087 instance=ExtResource("2_atmos")]
+[node name="AtmosphereBackground" parent="." instance=ExtResource("2_atmos")]
 layout_mode = 1
 
-[node name="PageHeader" type="Control" parent="." unique_id=233677485]
+[node name="PageHeader" type="Control" parent="."]
 layout_mode = 1
 anchors_preset = 10
 anchor_right = 1.0
@@ -30,7 +30,7 @@ offset_bottom = 290.0
 grow_horizontal = 2
 mouse_filter = 2
 
-[node name="Eyebrow" type="Label" parent="PageHeader" unique_id=124019717]
+[node name="Eyebrow" type="Label" parent="PageHeader"]
 layout_mode = 1
 offset_right = 400.0
 offset_bottom = 20.0
@@ -40,7 +40,7 @@ theme_override_font_sizes/font_size = 12
 text = "// THEATER LIST · 0XR-07"
 vertical_alignment = 1
 
-[node name="TitleEN" type="Label" parent="PageHeader" unique_id=2085786902]
+[node name="TitleEN" type="Label" parent="PageHeader"]
 layout_mode = 1
 offset_top = 30.0
 offset_right = 700.0
@@ -53,7 +53,7 @@ theme_override_font_sizes/font_size = 84
 text = "SELECT MAP"
 vertical_alignment = 1
 
-[node name="TitleCN" type="Label" parent="PageHeader" unique_id=1707583857]
+[node name="TitleCN" type="Label" parent="PageHeader"]
 layout_mode = 1
 offset_left = 530.0
 offset_top = 70.0
@@ -65,7 +65,7 @@ theme_override_font_sizes/font_size = 28
 text = "选择关卡"
 vertical_alignment = 1
 
-[node name="Rule" type="Label" parent="PageHeader" unique_id=131379837]
+[node name="Rule" type="Label" parent="PageHeader"]
 layout_mode = 1
 offset_top = 138.0
 offset_right = 800.0
@@ -76,7 +76,7 @@ theme_override_font_sizes/font_size = 13
 text = "◤  PICK YOUR DEPLOYMENT THEATER"
 vertical_alignment = 1
 
-[node name="PageBody" type="Control" parent="." unique_id=631662587]
+[node name="PageBody" type="Control" parent="."]
 layout_mode = 1
 anchors_preset = 10
 anchor_right = 1.0
@@ -85,7 +85,7 @@ offset_bottom = 920.0
 grow_horizontal = 2
 mouse_filter = 2
 
-[node name="CardsHBox" type="HBoxContainer" parent="PageBody" unique_id=1382640704]
+[node name="CardsHBox" type="HBoxContainer" parent="PageBody"]
 layout_mode = 1
 anchors_preset = 5
 anchor_left = 0.5
@@ -96,7 +96,7 @@ offset_bottom = 560.0
 theme_override_constants/separation = 44
 alignment = 1
 
-[node name="Footer" type="Control" parent="." unique_id=2070202701]
+[node name="Footer" type="Control" parent="."]
 layout_mode = 1
 anchors_preset = 12
 anchor_top = 1.0
@@ -107,7 +107,7 @@ grow_horizontal = 2
 grow_vertical = 0
 mouse_filter = 2
 
-[node name="BackButton" type="Control" parent="Footer" unique_id=1887298019]
+[node name="BackButton" type="Control" parent="Footer"]
 custom_minimum_size = Vector2(151, 56)
 layout_mode = 1
 anchors_preset = 0

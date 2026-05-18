@@ -1,36 +1,33 @@
 [gd_scene format=3 uid="uid://bvipbvm7or3e2"]
 
 [ext_resource type="PackedScene" path="res://scenes/enemy.tscn" id="1_base"]
-[ext_resource type="PackedScene" uid="uid://dao8wpqkk3orr" path="res://assets/enemies_quaternius/Enemy_Trilobite.gltf" id="2_trilobite"]
+[ext_resource type="Texture2D" uid="uid://dr3yh62ifeqw" path="res://assets/sprites/enemies/runner.png" id="2_sprite"]
 
 [sub_resource type="BoxShape3D" id="BoxShape_runner_collision"]
-size = Vector3(1.5, 1.2, 1.2)
+size = Vector3(0.62, 2.2, 0.62)
 
-[sub_resource type="BoxShape3D" id="BoxShape_runner_leg"]
-size = Vector3(0.3633789, 2, 0.5)
+[sub_resource type="BoxShape3D" id="BoxShape_runner_torso"]
+size = Vector3(0.68, 1.36, 0.5)
 
-[sub_resource type="CylinderShape3D" id="CylinderShape_runner_shell"]
-height = 0.5
-radius = 1.269043
+[sub_resource type="BoxShape3D" id="BoxShape_runner_legs"]
+size = Vector3(0.34, 0.93, 0.45)
 
-[node name="Enemy" unique_id=499098323 instance=ExtResource("1_base")]
-enemy_id = "runner"
+[sub_resource type="SphereShape3D" id="SphereShape_runner_head"]
+radius = 0.19016653
+
+[node name="Enemy" instance=ExtResource("1_base")]
 max_health = 40.0
 move_speed = 5.5
 health_pack_drop_chance = 0.15
 score_value = 150
+enemy_id = "runner"
 flank_offset_max = 2.5
 attack_damage = 6.0
 attack_windup = 0.3
 attack_cooldown = 0.9
-anim_idle = "Idle"
-anim_walk = "Walk"
-anim_run = "Run"
-anim_attack = "Attack"
-anim_death = "TurnOff"
 
 [node name="CollisionShape3D" parent="." index="0"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.6, 0)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.1, 0)
 shape = SubResource("BoxShape_runner_collision")
 
 [node name="body" parent="." index="1"]
@@ -43,19 +40,23 @@ visible = false
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0)
 
 [node name="CollisionShape3D" parent="BodyHitbox" index="0"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.8025383, 0.9948664, 0)
-shape = SubResource("BoxShape_runner_leg")
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.61, 0)
+shape = SubResource("BoxShape_runner_torso")
 
-[node name="CollisionShape3D2" type="CollisionShape3D" parent="BodyHitbox" index="1" unique_id=1868457373]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.8137305, 1, 0)
-shape = SubResource("BoxShape_runner_leg")
+[node name="CollisionShape3D2" type="CollisionShape3D" parent="BodyHitbox" index="1"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.46, 0)
+shape = SubResource("BoxShape_runner_legs")
 
 [node name="HeadHitbox" parent="." index="4"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2.25, 0)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0)
 
 [node name="CollisionShape3D" parent="HeadHitbox" index="0"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0.40917468)
-shape = SubResource("CylinderShape_runner_shell")
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2.48, 0)
+shape = SubResource("SphereShape_runner_head")
 
-[node name="model" parent="." index="6" unique_id=69346686 instance=ExtResource("2_trilobite")]
-transform = Transform3D(-1, 0, 0, 0, 1, 0, 0, 0, -1, 0, 0, 0)
+[node name="Sprite" type="Sprite3D" parent="." index="6"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.4, 0)
+pixel_size = 0.002206
+billboard = 1
+alpha_cut = 1
+texture = ExtResource("2_sprite")

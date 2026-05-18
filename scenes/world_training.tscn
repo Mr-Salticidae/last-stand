@@ -228,274 +228,274 @@ _data = {
 &"landing": SubResource("Animation_71j4m")
 }
 
-[node name="world" type="Node3D" unique_id=354887705]
+[node name="world" type="Node3D"]
 
-[node name="stage" type="NavigationRegion3D" parent="." unique_id=1787808641]
+[node name="stage" type="NavigationRegion3D" parent="."]
 navigation_mesh = SubResource("NavMesh_stage")
 script = ExtResource("11_navbake")
 
-[node name="ground" type="MeshInstance3D" parent="stage" unique_id=1318394202]
+[node name="ground" type="MeshInstance3D" parent="stage"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.5, 0)
 material_override = SubResource("Mat_train_floor")
 mesh = SubResource("BoxMesh_ground")
 
-[node name="central_platform" type="MeshInstance3D" parent="stage" unique_id=1427492053]
+[node name="central_platform" type="MeshInstance3D" parent="stage"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.75, 0)
 material_override = SubResource("Mat_train_structure")
 mesh = SubResource("BoxMesh_central")
 
-[node name="ramp_n" type="MeshInstance3D" parent="stage" unique_id=951487236]
+[node name="ramp_n" type="MeshInstance3D" parent="stage"]
 transform = Transform3D(1, 0, 0, 0, 0.8944, 0.4472, 0, -0.4472, 0.8944, 0, 0.616, -6.5)
 material_override = SubResource("Mat_train_structure")
 mesh = SubResource("BoxMesh_ramp_ns")
 
-[node name="ramp_s" type="MeshInstance3D" parent="stage" unique_id=656238805]
+[node name="ramp_s" type="MeshInstance3D" parent="stage"]
 transform = Transform3D(1, 0, 0, 0, 0.8944, -0.4472, 0, 0.4472, 0.8944, 0, 0.616, 6.5)
 material_override = SubResource("Mat_train_structure")
 mesh = SubResource("BoxMesh_ramp_ns")
 
-[node name="ramp_e" type="MeshInstance3D" parent="stage" unique_id=613817483]
+[node name="ramp_e" type="MeshInstance3D" parent="stage"]
 transform = Transform3D(0.8944, 0.4472, 0, -0.4472, 0.8944, 0, 0, 0, 1, 6.5, 0.616, 0)
 material_override = SubResource("Mat_train_structure")
 mesh = SubResource("BoxMesh_ramp_e")
 
-[node name="watchtower_ne" type="MeshInstance3D" parent="stage" unique_id=401872456]
+[node name="watchtower_ne" type="MeshInstance3D" parent="stage"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 20, 0.75, -20)
 material_override = SubResource("Mat_train_structure")
 mesh = SubResource("BoxMesh_watchtower")
 
-[node name="watchtower_nw" type="MeshInstance3D" parent="stage" unique_id=121295793]
+[node name="watchtower_nw" type="MeshInstance3D" parent="stage"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -20, 0.75, -20)
 material_override = SubResource("Mat_train_structure")
 mesh = SubResource("BoxMesh_watchtower")
 
-[node name="floating_island" type="MeshInstance3D" parent="stage" unique_id=1336116881]
+[node name="floating_island" type="MeshInstance3D" parent="stage"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -22, 1.25, 22)
 material_override = SubResource("Mat_train_structure")
 mesh = SubResource("BoxMesh_island")
 
-[node name="cover_n" type="MeshInstance3D" parent="stage" unique_id=312219644]
+[node name="cover_n" type="MeshInstance3D" parent="stage"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -5, 0.6, -15)
 material_override = SubResource("Mat_train_cover")
 mesh = SubResource("BoxMesh_cover_ns")
 
-[node name="cover_s" type="MeshInstance3D" parent="stage" unique_id=1568519217]
+[node name="cover_s" type="MeshInstance3D" parent="stage"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 5, 0.6, 15)
 material_override = SubResource("Mat_train_cover")
 mesh = SubResource("BoxMesh_cover_ns")
 
-[node name="cover_e" type="MeshInstance3D" parent="stage" unique_id=673337291]
+[node name="cover_e" type="MeshInstance3D" parent="stage"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 15, 0.6, -5)
 material_override = SubResource("Mat_train_cover")
 mesh = SubResource("BoxMesh_cover_ew")
 
-[node name="cover_w" type="MeshInstance3D" parent="stage" unique_id=1511292250]
+[node name="cover_w" type="MeshInstance3D" parent="stage"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -15, 0.6, 5)
 material_override = SubResource("Mat_train_cover")
 mesh = SubResource("BoxMesh_cover_ew")
 
-[node name="cover_ne" type="MeshInstance3D" parent="stage" unique_id=1276182493]
+[node name="cover_ne" type="MeshInstance3D" parent="stage"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 9, 0.6, -12)
 material_override = SubResource("Mat_train_cover")
 mesh = SubResource("BoxMesh_cover_ns")
 
-[node name="cover_nw" type="MeshInstance3D" parent="stage" unique_id=1095390117]
+[node name="cover_nw" type="MeshInstance3D" parent="stage"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -9, 0.6, -12)
 material_override = SubResource("Mat_train_cover")
 mesh = SubResource("BoxMesh_cover_ns")
 
-[node name="cover_se" type="MeshInstance3D" parent="stage" unique_id=1474035669]
+[node name="cover_se" type="MeshInstance3D" parent="stage"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 12, 0.6, 9)
 material_override = SubResource("Mat_train_cover")
 mesh = SubResource("BoxMesh_cover_ew")
 
-[node name="cover_sw" type="MeshInstance3D" parent="stage" unique_id=2125081150]
+[node name="cover_sw" type="MeshInstance3D" parent="stage"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -12, 0.6, 9)
 material_override = SubResource("Mat_train_cover")
 mesh = SubResource("BoxMesh_cover_ew")
 
-[node name="wall_n" type="MeshInstance3D" parent="stage" unique_id=1133317743]
+[node name="wall_n" type="MeshInstance3D" parent="stage"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 4, -29.75)
 material_override = SubResource("Mat_train_structure")
 mesh = SubResource("BoxMesh_wall_ns")
 
-[node name="wall_s" type="MeshInstance3D" parent="stage" unique_id=1208373177]
+[node name="wall_s" type="MeshInstance3D" parent="stage"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 4, 29.75)
 material_override = SubResource("Mat_train_structure")
 mesh = SubResource("BoxMesh_wall_ns")
 
-[node name="wall_e" type="MeshInstance3D" parent="stage" unique_id=205900555]
+[node name="wall_e" type="MeshInstance3D" parent="stage"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 29.75, 4, 0)
 material_override = SubResource("Mat_train_structure")
 mesh = SubResource("BoxMesh_wall_ew")
 
-[node name="wall_w" type="MeshInstance3D" parent="stage" unique_id=1939706685]
+[node name="wall_w" type="MeshInstance3D" parent="stage"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -29.75, 4, 0)
 material_override = SubResource("Mat_train_structure")
 mesh = SubResource("BoxMesh_wall_ew")
 
-[node name="barrel_nw_1" type="MeshInstance3D" parent="stage" unique_id=1137882828]
+[node name="barrel_nw_1" type="MeshInstance3D" parent="stage"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -28, 0.55, -28)
 material_override = SubResource("Mat_barrel")
 mesh = SubResource("CylinderMesh_barrel")
 
-[node name="barrel_nw_2" type="MeshInstance3D" parent="stage" unique_id=1903396756]
+[node name="barrel_nw_2" type="MeshInstance3D" parent="stage"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -28, 0.55, -27)
 material_override = SubResource("Mat_barrel")
 mesh = SubResource("CylinderMesh_barrel")
 
-[node name="barrel_ne_1" type="MeshInstance3D" parent="stage" unique_id=1796549159]
+[node name="barrel_ne_1" type="MeshInstance3D" parent="stage"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 28, 0.55, -28)
 material_override = SubResource("Mat_barrel")
 mesh = SubResource("CylinderMesh_barrel")
 
-[node name="barrel_ne_2" type="MeshInstance3D" parent="stage" unique_id=1209032020]
+[node name="barrel_ne_2" type="MeshInstance3D" parent="stage"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 28, 0.55, -27)
 material_override = SubResource("Mat_barrel")
 mesh = SubResource("CylinderMesh_barrel")
 
-[node name="barrel_sw_1" type="MeshInstance3D" parent="stage" unique_id=1101805802]
+[node name="barrel_sw_1" type="MeshInstance3D" parent="stage"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -28, 0.55, 28)
 material_override = SubResource("Mat_barrel")
 mesh = SubResource("CylinderMesh_barrel")
 
-[node name="barrel_sw_2" type="MeshInstance3D" parent="stage" unique_id=1808007502]
+[node name="barrel_sw_2" type="MeshInstance3D" parent="stage"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -28, 0.55, 27)
 material_override = SubResource("Mat_barrel")
 mesh = SubResource("CylinderMesh_barrel")
 
-[node name="barrel_se_1" type="MeshInstance3D" parent="stage" unique_id=1210915204]
+[node name="barrel_se_1" type="MeshInstance3D" parent="stage"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 28, 0.55, 28)
 material_override = SubResource("Mat_barrel")
 mesh = SubResource("CylinderMesh_barrel")
 
-[node name="barrel_se_2" type="MeshInstance3D" parent="stage" unique_id=887799978]
+[node name="barrel_se_2" type="MeshInstance3D" parent="stage"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 28, 0.55, 27)
 material_override = SubResource("Mat_barrel")
 mesh = SubResource("CylinderMesh_barrel")
 
-[node name="crate_n1_bot" type="MeshInstance3D" parent="stage" unique_id=103822384]
+[node name="crate_n1_bot" type="MeshInstance3D" parent="stage"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 15, 0.5, -28.5)
 material_override = SubResource("Mat_crate")
 mesh = SubResource("BoxMesh_crate")
 
-[node name="crate_n1_top" type="MeshInstance3D" parent="stage" unique_id=1344931854]
+[node name="crate_n1_top" type="MeshInstance3D" parent="stage"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 15, 1.5, -28.5)
 material_override = SubResource("Mat_crate")
 mesh = SubResource("BoxMesh_crate")
 
-[node name="crate_n2" type="MeshInstance3D" parent="stage" unique_id=2141728729]
+[node name="crate_n2" type="MeshInstance3D" parent="stage"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -15, 0.5, -28.5)
 material_override = SubResource("Mat_crate")
 mesh = SubResource("BoxMesh_crate")
 
-[node name="crate_s1_bot" type="MeshInstance3D" parent="stage" unique_id=916888619]
+[node name="crate_s1_bot" type="MeshInstance3D" parent="stage"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 15, 0.5, 28.5)
 material_override = SubResource("Mat_crate")
 mesh = SubResource("BoxMesh_crate")
 
-[node name="crate_s1_top" type="MeshInstance3D" parent="stage" unique_id=667171330]
+[node name="crate_s1_top" type="MeshInstance3D" parent="stage"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 15, 1.5, 28.5)
 material_override = SubResource("Mat_crate")
 mesh = SubResource("BoxMesh_crate")
 
-[node name="crate_s2" type="MeshInstance3D" parent="stage" unique_id=149465811]
+[node name="crate_s2" type="MeshInstance3D" parent="stage"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -15, 0.5, 28.5)
 material_override = SubResource("Mat_crate")
 mesh = SubResource("BoxMesh_crate")
 
-[node name="crate_e1_bot" type="MeshInstance3D" parent="stage" unique_id=768381769]
+[node name="crate_e1_bot" type="MeshInstance3D" parent="stage"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 28.5, 0.5, 15)
 material_override = SubResource("Mat_crate")
 mesh = SubResource("BoxMesh_crate")
 
-[node name="crate_e1_top" type="MeshInstance3D" parent="stage" unique_id=408313093]
+[node name="crate_e1_top" type="MeshInstance3D" parent="stage"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 28.5, 1.5, 15)
 material_override = SubResource("Mat_crate")
 mesh = SubResource("BoxMesh_crate")
 
-[node name="crate_e2" type="MeshInstance3D" parent="stage" unique_id=1366594111]
+[node name="crate_e2" type="MeshInstance3D" parent="stage"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 28.5, 0.5, -15)
 material_override = SubResource("Mat_crate")
 mesh = SubResource("BoxMesh_crate")
 
-[node name="crate_w1_bot" type="MeshInstance3D" parent="stage" unique_id=1560211556]
+[node name="crate_w1_bot" type="MeshInstance3D" parent="stage"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -28.5, 0.5, 15)
 material_override = SubResource("Mat_crate")
 mesh = SubResource("BoxMesh_crate")
 
-[node name="crate_w1_top" type="MeshInstance3D" parent="stage" unique_id=324292950]
+[node name="crate_w1_top" type="MeshInstance3D" parent="stage"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -28.5, 1.5, 15)
 material_override = SubResource("Mat_crate")
 mesh = SubResource("BoxMesh_crate")
 
-[node name="crate_w2" type="MeshInstance3D" parent="stage" unique_id=1139746171]
+[node name="crate_w2" type="MeshInstance3D" parent="stage"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -28.5, 0.5, -15)
 material_override = SubResource("Mat_crate")
 mesh = SubResource("BoxMesh_crate")
 
-[node name="env" type="Node3D" parent="." unique_id=1995890651]
+[node name="env" type="Node3D" parent="."]
 
-[node name="WorldEnvironment" type="WorldEnvironment" parent="env" unique_id=661310170]
+[node name="WorldEnvironment" type="WorldEnvironment" parent="env"]
 environment = SubResource("Environment_k0juu")
 
-[node name="DirectionalLight3D" type="DirectionalLight3D" parent="env" unique_id=1658686535]
+[node name="DirectionalLight3D" type="DirectionalLight3D" parent="env"]
 transform = Transform3D(-0.8660254, -0.43301278, 0.25, 0, 0.49999997, 0.86602545, -0.50000006, 0.75, -0.43301266, 0, 0, 0)
 shadow_enabled = true
 
-[node name="player" type="CharacterBody3D" parent="." unique_id=252459011 groups=["player"]]
+[node name="player" type="CharacterBody3D" parent="." groups=["player"]]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.6, 0)
 script = ExtResource("3_4wyf3")
 
-[node name="standing_collision_shape" type="CollisionShape3D" parent="player" unique_id=920472357]
+[node name="standing_collision_shape" type="CollisionShape3D" parent="player"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1, 0)
 shape = SubResource("CapsuleShape3D_rwgxs")
 
-[node name="crouching_collision_shape" type="CollisionShape3D" parent="player" unique_id=1607194456]
+[node name="crouching_collision_shape" type="CollisionShape3D" parent="player"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.5987277, 0)
 shape = SubResource("CapsuleShape3D_4wyf3")
 disabled = true
 
-[node name="RayCast3D" type="RayCast3D" parent="player" unique_id=315731427]
+[node name="RayCast3D" type="RayCast3D" parent="player"]
 target_position = Vector3(0, 2, 0)
 
-[node name="neck" type="Node3D" parent="player" unique_id=469468104]
+[node name="neck" type="Node3D" parent="player"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.8, 0)
 
-[node name="head" type="Node3D" parent="player/neck" unique_id=372955053]
+[node name="head" type="Node3D" parent="player/neck"]
 
-[node name="eyes" type="Node3D" parent="player/neck/head" unique_id=328210324]
+[node name="eyes" type="Node3D" parent="player/neck/head"]
 
-[node name="Camera3D" type="Camera3D" parent="player/neck/head/eyes" unique_id=2054508128]
+[node name="Camera3D" type="Camera3D" parent="player/neck/head/eyes"]
 
-[node name="shoot_raycast" type="RayCast3D" parent="player/neck/head/eyes/Camera3D" unique_id=253954902]
+[node name="shoot_raycast" type="RayCast3D" parent="player/neck/head/eyes/Camera3D"]
 target_position = Vector3(0, 0, -100)
 
-[node name="weapon_holder" type="Node3D" parent="player/neck/head/eyes/Camera3D" unique_id=171240891 node_paths=PackedStringArray("shoot_raycast")]
+[node name="weapon_holder" type="Node3D" parent="player/neck/head/eyes/Camera3D" node_paths=PackedStringArray("shoot_raycast")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.3, -0.25, -0.6)
 script = ExtResource("5_wmgr")
 shoot_raycast = NodePath("../shoot_raycast")
 
-[node name="pistol" parent="player/neck/head/eyes/Camera3D/weapon_holder" unique_id=682032927 instance=ExtResource("17_pistol_scene")]
+[node name="pistol" parent="player/neck/head/eyes/Camera3D/weapon_holder" instance=ExtResource("17_pistol_scene")]
 
-[node name="rifle" parent="player/neck/head/eyes/Camera3D/weapon_holder" unique_id=1009904037 instance=ExtResource("14_rifle")]
+[node name="rifle" parent="player/neck/head/eyes/Camera3D/weapon_holder" instance=ExtResource("14_rifle")]
 
-[node name="shotgun" parent="player/neck/head/eyes/Camera3D/weapon_holder" unique_id=52928024 instance=ExtResource("15_shotgun")]
+[node name="shotgun" parent="player/neck/head/eyes/Camera3D/weapon_holder" instance=ExtResource("15_shotgun")]
 
-[node name="revolver" parent="player/neck/head/eyes/Camera3D/weapon_holder" unique_id=1624823127 instance=ExtResource("16_revolver")]
+[node name="revolver" parent="player/neck/head/eyes/Camera3D/weapon_holder" instance=ExtResource("16_revolver")]
 
-[node name="AnimationPlayer" type="AnimationPlayer" parent="player/neck/head/eyes" unique_id=1772758950]
+[node name="AnimationPlayer" type="AnimationPlayer" parent="player/neck/head/eyes"]
 libraries/ = SubResource("AnimationLibrary_71j4m")
 
-[node name="HUD" parent="." unique_id=909294115 instance=ExtResource("6_hud")]
+[node name="HUD" parent="." instance=ExtResource("6_hud")]
 
-[node name="DeathScreen" parent="." unique_id=554905251 instance=ExtResource("8_death")]
+[node name="DeathScreen" parent="." instance=ExtResource("8_death")]
 
-[node name="PauseMenu" parent="." unique_id=780227337 instance=ExtResource("12_pause")]
+[node name="PauseMenu" parent="." instance=ExtResource("12_pause")]
 
-[node name="UpgradePanel" parent="." unique_id=1039756221 instance=ExtResource("13_upgrade")]
+[node name="UpgradePanel" parent="." instance=ExtResource("13_upgrade")]
 
-[node name="WaveManager" type="Node" parent="." unique_id=1996363087 groups=["wave_manager"]]
+[node name="WaveManager" type="Node" parent="." groups=["wave_manager"]]
 script = ExtResource("9_wave")
 enemy_scene = ExtResource("7_enemy")
 runner_scene = ExtResource("7_runner")
@@ -503,28 +503,28 @@ brute_scene = ExtResource("7_brute")
 elite_scene = ExtResource("7_elite")
 boss_scene = ExtResource("7_boss")
 
-[node name="SpawnPoints" type="Node3D" parent="." unique_id=1181934501]
+[node name="SpawnPoints" type="Node3D" parent="."]
 
-[node name="SpawnPoint_N" type="Marker3D" parent="SpawnPoints" unique_id=1929257751 groups=["spawn_point"]]
+[node name="SpawnPoint_N" type="Marker3D" parent="SpawnPoints" groups=["spawn_point"]]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.1, -28)
 script = ExtResource("10_sp")
 
-[node name="SpawnPoint_S" type="Marker3D" parent="SpawnPoints" unique_id=629272126 groups=["spawn_point"]]
+[node name="SpawnPoint_S" type="Marker3D" parent="SpawnPoints" groups=["spawn_point"]]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.1, 28)
 script = ExtResource("10_sp")
 
-[node name="SpawnPoint_E" type="Marker3D" parent="SpawnPoints" unique_id=1582767763 groups=["spawn_point"]]
+[node name="SpawnPoint_E" type="Marker3D" parent="SpawnPoints" groups=["spawn_point"]]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 28, 0.1, 0)
 script = ExtResource("10_sp")
 
-[node name="SpawnPoint_W" type="Marker3D" parent="SpawnPoints" unique_id=94259956 groups=["spawn_point"]]
+[node name="SpawnPoint_W" type="Marker3D" parent="SpawnPoints" groups=["spawn_point"]]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -28, 0.1, 0)
 script = ExtResource("10_sp")
 
-[node name="SpawnPoint_NE" type="Marker3D" parent="SpawnPoints" unique_id=1738935752 groups=["spawn_point"]]
+[node name="SpawnPoint_NE" type="Marker3D" parent="SpawnPoints" groups=["spawn_point"]]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 26, 0.1, -26)
 script = ExtResource("10_sp")
 
-[node name="SpawnPoint_SW" type="Marker3D" parent="SpawnPoints" unique_id=1609240960 groups=["spawn_point"]]
+[node name="SpawnPoint_SW" type="Marker3D" parent="SpawnPoints" groups=["spawn_point"]]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -26, 0.1, 26)
 script = ExtResource("10_sp")

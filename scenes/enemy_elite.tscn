@@ -1,32 +1,44 @@
-[gd_scene load_steps=4 format=3]
+[gd_scene format=3 uid="uid://dg8lgists2a82"]
 
 [ext_resource type="PackedScene" path="res://scenes/enemy.tscn" id="1_base"]
-[ext_resource type="Texture2D" path="res://assets/sprites/elite_eye.png" id="2_sprite_ph"]
+[ext_resource type="Texture2D" uid="uid://c3vgylra77bqk" path="res://assets/sprites/elite_eye.png" id="2_sprite_ph"]
 
-[sub_resource type="BoxShape3D" id="BoxShape_elite_body"]
-size = Vector3(1.0, 1.0, 1.0)
+[sub_resource type="BoxShape3D" id="BoxShape_elite_collision"]
+size = Vector3(1, 1.4, 1)
 
-[sub_resource type="BoxShape3D" id="BoxShape_elite_eye"]
-size = Vector3(0.4, 0.4, 0.4)
+[sub_resource type="BoxShape3D" id="BoxShape_elite_ring_top"]
+size = Vector3(1.05, 0.46, 0.9)
+
+[sub_resource type="BoxShape3D" id="BoxShape_elite_ring_bottom"]
+size = Vector3(0.9, 0.4, 0.9)
+
+[sub_resource type="BoxShape3D" id="BoxShape_elite_ring_left"]
+size = Vector3(0.36, 0.85, 0.9)
+
+[sub_resource type="BoxShape3D" id="BoxShape_elite_ring_right"]
+size = Vector3(0.36, 0.85, 0.9)
+
+[sub_resource type="SphereShape3D" id="SphereShape_elite_eye"]
+radius = 0.387565
 
 [node name="Enemy" instance=ExtResource("1_base")]
-enemy_id = "elite"
-move_speed = 5.2
 max_health = 260.0
+move_speed = 5.2
+health_pack_drop_chance = 1.0
+legendary_drop_chance = 0.3
+score_value = 1200
+is_elite = true
+enemy_id = "elite"
+flank_offset_max = 3.0
 attack_damage = 30.0
 attack_windup = 0.8
 attack_cooldown = 1.3
 attack_miss_bonus_cooldown = 0.3
-health_pack_drop_chance = 1.0
-legendary_drop_chance = 0.30
-score_value = 1200
-is_elite = true
-flank_offset_max = 3.0
 is_flying = true
 
 [node name="CollisionShape3D" parent="." index="0"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.0, 0)
-shape = SubResource("BoxShape_elite_body")
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.4, 0)
+shape = SubResource("BoxShape_elite_collision")
 
 [node name="body" parent="." index="1"]
 visible = false
@@ -35,21 +47,34 @@ visible = false
 visible = false
 
 [node name="BodyHitbox" parent="." index="3"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.0, 0)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0)
 
 [node name="CollisionShape3D" parent="BodyHitbox" index="0"]
-shape = SubResource("BoxShape_elite_body")
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.85, 0)
+shape = SubResource("BoxShape_elite_ring_top")
+
+[node name="CollisionShape3D2" type="CollisionShape3D" parent="BodyHitbox" index="1"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.73, 0)
+shape = SubResource("BoxShape_elite_ring_bottom")
+
+[node name="CollisionShape3D3" type="CollisionShape3D" parent="BodyHitbox" index="2"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.51, 1.264, 0)
+shape = SubResource("BoxShape_elite_ring_left")
+
+[node name="CollisionShape3D4" type="CollisionShape3D" parent="BodyHitbox" index="3"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.52, 1.264, 0)
+shape = SubResource("BoxShape_elite_ring_right")
 
 [node name="HeadHitbox" parent="." index="4"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.0, -0.7)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0)
 
 [node name="CollisionShape3D" parent="HeadHitbox" index="0"]
-shape = SubResource("BoxShape_elite_eye")
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.264, 0)
+shape = SubResource("SphereShape_elite_eye")
 
-[node name="Sprite" type="Sprite3D" parent="."]
+[node name="Sprite" type="Sprite3D" parent="." index="6"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.0, 0)
 pixel_size = 0.0025
 billboard = 1
-shaded = false
 alpha_cut = 1
 texture = ExtResource("2_sprite_ph")

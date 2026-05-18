@@ -213,9 +213,9 @@ roughness = 0.6
 uv1_scale = Vector3(0.5, 0.5, 0.5)
 uv1_triplanar = true
 
-[node name="world" type="Node3D" unique_id=354887705]
+[node name="world" type="Node3D"]
 
-[node name="stage" type="NavigationRegion3D" parent="." unique_id=1787808641]
+[node name="stage" type="NavigationRegion3D" parent="."]
 navigation_mesh = SubResource("NavMesh_stage")
 script = ExtResource("11_navbake")
 
@@ -364,44 +364,44 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 5, 0.6, 19)
 mesh = SubResource("CylinderMesh_drum")
 material_override = SubResource("Mat_drum")
 
-[node name="env" type="Node3D" parent="." unique_id=1995890651]
+[node name="env" type="Node3D" parent="."]
 
-[node name="WorldEnvironment" type="WorldEnvironment" parent="env" unique_id=661310170]
+[node name="WorldEnvironment" type="WorldEnvironment" parent="env"]
 environment = SubResource("Environment_k0juu")
 
-[node name="DirectionalLight3D" type="DirectionalLight3D" parent="env" unique_id=1658686535]
+[node name="DirectionalLight3D" type="DirectionalLight3D" parent="env"]
 transform = Transform3D(-0.8660254, -0.43301278, 0.25, 0, 0.49999997, 0.86602545, -0.50000006, 0.75, -0.43301266, 0, 0, 0)
 shadow_enabled = true
 
-[node name="player" type="CharacterBody3D" parent="." unique_id=252459011 groups=["player"]]
+[node name="player" type="CharacterBody3D" parent="." groups=["player"]]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.5, 13)
 script = ExtResource("3_4wyf3")
 
-[node name="standing_collision_shape" type="CollisionShape3D" parent="player" unique_id=920472357]
+[node name="standing_collision_shape" type="CollisionShape3D" parent="player"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1, 0)
 shape = SubResource("CapsuleShape3D_rwgxs")
 
-[node name="crouching_collision_shape" type="CollisionShape3D" parent="player" unique_id=1607194456]
+[node name="crouching_collision_shape" type="CollisionShape3D" parent="player"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.5987277, 0)
 shape = SubResource("CapsuleShape3D_4wyf3")
 disabled = true
 
-[node name="RayCast3D" type="RayCast3D" parent="player" unique_id=315731427]
+[node name="RayCast3D" type="RayCast3D" parent="player"]
 target_position = Vector3(0, 2, 0)
 
-[node name="neck" type="Node3D" parent="player" unique_id=469468104]
+[node name="neck" type="Node3D" parent="player"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.8, 0)
 
-[node name="head" type="Node3D" parent="player/neck" unique_id=372955053]
+[node name="head" type="Node3D" parent="player/neck"]
 
-[node name="eyes" type="Node3D" parent="player/neck/head" unique_id=328210324]
+[node name="eyes" type="Node3D" parent="player/neck/head"]
 
-[node name="Camera3D" type="Camera3D" parent="player/neck/head/eyes" unique_id=2054508128]
+[node name="Camera3D" type="Camera3D" parent="player/neck/head/eyes"]
 
-[node name="shoot_raycast" type="RayCast3D" parent="player/neck/head/eyes/Camera3D" unique_id=253954902]
+[node name="shoot_raycast" type="RayCast3D" parent="player/neck/head/eyes/Camera3D"]
 target_position = Vector3(0, 0, -100)
 
-[node name="weapon_holder" type="Node3D" parent="player/neck/head/eyes/Camera3D" unique_id=171240891 node_paths=PackedStringArray("shoot_raycast")]
+[node name="weapon_holder" type="Node3D" parent="player/neck/head/eyes/Camera3D" node_paths=PackedStringArray("shoot_raycast")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.3, -0.25, -0.6)
 script = ExtResource("5_wmgr")
 shoot_raycast = NodePath("../shoot_raycast")
@@ -414,12 +414,12 @@ shoot_raycast = NodePath("../shoot_raycast")
 
 [node name="revolver" parent="player/neck/head/eyes/Camera3D/weapon_holder" instance=ExtResource("16_revolver")]
 
-[node name="AnimationPlayer" type="AnimationPlayer" parent="player/neck/head/eyes" unique_id=1772758950]
+[node name="AnimationPlayer" type="AnimationPlayer" parent="player/neck/head/eyes"]
 libraries/ = SubResource("AnimationLibrary_71j4m")
 
-[node name="HUD" parent="." unique_id=909294115 instance=ExtResource("6_hud")]
+[node name="HUD" parent="." instance=ExtResource("6_hud")]
 
-[node name="DeathScreen" parent="." unique_id=554905251 instance=ExtResource("8_death")]
+[node name="DeathScreen" parent="." instance=ExtResource("8_death")]
 
 [node name="PauseMenu" parent="." instance=ExtResource("12_pause")]
 

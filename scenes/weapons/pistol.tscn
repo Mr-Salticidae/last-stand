@@ -65,7 +65,7 @@ _data = {
 &"recoil": SubResource("Anim_pistol_recoil")
 }
 
-[node name="pistol" type="Node3D" unique_id=381060320 groups=["weapon"]]
+[node name="pistol" type="Node3D" groups=["weapon"]]
 script = ExtResource("1_weapon")
 fire_rate = 0.08
 auto_fire = true
@@ -74,12 +74,12 @@ recoil_pitch_deg = 1.0
 bullet_spread_deg = 0.3
 preview_texture = ExtResource("3_preview")
 
-[node name="mesh" type="MeshInstance3D" parent="." unique_id=1392886623]
+[node name="mesh" type="MeshInstance3D" parent="."]
 transform = Transform3D(0, 0, 0.2, 0, 0.2, 0, -0.2, 0, 0, 0, 0, 0)
 mesh = ExtResource("2_mesh")
 
-[node name="muzzle" type="Marker3D" parent="." unique_id=708856275]
+[node name="muzzle" type="Marker3D" parent="."]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -0.3)
 
-[node name="AnimationPlayer" type="AnimationPlayer" parent="." unique_id=2142738722]
+[node name="AnimationPlayer" type="AnimationPlayer" parent="."]
 libraries/ = SubResource("AnimLib_pistol")

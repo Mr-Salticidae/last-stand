@@ -15,7 +15,7 @@
 [ext_resource type="PackedScene" uid="uid://bo0psd2ds2vq0" path="res://scenes/ui_common/exit_confirm.tscn" id="12_exit"]
 [ext_resource type="PackedScene" uid="uid://204nn608eiot" path="res://scenes/ui_common/deploying_overlay.tscn" id="13_deploy"]
 
-[node name="MainMenu" type="Control" unique_id=357280473]
+[node name="MainMenu" type="Control"]
 layout_mode = 3
 anchors_preset = 15
 anchor_right = 1.0
@@ -25,10 +25,10 @@ grow_vertical = 2
 mouse_filter = 1
 script = ExtResource("1_main")
 
-[node name="AtmosphereBackground" parent="." unique_id=74655087 instance=ExtResource("2_atmos")]
+[node name="AtmosphereBackground" parent="." instance=ExtResource("2_atmos")]
 layout_mode = 1
 
-[node name="MainPage" type="Control" parent="." unique_id=652472632]
+[node name="MainPage" type="Control" parent="."]
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
@@ -39,7 +39,7 @@ grow_horizontal = 2
 grow_vertical = 2
 mouse_filter = 1
 
-[node name="TitleBlock" type="Control" parent="MainPage" unique_id=1686300581]
+[node name="TitleBlock" type="Control" parent="MainPage"]
 anchors_preset = 0
 offset_left = 120.0
 offset_top = 100.0
@@ -47,7 +47,7 @@ offset_right = 1100.0
 offset_bottom = 350.0
 mouse_filter = 2
 
-[node name="EyebrowCN" type="Label" parent="MainPage/TitleBlock" unique_id=1182805972]
+[node name="EyebrowCN" type="Label" parent="MainPage/TitleBlock"]
 layout_mode = 0
 offset_left = 2.0
 offset_top = 162.0
@@ -59,7 +59,7 @@ theme_override_font_sizes/font_size = 26
 text = "死         守"
 vertical_alignment = 1
 
-[node name="EyebrowEN" type="Label" parent="MainPage/TitleBlock" unique_id=1752531374]
+[node name="EyebrowEN" type="Label" parent="MainPage/TitleBlock"]
 layout_mode = 0
 offset_left = 151.0
 offset_top = 178.0
@@ -71,7 +71,7 @@ theme_override_font_sizes/font_size = 13
 text = "/  OPERATION CODE 07-RED"
 vertical_alignment = 1
 
-[node name="StandGlow" type="Control" parent="MainPage/TitleBlock" unique_id=1601422731]
+[node name="StandGlow" type="Control" parent="MainPage/TitleBlock"]
 layout_mode = 0
 offset_left = 290.0
 offset_top = 160.0
@@ -84,14 +84,14 @@ diameter = 260.0
 inner_alpha = 0.5
 mid_alpha = 0.15
 
-[node name="TremorGroup" type="Control" parent="MainPage/TitleBlock" unique_id=1488203011]
+[node name="TremorGroup" type="Control" parent="MainPage/TitleBlock"]
 layout_mode = 0
 offset_right = 980.0
 offset_bottom = 410.0
 mouse_filter = 2
 script = ExtResource("14_tremor")
 
-[node name="LastLabel" type="Label" parent="MainPage/TitleBlock/TremorGroup" unique_id=1370786125]
+[node name="LastLabel" type="Label" parent="MainPage/TitleBlock/TremorGroup"]
 layout_mode = 0
 offset_left = -7.0
 offset_top = 179.0
@@ -104,7 +104,7 @@ theme_override_fonts/font = ExtResource("5_o7")
 theme_override_font_sizes/font_size = 152
 text = "LAST"
 
-[node name="StandLabel" type="Label" parent="MainPage/TitleBlock/TremorGroup" unique_id=63293714]
+[node name="StandLabel" type="Label" parent="MainPage/TitleBlock/TremorGroup"]
 layout_mode = 0
 offset_left = 402.0
 offset_top = 179.0
@@ -117,7 +117,7 @@ theme_override_fonts/font = ExtResource("5_o7")
 theme_override_font_sizes/font_size = 152
 text = "STAND"
 
-[node name="BulletHole1" type="Control" parent="MainPage/TitleBlock" unique_id=270441100]
+[node name="BulletHole1" type="Control" parent="MainPage/TitleBlock"]
 layout_mode = 0
 offset_left = 450.0
 offset_top = 240.0
@@ -128,7 +128,7 @@ script = ExtResource("15_bullet")
 hole_size = 36.0
 crack_seed = 11
 
-[node name="BulletHole2" type="Control" parent="MainPage/TitleBlock" unique_id=270441101]
+[node name="BulletHole2" type="Control" parent="MainPage/TitleBlock"]
 layout_mode = 0
 offset_left = 388.0
 offset_top = 218.0
@@ -139,7 +139,7 @@ script = ExtResource("15_bullet")
 hole_size = 20.0
 crack_seed = 23
 
-[node name="BulletHole3" type="Control" parent="MainPage/TitleBlock" unique_id=270441102]
+[node name="BulletHole3" type="Control" parent="MainPage/TitleBlock"]
 layout_mode = 0
 offset_left = 360.0
 offset_top = 340.0
@@ -150,7 +150,7 @@ script = ExtResource("15_bullet")
 hole_size = 24.0
 crack_seed = 37
 
-[node name="BulletHole4" type="Control" parent="MainPage/TitleBlock" unique_id=270441103]
+[node name="BulletHole4" type="Control" parent="MainPage/TitleBlock"]
 layout_mode = 0
 offset_left = 880.0
 offset_top = 200.0
@@ -161,7 +161,7 @@ script = ExtResource("15_bullet")
 hole_size = 26.0
 crack_seed = 53
 
-[node name="BulletHole5" type="Control" parent="MainPage/TitleBlock" unique_id=270441104]
+[node name="BulletHole5" type="Control" parent="MainPage/TitleBlock"]
 layout_mode = 0
 offset_left = 110.0
 offset_top = 360.0
@@ -172,7 +172,7 @@ script = ExtResource("15_bullet")
 hole_size = 22.0
 crack_seed = 71
 
-[node name="MetaLineIcon" type="Label" parent="MainPage/TitleBlock" unique_id=969226379]
+[node name="MetaLineIcon" type="Label" parent="MainPage/TitleBlock"]
 layout_mode = 0
 offset_left = 2.0
 offset_top = 378.0
@@ -184,7 +184,7 @@ theme_override_font_sizes/font_size = 14
 text = "◤"
 vertical_alignment = 1
 
-[node name="MetaLine" type="Label" parent="MainPage/TitleBlock" unique_id=842481524]
+[node name="MetaLine" type="Label" parent="MainPage/TitleBlock"]
 layout_mode = 0
 offset_left = 17.0
 offset_top = 380.0
@@ -196,7 +196,7 @@ theme_override_font_sizes/font_size = 14
 text = "FIRST-PERSON · WAVE DEFENSE  |  HOLD THE LINE · YOU WILL FALL"
 vertical_alignment = 1
 
-[node name="SituationReport" type="Control" parent="MainPage" unique_id=310168978]
+[node name="SituationReport" type="Control" parent="MainPage"]
 anchors_preset = 0
 offset_left = 120.0
 offset_top = 582.0
@@ -208,7 +208,7 @@ bg_color = Color(0.0588, 0.0392, 0.0392, 0.6)
 border_color = Color(0.227, 0.125, 0.102, 1)
 border_width = 1.0
 
-[node name="Eyebrow" type="Label" parent="MainPage/SituationReport" unique_id=780546428]
+[node name="Eyebrow" type="Label" parent="MainPage/SituationReport"]
 layout_mode = 0
 offset_left = 24.0
 offset_top = 18.0
@@ -220,7 +220,7 @@ theme_override_font_sizes/font_size = 12
 text = "// SITUATION REPORT"
 vertical_alignment = 1
 
-[node name="Body" type="Label" parent="MainPage/SituationReport" unique_id=147934771]
+[node name="Body" type="Label" parent="MainPage/SituationReport"]
 layout_mode = 0
 offset_left = 24.0
 offset_top = 50.0
@@ -234,7 +234,7 @@ text = "通讯中断 · 增援未到 · 弹药紧张。
 机器人浪潮正在合围。撑得越久 · 得分越高 · 你必将倒下。"
 autowrap_mode = 3
 
-[node name="RightColumn" type="Control" parent="MainPage" unique_id=46818218]
+[node name="RightColumn" type="Control" parent="MainPage"]
 anchors_preset = 0
 anchor_left = 1.0
 anchor_right = 1.0
@@ -244,7 +244,7 @@ offset_right = -120.0
 offset_bottom = 880.0
 mouse_filter = 2
 
-[node name="Eyebrow" type="Label" parent="MainPage/RightColumn" unique_id=1568432276]
+[node name="Eyebrow" type="Label" parent="MainPage/RightColumn"]
 layout_mode = 0
 offset_right = 560.0
 offset_bottom = 24.0
@@ -255,21 +255,21 @@ text = "COMMAND TERMINAL  ·  06 ENTRIES"
 horizontal_alignment = 2
 vertical_alignment = 1
 
-[node name="Buttons" type="VBoxContainer" parent="MainPage/RightColumn" unique_id=364921189]
+[node name="Buttons" type="VBoxContainer" parent="MainPage/RightColumn"]
 layout_mode = 0
 offset_top = 50.0
 offset_right = 560.0
 offset_bottom = 612.0
 theme_override_constants/separation = 14
 
-[node name="StartButton" type="Control" parent="MainPage/RightColumn/Buttons" unique_id=572927971]
+[node name="StartButton" type="Control" parent="MainPage/RightColumn/Buttons"]
 custom_minimum_size = Vector2(560, 82)
 layout_mode = 2
 focus_mode = 2
 mouse_default_cursor_shape = 2
 script = ExtResource("3_btn")
 
-[node name="LevelSelectButton" type="Control" parent="MainPage/RightColumn/Buttons" unique_id=1059086698]
+[node name="LevelSelectButton" type="Control" parent="MainPage/RightColumn/Buttons"]
 custom_minimum_size = Vector2(560, 82)
 layout_mode = 2
 focus_mode = 2
@@ -279,7 +279,7 @@ code = "02"
 cn_label = "选择关卡"
 en_label = "SELECT MAP"
 
-[node name="RecordButton" type="Control" parent="MainPage/RightColumn/Buttons" unique_id=163078185]
+[node name="RecordButton" type="Control" parent="MainPage/RightColumn/Buttons"]
 custom_minimum_size = Vector2(560, 82)
 layout_mode = 2
 focus_mode = 2
@@ -289,7 +289,7 @@ code = "03"
 cn_label = "最高纪录"
 en_label = "HIGH SCORES"
 
-[node name="SettingsButton" type="Control" parent="MainPage/RightColumn/Buttons" unique_id=1337785439]
+[node name="SettingsButton" type="Control" parent="MainPage/RightColumn/Buttons"]
 custom_minimum_size = Vector2(560, 82)
 layout_mode = 2
 focus_mode = 2
@@ -299,7 +299,7 @@ code = "04"
 cn_label = "设置"
 en_label = "SETTINGS"
 
-[node name="CreditsButton" type="Control" parent="MainPage/RightColumn/Buttons" unique_id=221760692]
+[node name="CreditsButton" type="Control" parent="MainPage/RightColumn/Buttons"]
 custom_minimum_size = Vector2(560, 82)
 layout_mode = 2
 focus_mode = 2
@@ -309,7 +309,7 @@ code = "05"
 cn_label = "致谢"
 en_label = "CREDITS"
 
-[node name="QuitButton" type="Control" parent="MainPage/RightColumn/Buttons" unique_id=347850132]
+[node name="QuitButton" type="Control" parent="MainPage/RightColumn/Buttons"]
 custom_minimum_size = Vector2(560, 82)
 layout_mode = 2
 focus_mode = 2
@@ -320,13 +320,13 @@ cn_label = "退出"
 en_label = "EXIT"
 danger = true
 
-[node name="ExitConfirm" parent="." unique_id=128306570 instance=ExtResource("12_exit")]
+[node name="ExitConfirm" parent="." instance=ExtResource("12_exit")]
 visible = false
 layout_mode = 1
 grow_horizontal = 2
 grow_vertical = 2
 
-[node name="DeployingOverlay" parent="." unique_id=1392755258 instance=ExtResource("13_deploy")]
+[node name="DeployingOverlay" parent="." instance=ExtResource("13_deploy")]
 visible = false
 layout_mode = 1
 grow_horizontal = 2

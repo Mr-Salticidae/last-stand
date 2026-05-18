@@ -2,8 +2,8 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://c3vgylra77bqk"
-path.s3tc="res://.godot/imported/elite_eye.png-206c74c1b8703a8bc1d0678236bb6cfc.s3tc.ctex"
+uid="uid://drndf3lplgtb5"
+path.s3tc="res://.godot/imported/grunt.png-06ae727a7caab96584de985bfb1331a2.s3tc.ctex"
 metadata={
 "imported_formats": ["s3tc_bptc"],
 "vram_texture": true
@@ -11,8 +11,8 @@ metadata={
 
 [deps]
 
-source_file="res://assets/sprites/elite_eye.png"
-dest_files=["res://.godot/imported/elite_eye.png-206c74c1b8703a8bc1d0678236bb6cfc.s3tc.ctex"]
+source_file="res://assets/sprites/enemies/grunt.png"
+dest_files=["res://.godot/imported/grunt.png-06ae727a7caab96584de985bfb1331a2.s3tc.ctex"]
 
 [params]
 

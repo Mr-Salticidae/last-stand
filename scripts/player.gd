@@ -163,6 +163,13 @@ func _input(event: InputEvent) -> void:
 		if ke.physical_keycode == KEY_F and ke.ctrl_pressed and ke.shift_pressed:
 			_toggle_noclip()
 			return
+		# 隐藏调试热键 Ctrl+Shift+H：开 hitbox 可视化（当前敌人 + 之后每波新生成的）
+		if ke.physical_keycode == KEY_H and ke.ctrl_pressed and ke.shift_pressed:
+			Enemy.debug_hitbox_viz = true
+			for e in get_tree().get_nodes_in_group("enemy"):
+				if e is Enemy:
+					(e as Enemy).enable_hitbox_viz()
+			return
 
 	if _dead or input_locked:
 		return

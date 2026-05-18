@@ -1,5 +1,10 @@
 class_name Enemy extends CharacterBody3D
 
+# Dev: 隐藏热键 Ctrl+Shift+H 置 true，已存活敌人立即开、之后每波新生成的敌人
+# _ready 时自动开 hitbox 可视化（红=BodyHitbox 蓝=HeadHitbox）。重开关卡清除。
+static var debug_hitbox_viz: bool = false
+var _hitbox_viz_on: bool = false
+
 # ========== 数值配置 ==========
 @export_group("Stats")
 @export var max_health: float = 100.0
@@ -262,6 +267,9 @@ func _ready() -> void:
 		_juice_base_pos = _juice_sprite.position
 		_juice_base_scale = _juice_sprite.scale
 
+	if Enemy.debug_hitbox_viz:
+		enable_hitbox_viz()
+
 func _find_player() -> void:
 	_player = get_tree().get_first_node_in_group("player") as Node3D
 
@@ -269,6 +277,9 @@ func _find_player() -> void:
 # BodyHitbox = 红色，HeadHitbox = 蓝色。让 hitbox 范围在运行时可见，方便对照视觉模型调
 # 由 wave_manager debug spawn 路径调用。封版保留，供未来调新敌人 hitbox 用。
 func enable_hitbox_viz() -> void:
+	if _hitbox_viz_on:
+		return
+	_hitbox_viz_on = true
 	for area_child in get_children():
 		if not (area_child is Area3D):
 			continue
@@ -305,6 +316,12 @@ func _make_viz_mesh_for_shape(shape: Shape3D) -> Mesh:
 		cm.bottom_radius = cyl.radius
 		cm.height = cyl.height
 		return cm
+	if shape is SphereShape3D:
+		var sm: SphereMesh = SphereMesh.new()
+		var r: float = (shape as SphereShape3D).radius
+		sm.radius = r
+		sm.height = r * 2.0
+		return sm
 	return null
 
 # 递归收集子树里所有 MeshInstance3D 的 BaseMaterial3D 副本
@@ -341,6 +358,7 @@ func is_dead() -> bool:
 func _physics_process(delta: float) -> void:
 	if _is_dead:
 		return
+
 
 	# 虚空清理：掉出关卡范围的敌人立即销毁
 	# 必须先 emit died 让 wave_manager 移除引用，否则 _alive_enemies 留 invalid 节点

@@ -9,7 +9,7 @@
 [ext_resource type="FontVariation" path="res://assets/fonts/font_jbmono_500.tres" id="7_jb5"]
 [ext_resource type="FontVariation" path="res://assets/fonts/font_notosc_900.tres" id="8_n9"]
 
-[node name="HighScoresMenu" type="Control" unique_id=1465625091]
+[node name="HighScoresMenu" type="Control"]
 layout_mode = 3
 anchors_preset = 15
 anchor_right = 1.0
@@ -18,10 +18,10 @@ grow_horizontal = 2
 grow_vertical = 2
 script = ExtResource("1_hs")
 
-[node name="AtmosphereBackground" parent="." unique_id=1497652650 instance=ExtResource("2_atmos")]
+[node name="AtmosphereBackground" parent="." instance=ExtResource("2_atmos")]
 layout_mode = 1
 
-[node name="PageHeader" type="Control" parent="." unique_id=701862450]
+[node name="PageHeader" type="Control" parent="."]
 layout_mode = 1
 anchors_preset = 10
 anchor_right = 1.0
@@ -32,7 +32,7 @@ offset_bottom = 290.0
 grow_horizontal = 2
 mouse_filter = 2
 
-[node name="Eyebrow" type="Label" parent="PageHeader" unique_id=1530742637]
+[node name="Eyebrow" type="Label" parent="PageHeader"]
 layout_mode = 1
 offset_right = 400.0
 offset_bottom = 20.0
@@ -42,7 +42,7 @@ theme_override_font_sizes/font_size = 12
 text = "// FIELD REPORT · 0XR-07"
 vertical_alignment = 1
 
-[node name="TitleEN" type="Label" parent="PageHeader" unique_id=2016367075]
+[node name="TitleEN" type="Label" parent="PageHeader"]
 layout_mode = 1
 offset_top = 30.0
 offset_right = 600.0
@@ -55,7 +55,7 @@ theme_override_font_sizes/font_size = 84
 text = "HIGH SCORES"
 vertical_alignment = 1
 
-[node name="TitleCN" type="Label" parent="PageHeader" unique_id=2003433492]
+[node name="TitleCN" type="Label" parent="PageHeader"]
 layout_mode = 1
 offset_left = 540.0
 offset_top = 70.0
@@ -67,7 +67,7 @@ theme_override_font_sizes/font_size = 28
 text = "最高纪录"
 vertical_alignment = 1
 
-[node name="Rule" type="Label" parent="PageHeader" unique_id=1007561489]
+[node name="Rule" type="Label" parent="PageHeader"]
 layout_mode = 1
 offset_top = 138.0
 offset_right = 800.0
@@ -78,7 +78,7 @@ theme_override_font_sizes/font_size = 13
 text = "◤  HOLD THE LINE · SECTOR 07"
 vertical_alignment = 1
 
-[node name="Stamp" type="Label" parent="PageHeader" unique_id=243577386]
+[node name="Stamp" type="Label" parent="PageHeader"]
 layout_mode = 1
 anchors_preset = 1
 anchor_left = 1.0
@@ -98,7 +98,7 @@ text = " RESTRICTED "
 horizontal_alignment = 1
 vertical_alignment = 1
 
-[node name="PageBody" type="Control" parent="." unique_id=1001193901]
+[node name="PageBody" type="Control" parent="."]
 layout_mode = 1
 anchors_preset = 10
 anchor_right = 1.0
@@ -107,7 +107,7 @@ offset_bottom = 920.0
 grow_horizontal = 2
 mouse_filter = 2
 
-[node name="Grid" type="GridContainer" parent="PageBody" unique_id=976033985]
+[node name="Grid" type="GridContainer" parent="PageBody"]
 layout_mode = 1
 anchors_preset = 5
 anchor_left = 0.5
@@ -120,17 +120,17 @@ theme_override_constants/h_separation = 26
 theme_override_constants/v_separation = 26
 columns = 2
 
-[node name="StatWave" parent="PageBody/Grid" unique_id=792059205 instance=ExtResource("3_stat")]
+[node name="StatWave" parent="PageBody/Grid" instance=ExtResource("3_stat")]
 layout_mode = 2
 
-[node name="StatScore" parent="PageBody/Grid" unique_id=1929636959 instance=ExtResource("3_stat")]
+[node name="StatScore" parent="PageBody/Grid" instance=ExtResource("3_stat")]
 layout_mode = 2
 code = "02"
 cn_label = "最高得分"
 en_label = "TOP SCORE"
 unit = "PTS"
 
-[node name="StatTime" parent="PageBody/Grid" unique_id=1702439755 instance=ExtResource("3_stat")]
+[node name="StatTime" parent="PageBody/Grid" instance=ExtResource("3_stat")]
 layout_mode = 2
 code = "03"
 cn_label = "最长存活"
@@ -138,14 +138,14 @@ en_label = "LONGEST HOLD"
 value = "--:--:--"
 unit = "TIME"
 
-[node name="StatCombo" parent="PageBody/Grid" unique_id=778110290 instance=ExtResource("3_stat")]
+[node name="StatCombo" parent="PageBody/Grid" instance=ExtResource("3_stat")]
 layout_mode = 2
 code = "04"
 cn_label = "最高连击"
 en_label = "BEST STREAK"
 unit = "x KILL"
 
-[node name="WarningStrip" type="Label" parent="PageBody" unique_id=707884179]
+[node name="WarningStrip" type="Label" parent="PageBody"]
 layout_mode = 1
 anchors_preset = 5
 anchor_left = 0.5
@@ -162,7 +162,7 @@ text = "⚠  FIRST BOOT DETECTED  ·  COMPLETE A DEPLOYMENT TO RECORD METRICS  �
 horizontal_alignment = 1
 vertical_alignment = 1
 
-[node name="Footer" type="Control" parent="." unique_id=792136872]
+[node name="Footer" type="Control" parent="."]
 layout_mode = 1
 anchors_preset = 12
 anchor_top = 1.0
@@ -173,7 +173,7 @@ grow_horizontal = 2
 grow_vertical = 0
 mouse_filter = 2
 
-[node name="BackButton" type="Control" parent="Footer" unique_id=1571729427]
+[node name="BackButton" type="Control" parent="Footer"]
 custom_minimum_size = Vector2(151, 56)
 layout_mode = 1
 anchors_preset = 0
