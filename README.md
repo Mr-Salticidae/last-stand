@@ -56,10 +56,10 @@ git clone https://github.com/Mr-Salticidae/last-stand.git
 
 ## 开发状态
 
-当前版本 **v0.4.0** — 极限档难度大改 + 数值平衡 + AI 行为升级 + Boss 多 phase + 方向感知移速  
+当前版本 **v0.5.0** — 敌人全面 DOOM 2D 精灵化 + 测量驱动分段 hitbox（球头/核 + 轮廓躯干 + Elite 圆环弱点）  
 完整更新日志：[GitHub Releases](https://github.com/Mr-Salticidae/last-stand/releases) · [itch.io devlog](https://mr-salticidae.itch.io/last-stand/devlog)
 
-下一版 v0.5 计划：敌人模型美术替换 + B 站实机视频引流。
+下一版 v0.6 计划：怪物逐帧动画（行走/奔跑/攻击/死亡）+ 武器 2D 持枪视图 + 地图贴图差异化。
 
 ## 反馈
 
