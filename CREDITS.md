@@ -1,6 +1,6 @@
 # LastStand — Asset Credits
 
-> Last updated: 2026-04-29 (demo release)
+> Last updated: 2026-05-18 (v0.5.0)
 
 ## Engine
 
@@ -16,11 +16,15 @@
 - All 17 in-game SFX (gunshots, hits, kills, enemy windup, UI clicks, death audio, etc.) generated with **ElevenLabs (Pro subscription)**, commercial use rights granted per ElevenLabs ToS
 - Files: `assets/audio/sfx/*.mp3`
 
+## 2D Art (Enemy Sprites)
+
+- All enemy sprites (Grunt / Runner / Brute / Elite / Boss) generated with **Midjourney** + **GPT Image 2** (subscriptions), commercial use rights granted per respective ToS
+- Files: `assets/sprites/*.png`, `assets/sprites/enemies/*.png`
+
 ## 3D Models
 
 ### Quaternius (CC0 - Public Domain)
 - **Ultimate Gun Pack** — Pistol_3 / AssaultRifle_3 / Revolver_5 / Shotgun_2 / Bullpup_1
-- **Sci-Fi Essentials Kit** — QuadShell / Trilobite / EyeDrone (enemy meshes)
 - License: CC0 1.0 Universal — no attribution required (listed here as good practice)
 - Source: https://quaternius.itch.io/
 - Author: Quaternius (https://www.patreon.com/quaternius)
@@ -31,11 +35,6 @@
 - Source: https://sketchfab.com/3d-models/low-poly-weapon-asset-pack-762c43cc1532421eb0452b64e2bdd483
 - Author: r2detta (https://sketchfab.com/r2detta)
 - **License terms**: Free use including commercial, but author must be credited
-
-### Animated Mech Pack (CC0 - Public Domain)
-- **Mike / George** — used as Grunt / Boss enemies (Leela / Stan packed but excluded from build)
-- License: CC0 1.0 Universal
-- Listed here as good practice
 
 ## Fonts
 
