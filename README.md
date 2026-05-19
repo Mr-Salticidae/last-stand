@@ -1,4 +1,4 @@
-# LastStand · 阵地战
+# LastStand · 死守
 
 一款用 Godot 4 做的波次生存 FPS。守住阵地，杀掉来犯的敌人，每波之间抽卡升级。
 
