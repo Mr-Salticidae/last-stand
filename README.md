@@ -52,7 +52,7 @@ git clone https://github.com/Mr-Salticidae/last-stand.git
 
 - **引擎**：Godot 4.6
 - **语言**：GDScript
-- **资源**：主要 CC0（Quaternius / Kenney / Mech Pack 等）
+- **资源**：武器 CC0/CC-BY（Quaternius / r2detta）；敌人精灵、BGM、音效为自制 AI 生成（Midjourney / GPT Image 2 / Suno / ElevenLabs，均订阅版商用授权）
 
 ## 开发状态
 

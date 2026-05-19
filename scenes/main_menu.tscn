@@ -231,7 +231,7 @@ theme_override_constants/line_spacing = 12
 theme_override_fonts/font = ExtResource("9_n4")
 theme_override_font_sizes/font_size = 15
 text = "通讯中断 · 增援未到 · 弹药紧张。
-机器人浪潮正在合围。撑得越久 · 得分越高 · 你必将倒下。"
+腐蚀漫过防线 · 残骸成群合围。撑得越久 · 得分越高 · 你必将倒下。"
 autowrap_mode = 3
 
 [node name="RightColumn" type="Control" parent="MainPage"]
