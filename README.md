@@ -9,7 +9,7 @@
 
 ---
 
-## 截图
+## 截图（旧版）
 
 ![战斗](assets/screenshots/上传itch/02_combat.png)
 ![连击](assets/screenshots/上传itch/03_combo.png)
