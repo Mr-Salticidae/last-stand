@@ -27,6 +27,11 @@ var slide_timer = 0.0
 var slide_timer_max = 1.0
 var slide_world_direction: Vector3 = Vector3.ZERO
 var slide_speed = 10.0
+# v0.6：速度增益倍率上限。疾风步伐(speed_mult)+杀戮节拍(_combo_speed_active)
+# 叠加原本无上限，多张速度卡后滑铲那 1s 横穿全图（"无限高速滑行"）。
+# clamp 在 dir_mult 之前——方向感知(前1.0/横0.85/后0.65)是设计因子不参与封顶。
+# 保留一条 build 路径可"很快"(满速 build 仍能顶到上限)，只是不破游戏。
+const SPEED_BUFF_CAP := 2.0
 
 # Head bobbing vars
 const head_bobbing_sprinting_speed = 22.0
@@ -397,7 +402,8 @@ func _physics_process(delta: float) -> void:
 	var dir_mult: float = 1.0
 	if not sliding:
 		dir_mult = _directional_speed_mult(input_dir)
-	var total_speed_mult: float = speed_mult * (1.0 + _combo_speed_active) * dir_mult
+	var buff_mult: float = minf(speed_mult * (1.0 + _combo_speed_active), SPEED_BUFF_CAP)
+	var total_speed_mult: float = buff_mult * dir_mult
 	if direction:
 		velocity.x = direction.x * current_speed * total_speed_mult
 		velocity.z = direction.z * current_speed * total_speed_mult
