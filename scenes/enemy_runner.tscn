@@ -56,7 +56,7 @@ shape = SubResource("SphereShape_runner_head")
 
 [node name="Sprite" type="Sprite3D" parent="." index="6"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.4, 0)
-pixel_size = 0.002206
+pixel_size = 0.00193
 billboard = 1
 alpha_cut = 1
 texture = ExtResource("2_sprite")

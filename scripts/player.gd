@@ -33,6 +33,10 @@ var slide_speed = 10.0
 # 保留一条 build 路径可"很快"(满速 build 仍能顶到上限)，只是不破游戏。
 const SPEED_BUFF_CAP := 2.0
 
+# 调试热键总开关：默认 false（发布态，防玩家误触飞天/碰撞箱可视化等）。
+# 需要调试时改 true。所有隐藏调试热键 + 之后新增的调试代码都挂这个开关，不要直接删。
+const DEBUG_HOTKEYS := false
+
 # v0.6 近战处决（DOOM 电锯位）：近距前向锥内秒杀一只敌人 + 当前武器满弹补给。
 # 有限资源（每波清空 +1 / 5% 击杀掉落，上限 EXECUTE_MAX），应急回弹解后期弹尽。
 const EXECUTE_RANGE := 2.6           # 处决判定距离（m）
@@ -166,6 +170,10 @@ signal execute_charges_changed(current: int, maximum: int)
 var execute_charges: int = EXECUTE_MAX
 var _executing: bool = false
 var _execute_timer: float = 0.0
+# 近战 viewmodel（Phase A 占位刃，代码生成；Phase B 换 2D 精灵）
+var _melee_vm: Node3D = null
+var _melee_vm_base_pos: Vector3 = Vector3.ZERO
+var _melee_swing_tween: Tween = null
 
 func _ready():
 	Input.set_mouse_mode(Input.MOUSE_MODE_CAPTURED)
@@ -173,19 +181,21 @@ func _ready():
 	# 延迟一帧发送，确保 HUD 已经连接 health_changed 后再同步初始值
 	call_deferred("emit_signal", "health_changed", current_health, max_health)
 	call_deferred("emit_signal", "execute_charges_changed", execute_charges, EXECUTE_MAX)
+	_setup_melee_viewmodel()
 	# 缓存 base FOV，杀戮节拍激活时叠加 _fov_extra
 	if camera_3d:
 		_base_fov = camera_3d.fov
 
 func _input(event: InputEvent) -> void:
-	# 隐藏调试热键 Ctrl+Shift+F：放在 _dead/input_locked 检查前，
-	# 这样玩家死亡或升级面板开着时也能切回飞行（开发场景常见）。
-	if event is InputEventKey and event.pressed and not event.echo:
+	# 隐藏调试热键：默认关（DEBUG_HOTKEYS=false），防玩家误触；调试时翻 true 启用。
+	# 代码保留不删，统一挂这个开关下（飞天 / hitbox 可视化 / 之后新调试键都走这）。
+	if DEBUG_HOTKEYS and event is InputEventKey and event.pressed and not event.echo:
 		var ke: InputEventKey = event
+		# Ctrl+Shift+F：noclip 飞天（放最前，死亡/面板态也能切回）
 		if ke.physical_keycode == KEY_F and ke.ctrl_pressed and ke.shift_pressed:
 			_toggle_noclip()
 			return
-		# 隐藏调试热键 Ctrl+Shift+H：开 hitbox 可视化（当前敌人 + 之后每波新生成的）
+		# Ctrl+Shift+H：开 hitbox 可视化（当前敌人 + 之后每波新生成的）
 		if ke.physical_keycode == KEY_H and ke.ctrl_pressed and ke.shift_pressed:
 			Enemy.debug_hitbox_viz = true
 			for e in get_tree().get_nodes_in_group("enemy"):
@@ -195,9 +205,12 @@ func _input(event: InputEvent) -> void:
 
 	if _dead or input_locked:
 		return
-	# 近战处决：V 键（避开 F=noclip / Q E=lean）
+	# 近战：F 键。不做任何修饰键排除——滑铲=同时握 Shift(疾跑)+Ctrl(蹲)，
+	# 之前 not(ctrl and shift) 守卫正好把滑铲中的 F 挡了。noclip 的 Ctrl+Shift+F
+	# 已在上面调试块里先 return 拦截，这里无需再排除，F 在任何姿态都能挥。
 	if event is InputEventKey and event.pressed and not event.echo:
-		if (event as InputEventKey).physical_keycode == KEY_V:
+		var k: InputEventKey = event
+		if k.physical_keycode == KEY_F:
 			_try_execute()
 			return
 	if event is InputEventMouseMotion:
@@ -290,7 +303,10 @@ func _physics_process(delta: float) -> void:
 		# （在跑步状态，含松开 sprint 后 lerp 减速窗口）+ 有移动方向就触发，玩家反馈
 		# "滑铲不好用出来"主因是 sprint 必须按住时机太严
 		# v0.4-A 方向感知：滑铲必须前向触发（input.y < 0），后退冲刺禁了滑铲也一并禁
-		if current_speed > walking_speed * 0.95 and input_dir.y < 0.0:
+		# 关键：加 not sliding——只在进入瞬间触发一次。否则按住 crouch 时每帧重置
+		# slide_timer 导致永远减不下去 = 无限滑。一次触发后 timer 正常递减 →
+		# current_speed=(timer+0.1)*slide_speed 从 11 衰减到 1 → 到 0 结束 → 自然转蹲行。
+		if not sliding and current_speed > walking_speed * 0.95 and input_dir.y < 0.0:
 			sliding = true
 			slide_timer = slide_timer_max
 			slide_world_direction = (transform.basis * Vector3(input_dir.x, 0, input_dir.y)).normalized()
@@ -571,24 +587,23 @@ func _process_noclip(delta: float) -> void:
 func _try_execute() -> void:
 	if _executing:
 		return
-	# 先判定，再扣除——任何"失败"路径都不消耗次数，只给拒绝反馈
+	# 充能 = 近战的"弹药"：没次数根本不能挥刀（连空挥都不行）
 	if execute_charges <= 0:
-		_execute_deny()
 		return
+	# 有可处决目标且充能足 → 真处决；否则空挥（仅动画，不扣不杀，可自由挥）
 	var target: Node3D = _find_execute_target()
-	if target == null:
-		_execute_deny()
-		return
-	var cost: int = EXECUTE_ELITE_COST if target.get("is_elite") else 1
-	if execute_charges < cost:  # 精英需 2 点但不足
-		_execute_deny()
-		return
-	_start_execute(target, cost)
+	if target != null:
+		var cost: int = EXECUTE_ELITE_COST if target.get("is_elite") else 1
+		if execute_charges >= cost:
+			_start_execute(target, cost)
+			return
+	_empty_swing()
 
-# 处决失败（无目标 / 次数不足）：轻拒绝音，明确告诉玩家"没生效、没扣次数"
-func _execute_deny() -> void:
-	if AudioManager:
-		AudioManager.play_dry_fire()
+# 空挥：只播挥击动画，不消耗 / 不无敌 / 不慢镜；正在挥时不打断（天然限频）
+func _empty_swing() -> void:
+	if _melee_swing_tween and _melee_swing_tween.is_valid():
+		return
+	_play_melee_swing()
 
 # 前向锥扫描：camera forward 方向、EXECUTE_CONE_DEG 半角、EXECUTE_RANGE 内，取最近
 func _find_execute_target() -> Node3D:
@@ -625,6 +640,7 @@ func _start_execute(target: Node3D, cost: int) -> void:
 	get_tree().create_timer(EXECUTE_SLOWMO_TIME, true, false, true).timeout.connect(
 		func(): Engine.time_scale = 1.0)
 	_spawn_execute_vfx(target.global_position + Vector3.UP * 1.0)
+	_play_melee_swing()
 	if AudioManager:
 		AudioManager.play_execute()
 	if target.has_method("die_by_execution"):
@@ -667,6 +683,58 @@ func _spawn_execute_vfx(pos: Vector3) -> void:
 	get_tree().create_timer(1.2, true).timeout.connect(func():
 		if is_instance_valid(p):
 			p.queue_free())
+
+# 近战 viewmodel（Phase A 占位刃）：代码生成挂相机下，平时隐藏，处决时挥击
+func _setup_melee_viewmodel() -> void:
+	if camera_3d == null:
+		return
+	_melee_vm = Node3D.new()
+	camera_3d.add_child(_melee_vm)
+	_melee_vm.position = Vector3(0.3, -0.28, -0.55)
+	_melee_vm_base_pos = _melee_vm.position
+	_melee_vm.rotation_degrees = Vector3(0, 0, 35)
+	var blade := MeshInstance3D.new()
+	var bm := BoxMesh.new()
+	bm.size = Vector3(0.05, 0.5, 0.09)
+	blade.mesh = bm
+	blade.position = Vector3(0, 0.22, 0)  # 刃身在握把上方
+	var mat := StandardMaterial3D.new()
+	mat.albedo_color = Color(0.10, 0.10, 0.12)
+	mat.metallic = 0.7
+	mat.roughness = 0.4
+	mat.emission_enabled = true
+	mat.emission = Color(0.75, 0.06, 0.04)
+	mat.emission_energy_multiplier = 0.7
+	blade.material_override = mat
+	_melee_vm.add_child(blade)
+	_melee_vm.visible = false
+
+# 程序挥击：起手右上 → 斜劈左下 → 收手隐藏。慢镜期间自动放慢（用 scaled time）
+func _play_melee_swing() -> void:
+	if _melee_vm == null:
+		return
+	if _melee_swing_tween and _melee_swing_tween.is_valid():
+		_melee_swing_tween.kill()
+	# 挥击时藏掉当前枪 viewmodel，避免刃与枪重叠
+	var wm: Node = get_tree().get_first_node_in_group("weapon_manager")
+	var gun: Node3D = null
+	if wm and "current_weapon" in wm and wm.current_weapon != null:
+		gun = wm.current_weapon
+		gun.visible = false
+	_melee_vm.visible = true
+	_melee_vm.rotation_degrees = Vector3(-25, 18, 75)
+	_melee_vm.position = _melee_vm_base_pos + Vector3(0.1, 0.16, 0.04)
+	_melee_swing_tween = create_tween()
+	_melee_swing_tween.tween_property(_melee_vm, "rotation_degrees", Vector3(28, -22, -62), 0.16) \
+		.set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
+	_melee_swing_tween.parallel().tween_property(_melee_vm, "position",
+		_melee_vm_base_pos + Vector3(-0.06, -0.12, -0.06), 0.16).set_ease(Tween.EASE_IN)
+	_melee_swing_tween.tween_interval(0.14)
+	_melee_swing_tween.tween_callback(func():
+		if is_instance_valid(_melee_vm):
+			_melee_vm.visible = false
+		if is_instance_valid(gun):
+			gun.visible = true)
 
 # 处决次数 +n（每波清空 / 击杀掉落调用），上限 EXECUTE_MAX
 func add_execute_charge(n: int) -> void:
