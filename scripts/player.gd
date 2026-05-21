@@ -692,20 +692,19 @@ func _setup_melee_viewmodel() -> void:
 	camera_3d.add_child(_melee_vm)
 	_melee_vm.position = Vector3(0.3, -0.28, -0.55)
 	_melee_vm_base_pos = _melee_vm.position
-	_melee_vm.rotation_degrees = Vector3(0, 0, 35)
-	var blade := MeshInstance3D.new()
-	var bm := BoxMesh.new()
-	bm.size = Vector3(0.05, 0.5, 0.09)
-	blade.mesh = bm
-	blade.position = Vector3(0, 0.22, 0)  # 刃身在握把上方
-	var mat := StandardMaterial3D.new()
-	mat.albedo_color = Color(0.10, 0.10, 0.12)
-	mat.metallic = 0.7
-	mat.roughness = 0.4
-	mat.emission_enabled = true
-	mat.emission = Color(0.75, 0.06, 0.04)
-	mat.emission_energy_multiplier = 0.7
-	blade.material_override = mat
+	_melee_vm.rotation_degrees = Vector3(0, 0, 0)
+	# Phase B：2D 刀精灵 viewmodel（临时键控版，颗粒感待白底重出后 drop-in 替换）
+	var blade := Sprite3D.new()
+	var tex: Texture2D = load("res://assets/sprites/melee_cleaver.png")
+	if tex:
+		blade.texture = tex
+	blade.pixel_size = 0.00065   # 1024px → ~0.67m，viewmodel 尺寸（待调）
+	blade.shaded = false
+	blade.alpha_cut = 0          # 用 alpha 混合而非 discard，颗粒图更柔少破洞
+	# 原图刀柄在右上/刃尖在左下，直接用会"拿刀柄打人"——180° 镜像让刃尖朝前、柄回手边
+	blade.flip_h = true
+	blade.flip_v = true
+	blade.position = Vector3(0, 0.1, 0)
 	_melee_vm.add_child(blade)
 	_melee_vm.visible = false
 
@@ -722,13 +721,16 @@ func _play_melee_swing() -> void:
 		gun = wm.current_weapon
 		gun.visible = false
 	_melee_vm.visible = true
-	_melee_vm.rotation_degrees = Vector3(-25, 18, 75)
-	_melee_vm.position = _melee_vm_base_pos + Vector3(0.1, 0.16, 0.04)
+	# 2D 精灵挥击：只用 z 轴(平面内旋转)，刀面始终朝相机；不用 x/y 倾斜(会把平面翻成横置)
+	# 刀图本身 ~45° 斜，屏幕上 +z=顺时针。负 z 把刃举竖直，正 z 顺时针往下劈。
+	# 起手 z=-45(刃竖直举起) → 下劈 z=+95(扫到下方)，约 140° 下劈弧。
+	_melee_vm.rotation_degrees = Vector3(0, 0, -45)
+	_melee_vm.position = _melee_vm_base_pos + Vector3(0.04, 0.14, 0.02)
 	_melee_swing_tween = create_tween()
-	_melee_swing_tween.tween_property(_melee_vm, "rotation_degrees", Vector3(28, -22, -62), 0.16) \
+	_melee_swing_tween.tween_property(_melee_vm, "rotation_degrees", Vector3(0, 0, 95), 0.16) \
 		.set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
 	_melee_swing_tween.parallel().tween_property(_melee_vm, "position",
-		_melee_vm_base_pos + Vector3(-0.06, -0.12, -0.06), 0.16).set_ease(Tween.EASE_IN)
+		_melee_vm_base_pos + Vector3(-0.04, -0.1, -0.04), 0.16).set_ease(Tween.EASE_IN)
 	_melee_swing_tween.tween_interval(0.14)
 	_melee_swing_tween.tween_callback(func():
 		if is_instance_valid(_melee_vm):
