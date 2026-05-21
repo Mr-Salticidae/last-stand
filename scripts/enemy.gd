@@ -231,6 +231,15 @@ const _JUICE_BREATH_AMT: float = 0.045
 const _JUICE_BREATH_HZ: float = 0.65
 const _JUICE_HIT_DURATION: float = 0.18
 const _JUICE_WINDUP_GROW: float = 0.16
+# 路径B 增强程序动效：走路步频 + 攻击前刺（纯代码，无新资产）
+var _walk_phase: float = 0.0          # 步频相位（按移动速度推进）
+var _walk_amt: float = 0.0            # 走路动效混入量 0→1（移动平滑淡入/停止淡出）
+var _juice_strike_timer: float = 0.0  # 攻击 strike 瞬间的前刺 impulse 计时
+const _WALK_BOB: float = 0.08         # 落脚下沉幅度
+const _WALK_SQUASH: float = 0.06      # 落脚横撑纵压
+const _WALK_SWAY: float = 0.03        # 横向摆幅
+const _STRIKE_DURATION: float = 0.22  # 前刺 impulse 时长
+const _STRIKE_LUNGE: float = 0.35     # 前刺朝玩家位移幅度
 
 signal died
 
@@ -514,10 +523,25 @@ func _update_sprite_juice(delta: float) -> void:
 	_juice_t += delta
 	if _juice_hit_timer > 0.0:
 		_juice_hit_timer -= delta
+	if _juice_strike_timer > 0.0:
+		_juice_strike_timer -= delta
 	var ph: float = _fly_weave_phase
 	var bob: float = sin((_juice_t + ph) * TAU * _JUICE_BOB_HZ) * _JUICE_BOB_AMP
 	var breath: float = 1.0 + sin((_juice_t + ph) * TAU * _JUICE_BREATH_HZ) * _JUICE_BREATH_AMT
 	var scale_mod: Vector3 = Vector3(breath, breath, breath)
+	var offset: Vector3 = Vector3(0.0, bob, 0.0)
+	# 走路步频（路径B）：移动时叠加 落脚颠簸 + 横向摆 + 落脚挤压，平滑淡入/淡出
+	var horiz_speed: float = Vector2(velocity.x, velocity.z).length()
+	var moving: bool = (_state == State.CHASE or _state == State.SEARCH) and horiz_speed > 0.4 and not is_flying
+	_walk_amt = lerpf(_walk_amt, 1.0 if moving else 0.0, clampf(delta * 9.0, 0.0, 1.0))
+	if _walk_amt > 0.001:
+		_walk_phase += delta * (5.0 + horiz_speed * 1.1)  # 越快步频越急
+		var step: float = absf(sin(_walk_phase))            # 双落脚 bounce
+		offset.y -= step * _WALK_BOB * _walk_amt            # 落脚下沉
+		offset.x += sin(_walk_phase) * _WALK_SWAY * _walk_amt
+		scale_mod *= Vector3(1.0 + step * _WALK_SQUASH * _walk_amt,
+			1.0 - step * _WALK_SQUASH * 0.8 * _walk_amt,
+			1.0 + step * _WALK_SQUASH * _walk_amt)
 	# 受击挤压：横撑纵压，快速衰减（被打"咯噔"一下）
 	if _juice_hit_timer > 0.0:
 		var k: float = _juice_hit_timer / _JUICE_HIT_DURATION
@@ -526,7 +550,13 @@ func _update_sprite_juice(delta: float) -> void:
 	if _state == State.WINDUP and attack_windup > 0.0:
 		var wp: float = clampf(1.0 - _state_timer / attack_windup, 0.0, 1.0)
 		scale_mod *= 1.0 + _JUICE_WINDUP_GROW * wp
-	_juice_sprite.position = _juice_base_pos + Vector3(0.0, bob, 0.0)
+	# 攻击前刺（路径B）：strike 瞬间朝玩家(-Z 本地)快速突刺 + scale 弹一下，半程冲半程收
+	if _juice_strike_timer > 0.0:
+		var s: float = _juice_strike_timer / _STRIKE_DURATION   # 1→0
+		var lunge: float = sin(s * PI)                          # 0→1→0 冲出再收回
+		offset.z -= lunge * _STRIKE_LUNGE
+		scale_mod *= 1.0 + 0.18 * lunge
+	_juice_sprite.position = _juice_base_pos + offset
 	_juice_sprite.scale = _juice_base_scale * scale_mod
 
 func _play_anim(anim_name: String, force: bool = false) -> void:
@@ -1188,6 +1218,7 @@ func _strike(distance: float) -> void:
 	if _flash_timer <= 0.0:
 		_restore_colors()
 	_release_attack_lock()
+	_juice_strike_timer = _STRIKE_DURATION  # 路径B：精灵前刺动效（命中与否都挥）
 
 	# 实时水平距离 + 高度差再验一次
 	var actual_dist: float = distance

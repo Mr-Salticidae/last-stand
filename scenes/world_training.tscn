@@ -22,6 +22,7 @@
 [ext_resource type="Texture2D" uid="uid://b8lhnjb43qbrx" path="res://assets/textures/warehouse/wall_albedo.jpg" id="30_wall_a"]
 [ext_resource type="Texture2D" uid="uid://cl5lk0dy40la2" path="res://assets/textures/warehouse/wall_normal.jpg" id="31_wall_n"]
 [ext_resource type="Texture2D" uid="uid://dj20nraev7xcb" path="res://assets/textures/warehouse/wall_roughness.jpg" id="32_wall_r"]
+[ext_resource type="Shader" path="res://assets/shaders/grunge_surface.gdshader" id="50_grunge"]
 
 [sub_resource type="NavigationMesh" id="NavMesh_stage"]
 geometry_parsed_geometry_type = 0
@@ -32,28 +33,32 @@ agent_radius = 0.4
 agent_max_climb = 0.5
 filter_baking_aabb = AABB(-35, -3, -35, 70, 10, 70)
 
-[sub_resource type="StandardMaterial3D" id="Mat_train_floor"]
-albedo_color = Color(0.6, 0.6, 0.6, 1)
-albedo_texture = ExtResource("30_wall_a")
-roughness = 0.85
-roughness_texture = ExtResource("32_wall_r")
-normal_enabled = true
-normal_texture = ExtResource("31_wall_n")
-uv1_scale = Vector3(0.2, 0.2, 0.2)
-uv1_triplanar = true
+[sub_resource type="ShaderMaterial" id="Mat_train_floor"]
+shader = ExtResource("50_grunge")
+shader_parameter/base_color = Color(0.5, 0.51, 0.53, 1)
+shader_parameter/roughness_val = 0.9
+shader_parameter/metallic_val = 0.0
+shader_parameter/grunge_scale = 0.1
+shader_parameter/grunge_strength = 0.42
+shader_parameter/micro_scale = 1.2
+shader_parameter/micro_strength = 0.1
+shader_parameter/corruption_color = Color(0.6, 0.08, 0.05, 1)
+shader_parameter/corruption_amount = 0.06
 
 [sub_resource type="BoxMesh" id="BoxMesh_ground"]
 size = Vector3(60, 1, 60)
 
-[sub_resource type="StandardMaterial3D" id="Mat_train_structure"]
-albedo_color = Color(0.63, 0.6, 0.55, 1)
-albedo_texture = ExtResource("30_wall_a")
-roughness = 0.75
-roughness_texture = ExtResource("32_wall_r")
-normal_enabled = true
-normal_texture = ExtResource("31_wall_n")
-uv1_scale = Vector3(0.4, 0.4, 0.4)
-uv1_triplanar = true
+[sub_resource type="ShaderMaterial" id="Mat_train_structure"]
+shader = ExtResource("50_grunge")
+shader_parameter/base_color = Color(0.6, 0.6, 0.62, 1)
+shader_parameter/roughness_val = 0.8
+shader_parameter/metallic_val = 0.0
+shader_parameter/grunge_scale = 0.14
+shader_parameter/grunge_strength = 0.45
+shader_parameter/micro_scale = 1.6
+shader_parameter/micro_strength = 0.12
+shader_parameter/corruption_color = Color(0.6, 0.08, 0.05, 1)
+shader_parameter/corruption_amount = 0.08
 
 [sub_resource type="BoxMesh" id="BoxMesh_central"]
 size = Vector3(10, 1.5, 10)
@@ -70,16 +75,17 @@ size = Vector3(8, 1.5, 8)
 [sub_resource type="BoxMesh" id="BoxMesh_island"]
 size = Vector3(4, 2.5, 4)
 
-[sub_resource type="StandardMaterial3D" id="Mat_train_cover"]
-albedo_color = Color(0.42, 0.39, 0.34, 1)
-albedo_texture = ExtResource("30_wall_a")
-metallic = 0.3
-roughness = 0.65
-roughness_texture = ExtResource("32_wall_r")
-normal_enabled = true
-normal_texture = ExtResource("31_wall_n")
-uv1_scale = Vector3(0.6, 0.6, 0.6)
-uv1_triplanar = true
+[sub_resource type="ShaderMaterial" id="Mat_train_cover"]
+shader = ExtResource("50_grunge")
+shader_parameter/base_color = Color(0.4, 0.41, 0.44, 1)
+shader_parameter/roughness_val = 0.7
+shader_parameter/metallic_val = 0.2
+shader_parameter/grunge_scale = 0.2
+shader_parameter/grunge_strength = 0.45
+shader_parameter/micro_scale = 1.8
+shader_parameter/micro_strength = 0.12
+shader_parameter/corruption_color = Color(0.6, 0.08, 0.05, 1)
+shader_parameter/corruption_amount = 0.05
 
 [sub_resource type="BoxMesh" id="BoxMesh_cover_ns"]
 size = Vector3(3, 1.2, 0.5)
@@ -93,31 +99,34 @@ size = Vector3(60, 8, 0.5)
 [sub_resource type="BoxMesh" id="BoxMesh_wall_ew"]
 size = Vector3(0.5, 8, 60)
 
-[sub_resource type="StandardMaterial3D" id="Mat_barrel"]
-albedo_color = Color(0.25, 0.32, 0.18, 1)
-albedo_texture = ExtResource("30_wall_a")
-metallic = 0.6
-roughness = 0.55
-roughness_texture = ExtResource("32_wall_r")
-normal_enabled = true
-normal_texture = ExtResource("31_wall_n")
-uv1_scale = Vector3(1.5, 1.5, 1.5)
-uv1_triplanar = true
+[sub_resource type="ShaderMaterial" id="Mat_barrel"]
+shader = ExtResource("50_grunge")
+shader_parameter/base_color = Color(0.28, 0.34, 0.22, 1)
+shader_parameter/roughness_val = 0.5
+shader_parameter/metallic_val = 0.5
+shader_parameter/grunge_scale = 0.5
+shader_parameter/grunge_strength = 0.45
+shader_parameter/micro_scale = 2.2
+shader_parameter/micro_strength = 0.14
+shader_parameter/corruption_color = Color(0.6, 0.08, 0.05, 1)
+shader_parameter/corruption_amount = 0.05
 
 [sub_resource type="CylinderMesh" id="CylinderMesh_barrel"]
 top_radius = 0.45
 bottom_radius = 0.45
 height = 1.1
 
-[sub_resource type="StandardMaterial3D" id="Mat_crate"]
-albedo_color = Color(0.45, 0.3, 0.16, 1)
-albedo_texture = ExtResource("30_wall_a")
-roughness = 0.85
-roughness_texture = ExtResource("32_wall_r")
-normal_enabled = true
-normal_texture = ExtResource("31_wall_n")
-uv1_scale = Vector3(1.2, 1.2, 1.2)
-uv1_triplanar = true
+[sub_resource type="ShaderMaterial" id="Mat_crate"]
+shader = ExtResource("50_grunge")
+shader_parameter/base_color = Color(0.45, 0.3, 0.16, 1)
+shader_parameter/roughness_val = 0.85
+shader_parameter/metallic_val = 0.0
+shader_parameter/grunge_scale = 0.5
+shader_parameter/grunge_strength = 0.5
+shader_parameter/micro_scale = 2.2
+shader_parameter/micro_strength = 0.14
+shader_parameter/corruption_color = Color(0.6, 0.08, 0.05, 1)
+shader_parameter/corruption_amount = 0.05
 
 [sub_resource type="BoxMesh" id="BoxMesh_crate"]
 
@@ -132,6 +141,14 @@ background_mode = 2
 sky = SubResource("Sky_4wyf3")
 tonemap_mode = 2
 glow_enabled = true
+glow_intensity = 0.7
+fog_enabled = true
+fog_light_color = Color(0.62, 0.67, 0.74, 1)
+fog_light_energy = 1.0
+fog_density = 0.005
+fog_aerial_perspective = 0.5
+adjustment_enabled = true
+adjustment_saturation = 0.92
 
 [sub_resource type="CapsuleShape3D" id="CapsuleShape3D_rwgxs"]
 
@@ -227,6 +244,17 @@ _data = {
 &"jump": SubResource("Animation_k0juu"),
 &"landing": SubResource("Animation_71j4m")
 }
+
+[sub_resource type="BoxMesh" id="BoxMesh_target_torso"]
+size = Vector3(0.55, 0.9, 0.12)
+
+[sub_resource type="BoxMesh" id="BoxMesh_target_head"]
+size = Vector3(0.3, 0.3, 0.12)
+
+[sub_resource type="CylinderMesh" id="CylinderMesh_target_post"]
+top_radius = 0.09
+bottom_radius = 0.09
+height = 1.0
 
 [node name="world" type="Node3D"]
 
@@ -374,6 +402,81 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 28, 0.55, 27)
 material_override = SubResource("Mat_barrel")
 mesh = SubResource("CylinderMesh_barrel")
 
+[node name="target_post_1" type="MeshInstance3D" parent="stage"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -16, 0.5, 28.8)
+mesh = SubResource("CylinderMesh_target_post")
+material_override = SubResource("Mat_train_cover")
+
+[node name="target_torso_1" type="MeshInstance3D" parent="stage"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -16, 1.5, 28.8)
+mesh = SubResource("BoxMesh_target_torso")
+material_override = SubResource("Mat_train_cover")
+
+[node name="target_head_1" type="MeshInstance3D" parent="stage"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -16, 2.05, 28.8)
+mesh = SubResource("BoxMesh_target_head")
+material_override = SubResource("Mat_train_cover")
+
+[node name="target_post_2" type="MeshInstance3D" parent="stage"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -8, 0.5, 28.8)
+mesh = SubResource("CylinderMesh_target_post")
+material_override = SubResource("Mat_train_cover")
+
+[node name="target_torso_2" type="MeshInstance3D" parent="stage"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -8, 1.5, 28.8)
+mesh = SubResource("BoxMesh_target_torso")
+material_override = SubResource("Mat_train_cover")
+
+[node name="target_head_2" type="MeshInstance3D" parent="stage"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -8, 2.05, 28.8)
+mesh = SubResource("BoxMesh_target_head")
+material_override = SubResource("Mat_train_cover")
+
+[node name="target_post_3" type="MeshInstance3D" parent="stage"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 8, 0.5, 28.8)
+mesh = SubResource("CylinderMesh_target_post")
+material_override = SubResource("Mat_train_cover")
+
+[node name="target_torso_3" type="MeshInstance3D" parent="stage"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 8, 1.5, 28.8)
+mesh = SubResource("BoxMesh_target_torso")
+material_override = SubResource("Mat_train_cover")
+
+[node name="target_head_3" type="MeshInstance3D" parent="stage"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 8, 2.05, 28.8)
+mesh = SubResource("BoxMesh_target_head")
+material_override = SubResource("Mat_train_cover")
+
+[node name="target_post_4" type="MeshInstance3D" parent="stage"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 16, 0.5, 28.8)
+mesh = SubResource("CylinderMesh_target_post")
+material_override = SubResource("Mat_train_cover")
+
+[node name="target_torso_4" type="MeshInstance3D" parent="stage"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 16, 1.5, 28.8)
+mesh = SubResource("BoxMesh_target_torso")
+material_override = SubResource("Mat_train_cover")
+
+[node name="target_head_4" type="MeshInstance3D" parent="stage"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 16, 2.05, 28.8)
+mesh = SubResource("BoxMesh_target_head")
+material_override = SubResource("Mat_train_cover")
+
+[node name="supply_crate_1" type="MeshInstance3D" parent="stage"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -28, 0.5, -10)
+mesh = SubResource("BoxMesh_crate")
+material_override = SubResource("Mat_crate")
+
+[node name="supply_crate_2" type="MeshInstance3D" parent="stage"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -28, 0.5, -9)
+mesh = SubResource("BoxMesh_crate")
+material_override = SubResource("Mat_crate")
+
+[node name="supply_crate_3" type="MeshInstance3D" parent="stage"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -27.6, 1.5, -9.5)
+mesh = SubResource("BoxMesh_crate")
+material_override = SubResource("Mat_crate")
+
 [node name="crate_n1_bot" type="MeshInstance3D" parent="stage"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 15, 0.5, -28.5)
 material_override = SubResource("Mat_crate")
@@ -441,6 +544,8 @@ environment = SubResource("Environment_k0juu")
 
 [node name="DirectionalLight3D" type="DirectionalLight3D" parent="env"]
 transform = Transform3D(-0.8660254, -0.43301278, 0.25, 0, 0.49999997, 0.86602545, -0.50000006, 0.75, -0.43301266, 0, 0, 0)
+light_color = Color(0.92, 0.95, 1, 1)
+light_energy = 1.0
 shadow_enabled = true
 
 [node name="player" type="CharacterBody3D" parent="." groups=["player"]]
