@@ -56,10 +56,10 @@ git clone https://github.com/Mr-Salticidae/last-stand.git
 
 ## 开发状态
 
-当前版本 **v0.5.0** — 敌人全面 DOOM 2D 精灵化 + 测量驱动分段 hitbox（球头/核 + 轮廓躯干 + Elite 圆环弱点）  
+当前版本 **v0.6.0** — 近战处决系统 + 敌人行走/攻击程序动效 + 三地图视觉差异化（暖沙漠/冷训练场/暗工业，统一 grunge 质感 + 身份地标）  
 完整更新日志：[GitHub Releases](https://github.com/Mr-Salticidae/last-stand/releases) · [itch.io devlog](https://mr-salticidae.itch.io/last-stand/devlog)
 
-下一版 v0.6 计划：怪物逐帧动画（行走/奔跑/攻击/死亡）+ 武器 2D 持枪视图 + 地图贴图差异化。
+下一版计划：武器 2D 持枪视图 + 怪物逐帧动画 + HUD 重绘。
 
 ## 反馈
 
