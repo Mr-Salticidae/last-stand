@@ -33,6 +33,16 @@ var slide_speed = 10.0
 # 保留一条 build 路径可"很快"(满速 build 仍能顶到上限)，只是不破游戏。
 const SPEED_BUFF_CAP := 2.0
 
+# v0.6 近战处决（DOOM 电锯位）：近距前向锥内秒杀一只敌人 + 当前武器满弹补给。
+# 有限资源（每波清空 +1 / 5% 击杀掉落，上限 EXECUTE_MAX），应急回弹解后期弹尽。
+const EXECUTE_RANGE := 2.6           # 处决判定距离（m）
+const EXECUTE_CONE_DEG := 75.0       # 前向锥半角内才可处决
+const EXECUTE_DURATION := 0.6        # 处决锁定时长（无敌 + 禁开火）
+const EXECUTE_MAX := 2               # 处决次数上限
+const EXECUTE_ELITE_COST := 2        # 处决精英消耗
+const EXECUTE_SLOWMO_SCALE := 0.4    # 处决瞬间慢镜
+const EXECUTE_SLOWMO_TIME := 0.18    # 慢镜时长（真实秒）
+
 # Head bobbing vars
 const head_bobbing_sprinting_speed = 22.0
 const head_bobbing_walking_speed = 14.0
@@ -150,12 +160,19 @@ signal health_changed(current: float, maximum: float)
 signal damaged(amount: float)
 signal healed(amount: float)
 signal died
+signal execute_charges_changed(current: int, maximum: int)
+
+# 近战处决运行时状态
+var execute_charges: int = EXECUTE_MAX
+var _executing: bool = false
+var _execute_timer: float = 0.0
 
 func _ready():
 	Input.set_mouse_mode(Input.MOUSE_MODE_CAPTURED)
 	current_health = max_health
 	# 延迟一帧发送，确保 HUD 已经连接 health_changed 后再同步初始值
 	call_deferred("emit_signal", "health_changed", current_health, max_health)
+	call_deferred("emit_signal", "execute_charges_changed", execute_charges, EXECUTE_MAX)
 	# 缓存 base FOV，杀戮节拍激活时叠加 _fov_extra
 	if camera_3d:
 		_base_fov = camera_3d.fov
@@ -178,6 +195,11 @@ func _input(event: InputEvent) -> void:
 
 	if _dead or input_locked:
 		return
+	# 近战处决：V 键（避开 F=noclip / Q E=lean）
+	if event is InputEventKey and event.pressed and not event.echo:
+		if (event as InputEventKey).physical_keycode == KEY_V:
+			_try_execute()
+			return
 	if event is InputEventMouseMotion:
 		var sens: float = Settings.mouse_sensitivity if Settings else DEFAULT_MOUSE_SENS
 		if free_looking:
@@ -211,6 +233,12 @@ func _physics_process(delta: float) -> void:
 			velocity.y -= fall_gravity * delta
 		move_and_slide()
 		return
+
+	# 处决锁定计时（用真实 delta 衰减；慢镜由 Engine.time_scale 处理，这里照常减）
+	if _execute_timer > 0.0:
+		_execute_timer = max(0.0, _execute_timer - delta)
+		if _execute_timer <= 0.0:
+			_executing = false
 
 	# 无敌 / 震晃计时（即使攀爬中也继续衰减，避免状态卡住）
 	if _invuln_timer > 0.0:
@@ -537,6 +565,115 @@ func _process_noclip(delta: float) -> void:
 	if Input.is_action_pressed("crouch"):
 		velocity.y -= speed
 	move_and_slide()
+
+# ========== 近战处决（v0.6）==========
+# 玩家按 V：扫前向锥找最近可处决敌人，秒杀 + 当前武器满弹补给。
+func _try_execute() -> void:
+	if _executing:
+		return
+	# 先判定，再扣除——任何"失败"路径都不消耗次数，只给拒绝反馈
+	if execute_charges <= 0:
+		_execute_deny()
+		return
+	var target: Node3D = _find_execute_target()
+	if target == null:
+		_execute_deny()
+		return
+	var cost: int = EXECUTE_ELITE_COST if target.get("is_elite") else 1
+	if execute_charges < cost:  # 精英需 2 点但不足
+		_execute_deny()
+		return
+	_start_execute(target, cost)
+
+# 处决失败（无目标 / 次数不足）：轻拒绝音，明确告诉玩家"没生效、没扣次数"
+func _execute_deny() -> void:
+	if AudioManager:
+		AudioManager.play_dry_fire()
+
+# 前向锥扫描：camera forward 方向、EXECUTE_CONE_DEG 半角、EXECUTE_RANGE 内，取最近
+func _find_execute_target() -> Node3D:
+	var origin: Vector3 = camera_3d.global_position
+	var fwd: Vector3 = -camera_3d.global_transform.basis.z
+	var best: Node3D = null
+	var best_d: float = INF
+	var cos_cone: float = cos(deg_to_rad(EXECUTE_CONE_DEG))
+	for e in get_tree().get_nodes_in_group("enemy"):
+		if not (e is Node3D) or not e.has_method("is_executable") or not e.is_executable():
+			continue
+		var to_e: Vector3 = (e as Node3D).global_position - origin
+		var d: float = to_e.length()
+		if d > EXECUTE_RANGE or d < 0.05:
+			continue
+		if fwd.dot(to_e / d) < cos_cone:
+			continue
+		if d < best_d:
+			best_d = d
+			best = e
+	return best
+
+func _start_execute(target: Node3D, cost: int) -> void:
+	_executing = true
+	_execute_timer = EXECUTE_DURATION
+	execute_charges -= cost
+	execute_charges_changed.emit(execute_charges, EXECUTE_MAX)
+	# 无手 viewmodel 的临时补偿：镜头冲击让"处决发生了"更可感（#1 根治靠近战 viewmodel）
+	_shake_timer = shake_duration
+	# 无敌覆盖整个处决 + 0.1s 余量，防被旁边的敌人秒
+	_invuln_timer = maxf(_invuln_timer, EXECUTE_DURATION + 0.1)
+	# 慢镜（真实秒计时恢复，不受 time_scale 影响）
+	Engine.time_scale = EXECUTE_SLOWMO_SCALE
+	get_tree().create_timer(EXECUTE_SLOWMO_TIME, true, false, true).timeout.connect(
+		func(): Engine.time_scale = 1.0)
+	_spawn_execute_vfx(target.global_position + Vector3.UP * 1.0)
+	if AudioManager:
+		AudioManager.play_execute()
+	if target.has_method("die_by_execution"):
+		target.die_by_execution()
+	# 当前武器满弹补给
+	var wm: Node = get_tree().get_first_node_in_group("weapon_manager")
+	if wm and wm.has_method("execute_ammo_refill"):
+		wm.execute_ammo_refill()
+
+# 红色腐蚀迸发粒子（程序生成，0.6s 后自销，无外部素材）
+func _spawn_execute_vfx(pos: Vector3) -> void:
+	var p := GPUParticles3D.new()
+	get_tree().current_scene.add_child(p)
+	p.global_position = pos
+	p.amount = 36
+	p.lifetime = 0.6
+	p.one_shot = true
+	p.explosiveness = 0.9
+	var mat := ParticleProcessMaterial.new()
+	mat.direction = Vector3(0, 1, 0)
+	mat.spread = 75.0
+	mat.initial_velocity_min = 3.0
+	mat.initial_velocity_max = 7.0
+	mat.gravity = Vector3(0, -9.0, 0)
+	mat.scale_min = 0.06
+	mat.scale_max = 0.16
+	mat.color = Color(0.85, 0.08, 0.06)
+	p.process_material = mat
+	var mesh := SphereMesh.new()
+	mesh.radius = 0.06
+	mesh.height = 0.12
+	var smat := StandardMaterial3D.new()
+	smat.albedo_color = Color(0.95, 0.12, 0.08)
+	smat.emission_enabled = true
+	smat.emission = Color(0.9, 0.1, 0.05)
+	smat.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+	mesh.material = smat
+	p.draw_pass_1 = mesh
+	p.emitting = true
+	get_tree().create_timer(1.2, true).timeout.connect(func():
+		if is_instance_valid(p):
+			p.queue_free())
+
+# 处决次数 +n（每波清空 / 击杀掉落调用），上限 EXECUTE_MAX
+func add_execute_charge(n: int) -> void:
+	var before: int = execute_charges
+	execute_charges = clampi(execute_charges + n, 0, EXECUTE_MAX)
+	if execute_charges != before:
+		execute_charges_changed.emit(execute_charges, EXECUTE_MAX)
 
 # 伤害接收层：敌人 / 子弹 / 环境都通过此方法扣血
 # source 传入攻击者节点（用于推力反馈）；没有明确来源时传 null

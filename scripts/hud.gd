@@ -10,6 +10,7 @@ extends CanvasLayer
 @onready var score_label: Label = $ScoreLabel
 @onready var combo_label: Label = $ComboLabel
 @onready var weapon_unlock_label: Label = $WeaponUnlockLabel
+@onready var execute_label: Label = $ExecuteLabel
 @onready var speed_blur: RadialBlurOverlay = $RadialBlurOverlay
 # v0.3 视觉提示
 const LAST_ROUND_PULSE_HZ: float = 4.0
@@ -83,6 +84,9 @@ func _ready() -> void:
 		_player.healed.connect(_on_healed)
 		# 主动同步一次：player._ready 可能已经跑过但信号还没连上
 		_on_health_changed(_player.current_health, _player.max_health)
+		if _player.has_signal("execute_charges_changed"):
+			_player.execute_charges_changed.connect(_on_execute_charges_changed)
+			# 初始值由 player._ready 的 call_deferred emit 同步，无需在此手动调
 
 	# 血迹 + 治疗材质句柄（每帧衰减用）
 	if damage_vignette and damage_vignette.material is ShaderMaterial:
@@ -306,6 +310,17 @@ func _on_healed(amount: float) -> void:
 	_heal_intensity = clamp(_heal_intensity + HEAL_FLASH_BASE + amount * HEAL_FLASH_PER_AMOUNT, 0.0, 1.0)
 	if _heal_vignette_material:
 		_heal_vignette_material.set_shader_parameter("intensity", _heal_intensity)
+
+func _on_execute_charges_changed(current: int, maximum: int) -> void:
+	if execute_label == null:
+		return
+	# 图标化：实心 ◆ = 可用，空心 ◇ = 已耗尽（比数字直观）
+	var maxc: int = maxi(maximum, current)
+	var pips: String = ""
+	for i in maxc:
+		pips += "◆" if i < current else "◇"
+	execute_label.text = "处决 " + pips
+	execute_label.modulate = Color(1, 1, 1, 0.4) if current <= 0 else Color.WHITE
 
 func _on_wave_started(wave_num: int, count: int) -> void:
 	_intermission_remaining = 0.0

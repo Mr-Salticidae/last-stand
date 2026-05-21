@@ -355,6 +355,16 @@ func is_winding_up() -> bool:
 func is_dead() -> bool:
 	return _is_dead
 
+# 供玩家近战处决：boss 不可处决（HP 墙），其余存活敌人均可
+func is_executable() -> bool:
+	return not _is_dead and not is_boss
+
+# 处决致死：绕过 HP / 伤害结算，直接走标准死亡流程（掉落 + 死亡动画）
+func die_by_execution() -> void:
+	if _is_dead:
+		return
+	_die()
+
 func _physics_process(delta: float) -> void:
 	if _is_dead:
 		return
@@ -1338,3 +1348,9 @@ func _drop_loot() -> void:
 		pickup.set("weapon_scene", LEGENDARY_POOL[randi() % LEGENDARY_POOL.size()])
 		get_tree().current_scene.add_child(pickup)
 		pickup.global_position = global_position + Vector3.UP * 0.5
+
+	# 处决次数补给：5% 概率直接给玩家 +1（v1 直接到账，未来可改实体拾取）
+	if randf() < 0.05:
+		var pl: Node = get_tree().get_first_node_in_group("player")
+		if pl and pl.has_method("add_execute_charge"):
+			pl.add_execute_charge(1)

@@ -19,6 +19,7 @@ extends Node
 @export var hit_stream: AudioStream
 @export var headshot_stream: AudioStream
 @export var kill_stream: AudioStream
+@export var execute_stream: AudioStream
 
 @export_group("Player")
 @export var player_damaged_stream: AudioStream
@@ -77,6 +78,7 @@ const SFX_FILE_MAP: Dictionary = {
 	"hit":              "hit_stream",
 	"headshot":         "headshot_stream",
 	"kill":             "kill_stream",
+	"execute":          "execute_stream",
 	"player_damaged":   "player_damaged_stream",
 	"player_healed":    "player_healed_stream",
 	"enemy_windup":     "enemy_windup_stream",
@@ -132,6 +134,8 @@ func _init_fallback_streams() -> void:
 	_fallback["hit"]             = _gen_wav(1200.0, 0.10, 2.5, 0.15, 0.35)
 	_fallback["headshot"]        = _gen_wav(2200.0, 0.18, 2.0, 0.2, 0.5)
 	_fallback["kill"]            = _gen_wav(140.0, 0.32, 1.8, 0.35, 0.5)
+	# 处决：低频重击 + 大量噪声（撕裂湿响），比 kill 更猛更长
+	_fallback["execute"]         = _gen_wav(90.0, 0.34, 1.5, 0.7, 0.8)
 	_fallback["player_damaged"]  = _gen_wav(110.0, 0.28, 1.8, 0.2, 0.55)
 	_fallback["player_healed"]   = _gen_wav(660.0, 0.22, 1.3, 0.0, 0.35)
 	# 倒地声：40Hz sub-bass + 40ms 软攻击，重心下压感的"扑通"闷响（避免像中弹）
@@ -287,6 +291,9 @@ func play_headshot() -> void:
 	_play_2d(headshot_stream if headshot_stream else _fallback["headshot"], 0.0, randf_range(0.95, 1.05))
 func play_kill() -> void:
 	_play_2d(kill_stream if kill_stream else _fallback["kill"])
+
+func play_execute() -> void:
+	_play_2d(execute_stream if execute_stream else _fallback["execute"])
 func play_player_damaged() -> void:
 	_play_2d(player_damaged_stream if player_damaged_stream else _fallback["player_damaged"])
 func play_player_healed() -> void:

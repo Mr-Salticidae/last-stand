@@ -186,6 +186,9 @@ func _process(delta: float) -> void:
 		return
 	if player and "input_locked" in player and player.input_locked:
 		return
+	# 处决动作期间禁开火（0.6s 锁定）
+	if player and "_executing" in player and player._executing:
+		return
 
 	# 切换动画期间禁开火，但 sway/bob 继续算（避免 0.3s 内画面僵硬感）
 	if not _switching:
@@ -329,6 +332,11 @@ func refill_all_reserves() -> void:
 	for w in weapons:
 		if w.unlocked and not w.is_legendary:
 			w.refill_reserve()
+
+# 近战处决奖励：当前武器满弹匣 + 备弹补满（应急回弹，解决后期弹尽待毙）
+func execute_ammo_refill() -> void:
+	if current_weapon:
+		current_weapon.refill_reserve()
 
 # UpgradeManager 改 mag_size_mult 后调，让当前武器立即同步 HUD
 func notify_ammo_recompute() -> void:

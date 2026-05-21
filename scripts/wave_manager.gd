@@ -327,6 +327,10 @@ func _check_wave_cleared() -> void:
 		return
 	_state = State.IDLE
 	wave_completed.emit(current_wave)
+	# 每波清空给玩家 +1 处决次数（保底应急回弹来源）
+	var _pl: Node = get_tree().get_first_node_in_group("player")
+	if _pl and _pl.has_method("add_execute_charge"):
+		_pl.add_execute_charge(1)
 	# 通关：到达 victory_wave 触发结算页，不再推下一波
 	if victory_wave > 0 and current_wave >= victory_wave:
 		game_completed.emit(current_wave)
