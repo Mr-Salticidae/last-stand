@@ -58,7 +58,7 @@ git clone https://github.com/Mr-Salticidae/last-stand.git
 
 ## 开发状态
 
-当前版本 **v0.6.0** — 近战处决系统 + 敌人行走/攻击程序动效 + 三地图视觉差异化（暖沙漠/冷训练场/暗工业，统一 grunge 质感 + 身份地标）  
+当前版本 **v0.6.1** — 手枪平衡回调 + G18 打腿彩蛋（夺舍流）+ 新手教程（操作说明页 / 近战处决提示）+ 羁绊信息悬停提示 + 跳出地图兜底  
 完整更新日志：[GitHub Releases](https://github.com/Mr-Salticidae/last-stand/releases) · [itch.io devlog](https://mr-salticidae.itch.io/last-stand/devlog)
 
 下一版计划：武器 2D 持枪视图 + 怪物逐帧动画 + HUD 重绘。
