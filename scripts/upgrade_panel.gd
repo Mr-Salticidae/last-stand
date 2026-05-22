@@ -28,6 +28,10 @@ const SYNERGY_DIM: Color = Color(0.6, 0.55, 0.5, 0.7)
 const SYNERGY_DIM_BG: Color = Color(0.10, 0.08, 0.07, 0.6)
 const SYNERGY_EPIC: Color = Color(0.85, 0.55, 1.0, 1.0)  # 史诗紫
 
+# 自定义即时 tooltip（鼠标一进入 chip 立刻显示，无 Godot 内置 0.5s 延迟 / 不需停住）
+var _synergy_tip: PanelContainer = null
+var _synergy_tip_label: Label = null
+
 # 稀有度染色（设计 palette 里 RED/CREAM/ORANGE 系，蓝色保留作功能区分，跨色系最直观）
 const RARITY_COLORS: Dictionary = {
 	0: Color(0.55, 0.55, 0.6),   # COMMON：灰
@@ -124,7 +128,7 @@ func _render_card_slot(slot: Control, card_id: String) -> void:
 	var rarity: int = int(card.rarity)
 	var rarity_color: Color = RARITY_COLORS[rarity]
 	name_label.text = card.name
-	rarity_label.text = "// %s · %s" % [RARITY_NAMES_CN[rarity], RARITY_NAMES_EN[rarity]]
+	rarity_label.text = "%s · %s" % [RARITY_NAMES_CN[rarity], RARITY_NAMES_EN[rarity]]
 	rarity_label.add_theme_color_override("font_color", rarity_color)
 	stack_label.text = "STACK · %d / %d" % [UpgradeManager.stack_count(card_id), int(card.max_stack)]
 	desc_label.text = card.desc
@@ -185,6 +189,7 @@ func _on_synergy_activated(_id: String) -> void:
 # 注意：用 remove_child + queue_free 立即从 layout 树移除（仅 queue_free 当帧仍在树里，
 # HBoxContainer 会把旧 children 算进 minimum_size 撑大外壳，导致 chip 行下沿挤进 Card 顶部）
 func _render_synergy_bar() -> void:
+	_hide_synergy_tip()   # 重建 chip 前先收起 tooltip，避免引用已 free 的 chip
 	for c in synergy_hbox.get_children():
 		synergy_hbox.remove_child(c)
 		c.queue_free()
@@ -225,34 +230,99 @@ func _make_synergy_chip(s: Dictionary, active: bool) -> Control:
 	sb.content_margin_top = 4
 	sb.content_margin_bottom = 4
 	chip.add_theme_stylebox_override("panel", sb)
-	chip.mouse_filter = Control.MOUSE_FILTER_PASS  # tooltip 需要 hover
-	chip.tooltip_text = "%s\n%s\n触发卡：%s" % [
+	# STOP 让 chip 接住 mouse_entered/exited（IGNORE 不触发；PASS 时 Label 会截走）
+	chip.mouse_filter = Control.MOUSE_FILTER_STOP
+	# 自定义即时 tooltip 内容：名字 + 效果 + 触发卡（每张标 ✓/✗）+ 状态行
+	var status_line: String = "已激活" if active else "还差：%s" % " · ".join(_missing_card_names(s.cards))
+	var tip_text: String = "%s\n%s\n触发卡：%s\n%s" % [
 		s.name,
 		s.desc,
 		_format_required_cards(s.cards),
+		status_line,
 	]
+	# 鼠标一进入立刻弹（不走内置 tooltip 的延迟），离开即隐藏
+	chip.mouse_entered.connect(_show_synergy_tip.bind(chip, tip_text))
+	chip.mouse_exited.connect(_hide_synergy_tip)
 	var label := Label.new()
 	var tier_marker: String = "★" if is_epic else "◆"
 	if active:
 		label.text = "%s %s" % [tier_marker, s.name]
 		label.add_theme_color_override("font_color", SYNERGY_EPIC if is_epic else SYNERGY_GOLD)
 	else:
-		label.text = "%s %s · 差 1" % [tier_marker, s.name]
+		# 直接在 chip 上写出还差哪张卡，玩家不用 hover 也知道凑什么
+		var missing: Array = _missing_card_names(s.cards)
+		var miss_str: String = str(missing[0]) if missing.size() == 1 else "%d 张" % missing.size()
+		label.text = "%s %s · 还差「%s」" % [tier_marker, s.name, miss_str]
 		label.add_theme_color_override("font_color", SYNERGY_DIM)
 	label.add_theme_font_size_override("font_size", SYNERGY_CHIP_FONT_SIZE)
+	# Label 默认 mouse_filter=STOP，会盖在 chip 上截走 hover → tooltip 弹不出；改 IGNORE 让 hover 落到 chip
+	label.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	chip.add_child(label)
 	return chip
 
-# tooltip 用：把 ["crit_chance", "heavy_rounds"] 渲染成 "穿甲弹 + 重型弹药"
+# tooltip 用：把 ["crit_chance", "heavy_rounds"] 渲染成 "穿甲弹 ✓ + 重型弹药 ✗"
+# ✓ = 已拥有该卡，✗ = 还差这张
 func _format_required_cards(card_ids: Array) -> String:
-	var names: Array = []
+	var parts: Array = []
 	for cid in card_ids:
 		var c: Dictionary = UpgradeManager.get_card(cid)
-		if c.is_empty():
-			names.append(cid)
-		else:
-			names.append(c.name)
-	return " + ".join(names)
+		var nm: String = cid if c.is_empty() else str(c.name)
+		var mark: String = " ✓" if UpgradeManager.stack_count(cid) > 0 else " ✗"
+		parts.append(nm + mark)
+	return " + ".join(parts)
+
+# 返回该羁绊还没拥有的触发卡名字列表（chip 上"还差「X」"和 tooltip 状态行用）
+func _missing_card_names(card_ids: Array) -> Array:
+	var names: Array = []
+	for cid in card_ids:
+		if UpgradeManager.stack_count(cid) <= 0:
+			var c: Dictionary = UpgradeManager.get_card(cid)
+			names.append(cid if c.is_empty() else str(c.name))
+	return names
+
+# ===== 自定义即时 tooltip（鼠标进入 chip 立刻弹，不走内置延迟） =====
+func _ensure_synergy_tip() -> void:
+	if is_instance_valid(_synergy_tip):
+		return
+	_synergy_tip = PanelContainer.new()
+	# 不设固定宽度 / 不开 autowrap：让框按文字内容紧贴尺寸（autowrap 在容器里会把文字折成几十行撑爆高度）
+	_synergy_tip.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_synergy_tip.z_index = 200
+	_synergy_tip.visible = false
+	var sb := StyleBoxFlat.new()
+	sb.bg_color = Color(0.05, 0.035, 0.035, 0.97)
+	sb.border_color = SYNERGY_GOLD
+	sb.set_border_width_all(2)
+	sb.set_corner_radius_all(4)
+	sb.content_margin_left = 12
+	sb.content_margin_right = 12
+	sb.content_margin_top = 8
+	sb.content_margin_bottom = 8
+	_synergy_tip.add_theme_stylebox_override("panel", sb)
+	_synergy_tip_label = Label.new()
+	_synergy_tip_label.add_theme_font_size_override("font_size", 15)
+	_synergy_tip_label.add_theme_color_override("font_color", Color(1, 0.918, 0.851, 1))
+	_synergy_tip_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_synergy_tip.add_child(_synergy_tip_label)
+	$Center/Panel.add_child(_synergy_tip)
+
+func _show_synergy_tip(chip: Control, text: String) -> void:
+	_ensure_synergy_tip()
+	_synergy_tip_label.text = text
+	_synergy_tip.visible = true
+	_synergy_tip.reset_size()                    # 按文字内容收紧到最小尺寸
+	$Center/Panel.move_child(_synergy_tip, -1)   # 移到最后绘制 = 盖在卡片上
+	# 定位：chip 正下方，左缘对齐 chip，水平夹到视口内
+	var tw: float = _synergy_tip.size.x
+	var gx: float = chip.global_position.x
+	var gy: float = chip.global_position.y + chip.size.y + 6.0
+	var vp: Vector2 = get_viewport().get_visible_rect().size
+	gx = clampf(gx, 8.0, maxf(8.0, vp.x - tw - 8.0))
+	_synergy_tip.global_position = Vector2(gx, gy)
+
+func _hide_synergy_tip() -> void:
+	if is_instance_valid(_synergy_tip):
+		_synergy_tip.visible = false
 
 func _on_card_purchased(id: String) -> void:
 	_refresh_all()

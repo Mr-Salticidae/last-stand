@@ -410,8 +410,8 @@ func _show_wave_cleared_toast(wave_num: int) -> void:
 	tween.parallel().tween_property(toast, "offset_bottom", 115.0, 0.5)
 	tween.tween_callback(toast.queue_free)
 
-# v0.3 PR-B 羁绊激活 toast：屏幕中央偏上漂浮 1.5s
-# "羁绊激活" 副标题 + 名字主标题；稀有金色，史诗紫色
+# v0.3 PR-B 羁绊激活 toast：屏幕中央偏上漂浮
+# "羁绊激活" 副标题 + 名字主标题 + 效果描述（让玩家立刻知道激活了什么、有什么用）；稀有金色，史诗紫色
 # 触发于商店面板激活瞬间，UI 仍在显示，所以 toast 用 layer 90 盖在 panel(20) 之上
 # 队列化：同时激活多个羁绊时依次播放，避免 toast 重叠
 var _synergy_toast_queue: Array[String] = []
@@ -452,7 +452,7 @@ func _show_synergy_toast(id: String) -> void:
 	holder.mouse_filter = Control.MOUSE_FILTER_IGNORE
 
 	var subtitle := Label.new()
-	subtitle.text = "// 羁绊激活 · SYNERGY UNLOCKED"
+	subtitle.text = "羁绊激活 · SYNERGY UNLOCKED"
 	subtitle.add_theme_font_size_override("font_size", 18)
 	subtitle.add_theme_color_override("font_color", main_color)
 	subtitle.add_theme_color_override("font_outline_color", outline_color)
@@ -483,6 +483,23 @@ func _show_synergy_toast(id: String) -> void:
 	title.offset_bottom = 110
 	holder.add_child(title)
 
+	# 效果描述：玩家最关心"这羁绊有什么用"，激活瞬间直接给出，不用回商店 hover
+	var desc := Label.new()
+	desc.text = str(s.desc)
+	desc.add_theme_font_size_override("font_size", 22)
+	desc.add_theme_color_override("font_color", Color(1, 0.918, 0.851, 1))
+	desc.add_theme_color_override("font_outline_color", Color(0, 0, 0, 0.8))
+	desc.add_theme_constant_override("outline_size", 5)
+	desc.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	desc.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	desc.anchor_left = 0.0
+	desc.anchor_right = 1.0
+	desc.anchor_top = 0.0
+	desc.anchor_bottom = 0.0
+	desc.offset_top = 116
+	desc.offset_bottom = 168
+	holder.add_child(desc)
+
 	add_child(holder)
 
 	# 入场：淡入 + 上滑（与"区域肃清"toast 风格一致）
@@ -492,7 +509,7 @@ func _show_synergy_toast(id: String) -> void:
 		.set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
 	tween.parallel().tween_property(holder, "offset_bottom", 340.0, 0.30) \
 		.set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
-	tween.tween_interval(0.7)
+	tween.tween_interval(1.4)   # 多停留，让玩家读完效果描述
 	tween.tween_property(holder, "modulate:a", 0.0, 0.5)
 	tween.parallel().tween_property(holder, "offset_top", 180.0, 0.5)
 	tween.parallel().tween_property(holder, "offset_bottom", 300.0, 0.5)

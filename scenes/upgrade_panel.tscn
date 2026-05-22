@@ -129,7 +129,7 @@ offset_bottom = 42.0
 theme_override_colors/font_color = Color(0.55, 0.55, 0.6, 1)
 theme_override_fonts/font = ExtResource("6_jb5")
 theme_override_font_sizes/font_size = 12
-text = "// COMMON"
+text = "COMMON"
 vertical_alignment = 1
 
 [node name="NameLabel" type="Label" parent="Center/Panel/CardsHBox/Card0"]
@@ -216,7 +216,7 @@ offset_bottom = 42.0
 theme_override_colors/font_color = Color(0.55, 0.55, 0.6, 1)
 theme_override_fonts/font = ExtResource("6_jb5")
 theme_override_font_sizes/font_size = 12
-text = "// COMMON"
+text = "COMMON"
 vertical_alignment = 1
 
 [node name="NameLabel" type="Label" parent="Center/Panel/CardsHBox/Card1"]
@@ -303,7 +303,7 @@ offset_bottom = 42.0
 theme_override_colors/font_color = Color(0.55, 0.55, 0.6, 1)
 theme_override_fonts/font = ExtResource("6_jb5")
 theme_override_font_sizes/font_size = 12
-text = "// COMMON"
+text = "COMMON"
 vertical_alignment = 1
 
 [node name="NameLabel" type="Label" parent="Center/Panel/CardsHBox/Card2"]

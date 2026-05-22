@@ -133,7 +133,7 @@ func _apply_victory_theme() -> void:
 	title_en.add_theme_color_override("font_color", victory_color)
 	var stats_eyebrow: Node = stats_card.get_node_or_null("StatsEyebrow")
 	if stats_eyebrow and stats_eyebrow is Label:
-		(stats_eyebrow as Label).text = "// SURVIVAL REPORT"
+		(stats_eyebrow as Label).text = "SURVIVAL REPORT"
 		(stats_eyebrow as Label).add_theme_color_override("font_color", victory_color)
 	respawn_button.cn_label = "再战一局"
 	respawn_button.en_label = "REPLAY"

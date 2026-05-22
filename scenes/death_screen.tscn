@@ -118,7 +118,7 @@ offset_bottom = 44.0
 theme_override_colors/font_color = Color(0.855, 0.18, 0.2, 1)
 theme_override_fonts/font = ExtResource("6_jb5")
 theme_override_font_sizes/font_size = 12
-text = "// CASUALTY REPORT"
+text = "CASUALTY REPORT"
 vertical_alignment = 1
 
 [node name="StatsLabel" type="RichTextLabel" parent="UIRoot/Center/StatsCard"]

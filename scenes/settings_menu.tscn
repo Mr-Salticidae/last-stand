@@ -108,7 +108,7 @@ theme_override_constants/separation = 6
 [node name="GroupHeader" type="Label" parent="PageBody/LeftCol/AudioGroup"]
 custom_minimum_size = Vector2(0, 32)
 layout_mode = 2
-text = "// AUDIO  音频"
+text = "AUDIO  音频"
 vertical_alignment = 1
 theme_override_fonts/font = ExtResource("8_o5")
 theme_override_font_sizes/font_size = 20
@@ -223,7 +223,7 @@ theme_override_constants/separation = 6
 [node name="GroupHeader" type="Label" parent="PageBody/LeftCol/ControlsGroup"]
 custom_minimum_size = Vector2(0, 32)
 layout_mode = 2
-text = "// CONTROLS  操作"
+text = "CONTROLS  操作"
 vertical_alignment = 1
 theme_override_fonts/font = ExtResource("8_o5")
 theme_override_font_sizes/font_size = 20
@@ -272,7 +272,7 @@ theme_override_constants/separation = 6
 [node name="GroupHeader" type="Label" parent="PageBody/LeftCol/GameplayGroup"]
 custom_minimum_size = Vector2(0, 32)
 layout_mode = 2
-text = "// GAMEPLAY  玩法"
+text = "GAMEPLAY  玩法"
 vertical_alignment = 1
 theme_override_fonts/font = ExtResource("8_o5")
 theme_override_font_sizes/font_size = 20
@@ -314,7 +314,7 @@ theme_override_constants/separation = 6
 [node name="GroupHeader" type="Label" parent="PageBody/RightCol/DisplayGroup"]
 custom_minimum_size = Vector2(0, 32)
 layout_mode = 2
-text = "// DISPLAY  显示"
+text = "DISPLAY  显示"
 vertical_alignment = 1
 theme_override_fonts/font = ExtResource("8_o5")
 theme_override_font_sizes/font_size = 20
@@ -468,7 +468,7 @@ offset_left = 24.0
 offset_top = 18.0
 offset_right = 600.0
 offset_bottom = 38.0
-text = "// PROFILE  档案"
+text = "PROFILE  档案"
 vertical_alignment = 1
 theme_override_fonts/font = ExtResource("9_jb5")
 theme_override_font_sizes/font_size = 12
