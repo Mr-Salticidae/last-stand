@@ -150,6 +150,11 @@ var input_locked: bool = false
 var _knockback: Vector3 = Vector3.ZERO
 const _KNOCKBACK_DECAY: float = 18.0  # m/s²，pushback_force=6 的话约 0.33s 衰减完
 
+# 出界兜底：玩家翻出围墙 / 掉进虚空时，y 低于此阈值就拉回最后落脚点（防无限坠落）。
+# 地图地面在 y≈0，-8 安全低于任何平台，又能在坠落不久就触发。
+const OUT_OF_BOUNDS_Y: float = -8.0
+var _last_safe_pos: Vector3 = Vector3.ZERO
+
 # === 隐藏调试工具：飞行 / Noclip ===
 # 触发热键 Ctrl+Shift+F（直接读 InputEventKey，不走 InputMap，键位设置面板里玩家看不见）。
 # 用途：地图调试、卡位逃脱、关卡审视。封版后保留为开发工具，更新时仍可使用。
@@ -178,6 +183,7 @@ var _melee_swing_tween: Tween = null
 func _ready():
 	Input.set_mouse_mode(Input.MOUSE_MODE_CAPTURED)
 	current_health = max_health
+	_last_safe_pos = global_position
 	# 延迟一帧发送，确保 HUD 已经连接 health_changed 后再同步初始值
 	call_deferred("emit_signal", "health_changed", current_health, max_health)
 	call_deferred("emit_signal", "execute_charges_changed", execute_charges, EXECUTE_MAX)
@@ -237,6 +243,10 @@ func _physics_process(delta: float) -> void:
 	# 调试飞行：跳过常规物理 / 滑铲 / 攀爬 / 重力，全程独立处理
 	if _noclip:
 		_process_noclip(delta)
+		return
+	# 出界兜底：翻出围墙 / 坠入虚空 → 拉回最后落脚点（noclip 例外，上面已 return）
+	if global_position.y < OUT_OF_BOUNDS_Y:
+		_recover_from_out_of_bounds()
 		return
 	# 升级面板等模态 UI 开启时：玩家输入被锁，水平速度归零但重力仍然生效（自然落地）
 	if input_locked:
@@ -418,6 +428,8 @@ func _physics_process(delta: float) -> void:
 	# 触地归零 air jumps（滑铲等状态不影响）
 	if is_on_floor():
 		_air_jumps_used = 0
+		# 记录最后落脚点：出界时拉回这里
+		_last_safe_pos = global_position
 	
 	# 落地动画：按掉落高度派生速度阈值（v = sqrt(2 * g * h)），随重力设定自适应
 	if is_on_floor():
@@ -744,6 +756,14 @@ func add_execute_charge(n: int) -> void:
 	execute_charges = clampi(execute_charges + n, 0, EXECUTE_MAX)
 	if execute_charges != before:
 		execute_charges_changed.emit(execute_charges, EXECUTE_MAX)
+
+# 出界恢复：拉回最后落脚点上方 1m，清速度/击退/二段跳，给短暂无敌防落地被秒
+func _recover_from_out_of_bounds() -> void:
+	global_position = _last_safe_pos + Vector3.UP * 1.0
+	velocity = Vector3.ZERO
+	_knockback = Vector3.ZERO
+	_air_jumps_used = 0
+	_invuln_timer = maxf(_invuln_timer, 0.5)
 
 # 伤害接收层：敌人 / 子弹 / 环境都通过此方法扣血
 # source 传入攻击者节点（用于推力反馈）；没有明确来源时传 null

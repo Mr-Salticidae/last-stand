@@ -7,8 +7,10 @@ const HIGH_SCORES_PATH: String = "res://scenes/high_scores_menu.tscn"
 const SETTINGS_PATH: String = "res://scenes/settings_menu.tscn"
 const CREDITS_PATH: String = "res://scenes/credits_menu.tscn"
 const LEVEL_SELECT_PATH: String = "res://scenes/level_select.tscn"
+const HOWTO_PATH: String = "res://scenes/howto_menu.tscn"
 
 @onready var start_btn: Control = $MainPage/RightColumn/Buttons/StartButton
+@onready var howto_btn: Control = $MainPage/RightColumn/Buttons/HowtoButton
 @onready var level_select_btn: Control = $MainPage/RightColumn/Buttons/LevelSelectButton
 @onready var record_btn: Control = $MainPage/RightColumn/Buttons/RecordButton
 @onready var settings_btn: Control = $MainPage/RightColumn/Buttons/SettingsButton
@@ -22,6 +24,7 @@ func _ready() -> void:
 	# 单轨贯穿菜单+战斗：每次进入主菜单触发，跨场景延续不间断（autoload 上的 player）
 	AudioManager.play_main_bgm()
 	start_btn.pressed.connect(_on_start_pressed)
+	howto_btn.pressed.connect(_on_howto_pressed)
 	level_select_btn.pressed.connect(_on_level_select_pressed)
 	record_btn.pressed.connect(_on_record_pressed)
 	settings_btn.pressed.connect(_on_settings_pressed)
@@ -36,6 +39,10 @@ func _on_start_pressed() -> void:
 	var path: String = Settings.get_current_arena_scene()
 	if path != "":
 		deploying_overlay.show_for_scene(path)
+
+func _on_howto_pressed() -> void:
+	AudioManager.play_ui_click()
+	get_tree().change_scene_to_file(HOWTO_PATH)
 
 func _on_level_select_pressed() -> void:
 	AudioManager.play_ui_click()

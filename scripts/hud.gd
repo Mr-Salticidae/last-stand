@@ -58,6 +58,14 @@ var _reload_prompt_label: Label
 var _reload_prompt_active: bool = false
 var _reload_prompt_pulse_timer: float = 0.0
 
+# 一次性教学提示：近战处决（玩家常不知道按 F 能处决补弹）。首次"附近有可处决敌人 + 有充能"
+# 时弹一次，用 user:// ConfigFile 记录已见，永不再弹（老玩家不被打扰）。
+const TIPS_CFG_PATH: String = "user://laststand_tips.cfg"
+const MELEE_TIP_NEAR_DIST: float = 5.0
+var _melee_tip_label: Label
+var _melee_tip_seen: bool = false
+var _melee_tip_active: bool = false
+
 func _ready() -> void:
 	# 武器管理器：通过 weapon_changed 信号知道当前武器是谁，切换时重连信号
 	_weapon_manager = get_tree().get_first_node_in_group("weapon_manager")
@@ -119,6 +127,25 @@ func _ready() -> void:
 	_reload_prompt_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	add_child(_reload_prompt_label)
 
+	# 近战处决教学提示：读取已见状态 + 创建提示 label（中央偏上，避开下方换弹提示）
+	_load_tips_seen()
+	_melee_tip_label = Label.new()
+	_melee_tip_label.text = "敌人逼近 ——  按 [ F ] 处决：瞬杀杂兵，并补满当前武器弹药"
+	_melee_tip_label.add_theme_font_size_override("font_size", 26)
+	_melee_tip_label.add_theme_color_override("font_color", Color(0.98, 0.72, 0.28, 1))
+	_melee_tip_label.add_theme_color_override("font_outline_color", Color(0, 0, 0, 0.9))
+	_melee_tip_label.add_theme_constant_override("outline_size", 6)
+	_melee_tip_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	_melee_tip_label.anchor_left = 0.0
+	_melee_tip_label.anchor_top = 0.5
+	_melee_tip_label.anchor_right = 1.0
+	_melee_tip_label.anchor_bottom = 0.5
+	_melee_tip_label.offset_top = -170
+	_melee_tip_label.offset_bottom = -120
+	_melee_tip_label.modulate.a = 0.0
+	_melee_tip_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	add_child(_melee_tip_label)
+
 	# 换弹圆环进度条：屏幕中央偏下（准星下方 80px），无换弹时不可见
 	_reload_indicator = ReloadIndicator.new()
 	_reload_indicator.size = Vector2(80, 80)
@@ -172,6 +199,9 @@ func _process(delta: float) -> void:
 
 	# v0.3 视觉提示：每帧根据 weapon / wm 状态驱动准心红环 / ammo 脉冲 / 速度线
 	_update_v03_overlays(delta)
+
+	# 近战处决一次性教学提示
+	_check_melee_tip()
 
 	# 波间倒计时文本更新
 	if _intermission_remaining > 0.0:
@@ -237,6 +267,8 @@ func _on_weapon_changed(weapon: Weapon) -> void:
 			_weapon.headshot_confirmed.disconnect(_on_headshot_confirmed)
 		if _weapon.kill_confirmed.is_connected(_on_kill_confirmed):
 			_weapon.kill_confirmed.disconnect(_on_kill_confirmed)
+		if _weapon.has_signal("leg_confirmed") and _weapon.leg_confirmed.is_connected(_on_leg_confirmed):
+			_weapon.leg_confirmed.disconnect(_on_leg_confirmed)
 		if _weapon.reload_burst_consumed.is_connected(_on_reload_burst_consumed):
 			_weapon.reload_burst_consumed.disconnect(_on_reload_burst_consumed)
 		if _weapon.last_round_fired.is_connected(_on_last_round_fired):
@@ -251,6 +283,8 @@ func _on_weapon_changed(weapon: Weapon) -> void:
 	_weapon.hit_confirmed.connect(_on_hit_confirmed)
 	_weapon.headshot_confirmed.connect(_on_headshot_confirmed)
 	_weapon.kill_confirmed.connect(_on_kill_confirmed)
+	if _weapon.has_signal("leg_confirmed"):
+		_weapon.leg_confirmed.connect(_on_leg_confirmed)
 	_weapon.reload_burst_consumed.connect(_on_reload_burst_consumed)
 	_weapon.last_round_fired.connect(_on_last_round_fired)
 	_on_ammo_changed(_weapon.current_ammo, _weapon.reserve_ammo, _weapon.max_ammo())
@@ -487,6 +521,11 @@ func _on_kill_confirmed() -> void:
 	if crosshair and crosshair.has_method("flash_kill"):
 		crosshair.flash_kill()
 
+func _on_leg_confirmed() -> void:
+	# G18 打腿彩蛋：琥珀色命中标记
+	if crosshair and crosshair.has_method("flash_leg"):
+		crosshair.flash_leg()
+
 # v0.3 新卡视觉反馈：聚焦到准心层（仿 hit/headshot/kill marker），不再用全屏闪
 func _on_reload_burst_consumed() -> void:
 	if crosshair and crosshair.has_method("flash_reload_burst"):
@@ -529,6 +568,47 @@ func _on_currency_changed(amount: int) -> void:
 
 func _refresh_score_label() -> void:
 	score_label.text = "得分 %d · 资金 %d" % [_total_score, _currency]
+
+# ========== 近战处决一次性教学提示 ==========
+func _load_tips_seen() -> void:
+	var cfg := ConfigFile.new()
+	if cfg.load(TIPS_CFG_PATH) == OK:
+		_melee_tip_seen = bool(cfg.get_value("tips", "melee_seen", false))
+
+func _check_melee_tip() -> void:
+	if _melee_tip_seen or _melee_tip_active:
+		return
+	if _player == null or not is_instance_valid(_player):
+		return
+	if "_dead" in _player and _player._dead:
+		return
+	# 有处决充能 + 附近有可处决敌人 = "用得上"的时机，此时教学最有效
+	if not ("execute_charges" in _player) or _player.execute_charges <= 0:
+		return
+	var ppos: Vector3 = _player.global_position
+	for e in get_tree().get_nodes_in_group("enemy"):
+		if not (e is Node3D) or not e.has_method("is_executable") or not e.is_executable():
+			continue
+		var d: float = Vector2(e.global_position.x - ppos.x, e.global_position.z - ppos.z).length()
+		if d <= MELEE_TIP_NEAR_DIST:
+			_show_melee_tip()
+			return
+
+func _show_melee_tip() -> void:
+	_melee_tip_active = true
+	_melee_tip_seen = true   # 立即标记，整局/跨局只弹一次
+	_save_tip_seen("melee_seen")
+	var t: Tween = create_tween()
+	t.tween_property(_melee_tip_label, "modulate:a", 1.0, 0.3)
+	t.tween_interval(6.0)
+	t.tween_property(_melee_tip_label, "modulate:a", 0.0, 0.6)
+	t.tween_callback(func() -> void: _melee_tip_active = false)
+
+func _save_tip_seen(key: String) -> void:
+	var cfg := ConfigFile.new()
+	cfg.load(TIPS_CFG_PATH)   # 文件不存在时忽略错误，直接新建
+	cfg.set_value("tips", key, true)
+	cfg.save(TIPS_CFG_PATH)
 
 func _on_combo_changed(count: int, broken: bool) -> void:
 	if _combo_tween and _combo_tween.is_valid():

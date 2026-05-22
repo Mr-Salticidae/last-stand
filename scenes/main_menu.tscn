@@ -251,7 +251,7 @@ offset_bottom = 24.0
 theme_override_colors/font_color = Color(0.478, 0.416, 0.361, 1)
 theme_override_fonts/font = ExtResource("8_jb5")
 theme_override_font_sizes/font_size = 12
-text = "COMMAND TERMINAL  ·  06 ENTRIES"
+text = "COMMAND TERMINAL  ·  07 ENTRIES"
 horizontal_alignment = 2
 vertical_alignment = 1
 
@@ -269,13 +269,23 @@ focus_mode = 2
 mouse_default_cursor_shape = 2
 script = ExtResource("3_btn")
 
-[node name="LevelSelectButton" type="Control" parent="MainPage/RightColumn/Buttons"]
+[node name="HowtoButton" type="Control" parent="MainPage/RightColumn/Buttons"]
 custom_minimum_size = Vector2(560, 82)
 layout_mode = 2
 focus_mode = 2
 mouse_default_cursor_shape = 2
 script = ExtResource("3_btn")
 code = "02"
+cn_label = "操作说明"
+en_label = "FIELD MANUAL"
+
+[node name="LevelSelectButton" type="Control" parent="MainPage/RightColumn/Buttons"]
+custom_minimum_size = Vector2(560, 82)
+layout_mode = 2
+focus_mode = 2
+mouse_default_cursor_shape = 2
+script = ExtResource("3_btn")
+code = "03"
 cn_label = "选择关卡"
 en_label = "SELECT MAP"
 
@@ -285,7 +295,7 @@ layout_mode = 2
 focus_mode = 2
 mouse_default_cursor_shape = 2
 script = ExtResource("3_btn")
-code = "03"
+code = "04"
 cn_label = "最高纪录"
 en_label = "HIGH SCORES"
 
@@ -295,7 +305,7 @@ layout_mode = 2
 focus_mode = 2
 mouse_default_cursor_shape = 2
 script = ExtResource("3_btn")
-code = "04"
+code = "05"
 cn_label = "设置"
 en_label = "SETTINGS"
 
@@ -305,7 +315,7 @@ layout_mode = 2
 focus_mode = 2
 mouse_default_cursor_shape = 2
 script = ExtResource("3_btn")
-code = "05"
+code = "06"
 cn_label = "致谢"
 en_label = "CREDITS"
 
@@ -315,7 +325,7 @@ layout_mode = 2
 focus_mode = 2
 mouse_default_cursor_shape = 2
 script = ExtResource("3_btn")
-code = "06"
+code = "07"
 cn_label = "退出"
 en_label = "EXIT"
 danger = true

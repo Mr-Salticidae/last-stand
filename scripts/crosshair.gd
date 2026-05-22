@@ -12,9 +12,11 @@ extends Control
 @export var hit_marker_color: Color = Color(1, 1, 1, 1)           # 普通命中：白
 @export var headshot_marker_color: Color = Color(1.0, 0.85, 0.2, 1)  # 爆头：金黄
 @export var kill_marker_color: Color = Color(1.0, 0.25, 0.15, 1)    # 击杀：红
+@export var leg_marker_color: Color = Color(1.0, 0.55, 0.2, 1)     # 打腿（G18 彩蛋）：琥珀橙，微妙
 @export var hit_flash_duration: float = 0.18
 @export var headshot_flash_duration: float = 0.28
 @export var kill_flash_duration: float = 0.4
+@export var leg_flash_duration: float = 0.22
 @export var hit_marker_length: float = 8.0
 @export var hit_marker_thickness: float = 2.5
 
@@ -62,6 +64,14 @@ func flash_kill() -> void:
 	_flash_total = kill_flash_duration
 	_flash_color = kill_marker_color
 	_flash_scale = 1.6
+	queue_redraw()
+
+# G18 打腿彩蛋：琥珀橙 X marker，缩放/时长都比爆头克制，"微妙"提示玩家打中了腿
+func flash_leg() -> void:
+	_flash_timer = leg_flash_duration
+	_flash_total = leg_flash_duration
+	_flash_color = leg_marker_color
+	_flash_scale = 1.15
 	queue_redraw()
 
 # v0.3 暴伤反馈：复用 X 形 marker 通道（同时触发会被后调用的覆盖，可接受）

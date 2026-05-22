@@ -4,18 +4,22 @@ extends CanvasLayer
 # 整个 CanvasLayer process_mode = ALWAYS，即使 tree.paused 也能响应 input
 
 const SETTINGS_MENU_SCENE: PackedScene = preload("res://scenes/settings_menu.tscn")
+const HOWTO_MENU_SCENE: PackedScene = preload("res://scenes/howto_menu.tscn")
 
 @onready var continue_btn: ChamferButton = $Dim/Center/Panel/VBox/ContinueButton
+@onready var howto_btn: ChamferButton = $Dim/Center/Panel/VBox/HowtoButton
 @onready var settings_btn: ChamferButton = $Dim/Center/Panel/VBox/SettingsButton
 @onready var menu_btn: ChamferButton = $Dim/Center/Panel/VBox/MenuButton
 @onready var quit_btn: ChamferButton = $Dim/Center/Panel/VBox/QuitButton
 
 var _paused: bool = false
 var _settings_overlay: Control = null
+var _howto_overlay: Control = null
 
 func _ready() -> void:
 	visible = false
 	continue_btn.pressed.connect(_on_continue_pressed)
+	howto_btn.pressed.connect(_on_howto_pressed)
 	settings_btn.pressed.connect(_on_settings_pressed)
 	menu_btn.pressed.connect(_on_menu_pressed)
 	quit_btn.pressed.connect(_on_quit_pressed)
@@ -37,6 +41,18 @@ func _on_settings_closed() -> void:
 	# 主动释放设置按钮焦点，避免它持续点亮（点击时 ChamferButton 自动 grab_focus）
 	settings_btn.release_focus()
 
+func _on_howto_pressed() -> void:
+	AudioManager.play_ui_click()
+	if _howto_overlay != null:
+		return
+	_howto_overlay = HOWTO_MENU_SCENE.instantiate()
+	_howto_overlay.closed.connect(_on_howto_closed)
+	add_child(_howto_overlay)
+
+func _on_howto_closed() -> void:
+	_howto_overlay = null
+	howto_btn.release_focus()
+
 func _on_menu_pressed() -> void:
 	AudioManager.play_ui_click()
 	_to_main_menu()
@@ -57,6 +73,9 @@ func _unhandled_input(event: InputEvent) -> void:
 			return
 		# 设置覆盖层在上层时，ESC 由 settings_menu 自己处理（先关设置）
 		if _settings_overlay != null:
+			return
+		# 操作说明覆盖层在上层时，ESC 由 howto_menu 自己处理（先关说明页）
+		if _howto_overlay != null:
 			return
 		if _paused:
 			_resume()

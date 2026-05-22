@@ -4,6 +4,10 @@ class_name Weapon extends Node3D
 # 改这里要一并调 tscn；爆头阈值判定 + headshot_bonus 公式都从这里取。
 const HEADSHOT_BASE_MULT: float = 2.5
 
+# G18 彩蛋（夺舍流）：命中点相对敌人脚部高度 ≤ 此值判定为腿部。
+# 用高度判定而非每敌单独的腿 hitbox —— 对所有站立人形敌人通用，零 tscn 改动。
+const LEG_SHOT_MAX_HEIGHT: float = 0.85
+
 # ========== 身份配置 ==========
 @export_group("Identity")
 @export var weapon_id: String = "pistol"      # 唯一 ID（HUD / 切换 / 解锁系统索引用）
@@ -18,6 +22,9 @@ const HEADSHOT_BASE_MULT: float = 2.5
 @export var reload_time: float = 1.5
 @export var weapon_range: float = 100.0
 @export var pellet_count: int = 1             # 单次开火发射的弹丸数（散弹用 8）
+# G18 彩蛋（夺舍流）：打腿伤害倍率，> 1.0 才生效（仅手枪设 1.8）。
+# 低于爆头倍率 2.5，符合"打腿额外伤害但不超过爆头"。其他武器保持 1.0 = 无变化。
+@export var leg_shot_mult: float = 1.0
 
 @export_group("Behavior")
 @export var auto_fire: bool = false           # true=按住连发，false=单击单发
@@ -68,6 +75,8 @@ signal reload_finished
 signal hit_confirmed
 signal headshot_confirmed
 signal kill_confirmed
+# G18 打腿彩蛋命中（仅手枪 leg_shot_mult>1 时触发）：HUD 用独立颜色的命中标记，帮玩家发现彩蛋
+signal leg_confirmed
 # 传说武器空弹 → manager 监听此信号触发自动丢弃
 signal depleted
 # 每次成功开火（pellet 散射前）发一次：武器附属脚本（如 barrel_spinner）用来驱动加速 / 后坐反馈
@@ -301,6 +310,16 @@ func _fire_pellet(effective_spread: float) -> void:
 	# 爆头额外倍率：hitbox 自身已经乘 damage_multiplier(HEADSHOT_BASE_MULT)，这里补乘 headshot_bonus 分量
 	if is_headshot and headshot_bonus > 0.0:
 		total_damage *= (HEADSHOT_BASE_MULT + headshot_bonus) / HEADSHOT_BASE_MULT
+	# G18 彩蛋（夺舍流）：手枪打腿额外伤害（不超过爆头）。命中点相对敌人脚部高度判定腿部，
+	# 不依赖每敌单独的腿 hitbox。飞行单位（EyeDrone）无腿，跳过。
+	var is_leg_hit: bool = false
+	if leg_shot_mult > 1.0 and not is_headshot and target_enemy is Node3D:
+		var is_flyer: bool = "is_flying" in target_enemy and target_enemy.is_flying
+		if not is_flyer:
+			var leg_h: float = hit_pos.y - (target_enemy as Node3D).global_position.y
+			if leg_h >= 0.0 and leg_h <= LEG_SHOT_MAX_HEIGHT:
+				total_damage *= leg_shot_mult
+				is_leg_hit = true
 	# 战术换弹：换弹后下一发开火吃 ×N 暴伤（消费 pending flag）
 	# 注意：散弹枪 _fire_pellet 一次开火多次调用 → 多 pellet 都吃这个 buff，因为 flag 只在第一发被消费
 	# 但散弹一次开火逻辑上算 1 发，所以"多 pellet 都吃 mult"才符合卡描述（"换弹后下一发开火"）
@@ -376,6 +395,10 @@ func _fire_pellet(effective_spread: float) -> void:
 		if is_headshot:
 			headshot_confirmed.emit()
 			AudioManager.play_headshot()
+		elif is_leg_hit:
+			# G18 打腿彩蛋：独立颜色 hit marker（音效仍走普通命中，保持"微妙"）
+			leg_confirmed.emit()
+			AudioManager.play_hit()
 		else:
 			hit_confirmed.emit()
 			AudioManager.play_hit()

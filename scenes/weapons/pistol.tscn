@@ -67,11 +67,13 @@ _data = {
 
 [node name="pistol" type="Node3D" groups=["weapon"]]
 script = ExtResource("1_weapon")
+damage = 20.0
 fire_rate = 0.08
 auto_fire = true
 unlocked = true
 recoil_pitch_deg = 1.0
 bullet_spread_deg = 0.3
+leg_shot_mult = 1.8
 preview_texture = ExtResource("3_preview")
 
 [node name="mesh" type="MeshInstance3D" parent="."]

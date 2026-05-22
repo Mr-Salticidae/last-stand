@@ -26,9 +26,9 @@ anchor_top = 0.5
 anchor_right = 0.5
 anchor_bottom = 0.5
 offset_left = -270.0
-offset_top = -310.0
+offset_top = -360.0
 offset_right = 270.0
-offset_bottom = 310.0
+offset_bottom = 360.0
 mouse_filter = 1
 
 [node name="Panel" type="Control" parent="Dim/Center"]
@@ -86,7 +86,7 @@ anchor_top = 1.0
 anchor_right = 1.0
 anchor_bottom = 1.0
 offset_left = 40.0
-offset_top = -376.0
+offset_top = -452.0
 offset_right = -40.0
 offset_bottom = -36.0
 theme_override_constants/separation = 14
@@ -101,13 +101,23 @@ code = "01"
 cn_label = "继续"
 en_label = "RESUME · ESC"
 
-[node name="SettingsButton" type="Control" parent="Dim/Center/Panel/VBox"]
+[node name="HowtoButton" type="Control" parent="Dim/Center/Panel/VBox"]
 custom_minimum_size = Vector2(460, 72)
 layout_mode = 2
 focus_mode = 2
 mouse_default_cursor_shape = 2
 script = ExtResource("3_btn")
 code = "02"
+cn_label = "操作说明"
+en_label = "FIELD MANUAL"
+
+[node name="SettingsButton" type="Control" parent="Dim/Center/Panel/VBox"]
+custom_minimum_size = Vector2(460, 72)
+layout_mode = 2
+focus_mode = 2
+mouse_default_cursor_shape = 2
+script = ExtResource("3_btn")
+code = "03"
 cn_label = "设置"
 en_label = "SETTINGS"
 
@@ -117,7 +127,7 @@ layout_mode = 2
 focus_mode = 2
 mouse_default_cursor_shape = 2
 script = ExtResource("3_btn")
-code = "03"
+code = "04"
 cn_label = "返回主菜单"
 en_label = "RETURN TO MENU"
 
@@ -127,7 +137,7 @@ layout_mode = 2
 focus_mode = 2
 mouse_default_cursor_shape = 2
 script = ExtResource("3_btn")
-code = "04"
+code = "05"
 cn_label = "退出游戏"
 en_label = "EXIT"
 danger = true
