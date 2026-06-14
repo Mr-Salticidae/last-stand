@@ -241,6 +241,18 @@ const _WALK_SWAY: float = 0.03        # 横向摆幅
 const _STRIKE_DURATION: float = 0.22  # 前刺 impulse 时长
 const _STRIKE_LUNGE: float = 0.35     # 前刺朝玩家位移幅度
 
+# 路径B 逐帧贴图动画（DOOM 双帧抖）：在程序 juice 之上叠加切帧
+# 约定：精灵贴图 res://.../<name>.png 旁若存在同名文件夹 res://.../<name>/，
+#       内含 walk_0..N / attack_0..N / death_0..N（按需），则启用帧动画；
+#       否则 _has_frame_anim=false，退回单张静态图（与改动前完全一致，零破坏）。
+# 走路帧与落脚相位 _walk_phase 同步（每半步 π 翻一帧），前摇切攻击帧，死亡切倒地帧。
+var _frames_walk: Array[Texture2D] = []
+var _frames_attack: Array[Texture2D] = []
+var _frames_death: Array[Texture2D] = []
+var _frame_idle: Texture2D = null     # 静止/默认帧（= 原始单张图）
+var _has_frame_anim: bool = false
+const _FRAME_SEQ_CAP: int = 32        # 单 clip 帧数安全上限
+
 signal died
 
 func _ready() -> void:
@@ -275,6 +287,7 @@ func _ready() -> void:
 		_juice_sprite = _flash_sprites[0][0]
 		_juice_base_pos = _juice_sprite.position
 		_juice_base_scale = _juice_sprite.scale
+		_load_frame_sets()
 
 	if Enemy.debug_hitbox_viz:
 		enable_hitbox_viz()
@@ -558,6 +571,60 @@ func _update_sprite_juice(delta: float) -> void:
 		scale_mod *= 1.0 + 0.18 * lunge
 	_juice_sprite.position = _juice_base_pos + offset
 	_juice_sprite.scale = _juice_base_scale * scale_mod
+	# 程序变换敲定后再选帧（_walk_phase 此刻已是最新，走路帧才能与落脚同步）
+	_update_sprite_frame()
+
+# 启动期扫描约定文件夹，按 clip 装载帧序列；找不到则保持静态（_has_frame_anim=false）
+func _load_frame_sets() -> void:
+	if _juice_sprite == null:
+		return
+	var tex: Texture2D = _juice_sprite.texture
+	if tex == null:
+		return
+	_frame_idle = tex
+	var src: String = tex.resource_path     # 例：res://assets/sprites/enemies/grunt.png
+	if src.is_empty():
+		return
+	var base_dir: String = src.get_basename()  # 去扩展名 → res://assets/sprites/enemies/grunt
+	_frames_walk = _load_frame_seq(base_dir, "walk")
+	_frames_attack = _load_frame_seq(base_dir, "attack")
+	_frames_death = _load_frame_seq(base_dir, "death")
+	_has_frame_anim = not (_frames_walk.is_empty() and _frames_attack.is_empty() and _frames_death.is_empty())
+
+# 从 base_dir 顺序探测 <clip>_0.png, <clip>_1.png … 直到缺失。ResourceLoader.exists 导出安全
+func _load_frame_seq(base_dir: String, clip: String) -> Array[Texture2D]:
+	var out: Array[Texture2D] = []
+	var i: int = 0
+	while i < _FRAME_SEQ_CAP:
+		var p: String = "%s/%s_%d.png" % [base_dir, clip, i]
+		if not ResourceLoader.exists(p):
+			break
+		var t: Texture2D = load(p) as Texture2D
+		if t == null:
+			break
+		out.append(t)
+		i += 1
+	return out
+
+# 每帧按状态选贴图：前摇攻击 > 移动走路 > 静止默认。死亡帧由 _play_death_sequence 接管
+func _update_sprite_frame() -> void:
+	if not _has_frame_anim or _juice_sprite == null or _is_dead:
+		return
+	# 前摇：按 windup 进度推进攻击帧（通常 1-2 帧，到位即举手/张口）
+	if _state == State.WINDUP and not _frames_attack.is_empty():
+		var wp: float = 1.0
+		if attack_windup > 0.0:
+			wp = clampf(1.0 - _state_timer / attack_windup, 0.0, 1.0)
+		var ai: int = clampi(int(wp * _frames_attack.size()), 0, _frames_attack.size() - 1)
+		_juice_sprite.texture = _frames_attack[ai]
+		return
+	# 移动：双帧抖，与落脚相位同步（_walk_phase 每过 π = 一次落脚 = 翻一帧）
+	if _walk_amt > 0.5 and not _frames_walk.is_empty():
+		var wi: int = int(_walk_phase / PI) % _frames_walk.size()
+		_juice_sprite.texture = _frames_walk[wi]
+		return
+	# 静止 / 无走路帧：回默认帧
+	_juice_sprite.texture = _frame_idle
 
 func _play_anim(anim_name: String, force: bool = false) -> void:
 	if _anim_player == null or anim_name.is_empty():
@@ -1349,6 +1416,9 @@ func _die() -> void:
 # 统一 1.4s 后 queue_free（足够 Mech Pack Death + Sci-Fi TurnOff 播完）
 func _play_death_sequence() -> void:
 	if _juice_sprite != null:
+		# 有倒地帧则先切到最末帧（最"塌"的姿态），再叠缩小/上飘/淡出溶解
+		if not _frames_death.is_empty():
+			_juice_sprite.texture = _frames_death[_frames_death.size() - 1]
 		# 精灵死亡：缩小 + 上飘 + 淡出溶解（root 旋转对 billboard 无效，必须动精灵本身）
 		var stw: Tween = create_tween()
 		stw.set_parallel(true)
