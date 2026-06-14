@@ -58,10 +58,10 @@ git clone https://github.com/Mr-Salticidae/last-stand.git
 
 ## 开发状态
 
-当前版本 **v0.6.1** — 手枪平衡回调 + G18 打腿彩蛋（夺舍流）+ 新手教程（操作说明页 / 近战处决提示）+ 羁绊信息悬停提示 + 跳出地图兜底  
+当前版本 **v0.7.0** — 局内经济改造（永续强化卡 + 货币稀缺化，后期不再空转）+ 敌人步态动效重写 + 首次命中/处决卡顿修复 + 霰弹叠音 / 爆头音 / 寻路抖动批修 + 仓库瘦身  
 完整更新日志：[GitHub Releases](https://github.com/Mr-Salticidae/last-stand/releases) · [itch.io devlog](https://mr-salticidae.itch.io/last-stand/devlog)
 
-下一版计划：武器 2D 持枪视图 + 怪物逐帧动画 + HUD 重绘。
+下一版计划：根据玩家反馈持续调优经济 / 难度曲线 + 武器 2D 持枪视图 + HUD 重绘。
 
 ## 反馈
 
