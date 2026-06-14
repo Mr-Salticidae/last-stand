@@ -582,3 +582,53 @@ func _create_explosion_visual(world_pos: Vector3) -> void:
 		.set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
 	tween.tween_property(mat, "albedo_color", Color(1.0, 0.55, 0.15, 0.0), 0.4)
 	tween.chain().tween_callback(flash.queue_free)
+
+# VFX shader 预热：命中发光球/爆炸球的材质变体首次渲染时才即时编译 shader，
+# 在 Forward+/D3D12 + glow 下表现为"第一次命中卡一帧"。这里开局把用到的两个变体
+# （不透明发光 = 命中球/爆头刺，半透明发光 = 爆炸球）各画几帧再丢弃，
+# 让编译发生在加载/部署遮罩期间。Godot 按材质“变体特征”缓存编译（非按实例），
+# 故预热体只要 emission/transparency 标志与命中材质一致即命中同一缓存；
+# emission_energy 与颜色只是 uniform，可设到近黑/全透使预热体肉眼不可见。
+static var _vfx_warmed: bool = false
+
+static func warmup_hit_vfx(camera: Camera3D) -> void:
+	if _vfx_warmed or camera == null:
+		return
+	_vfx_warmed = true
+
+	# 变体①：不透明发光（命中球 / 爆头刺）。energy=0 + 黑发光 → 不发亮
+	var opaque := StandardMaterial3D.new()
+	opaque.emission_enabled = true
+	opaque.emission = Color.BLACK
+	opaque.emission_energy_multiplier = 0.0
+	opaque.albedo_color = Color(0, 0, 0, 1)
+
+	# 变体②：半透明发光（爆炸球）。albedo alpha=0 → 完全透明不可见
+	var alpha := StandardMaterial3D.new()
+	alpha.emission_enabled = true
+	alpha.emission = Color.BLACK
+	alpha.emission_energy_multiplier = 0.0
+	alpha.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+	alpha.albedo_color = Color(0, 0, 0, 0)
+
+	var sphere := SphereMesh.new()
+	sphere.radius = 0.01
+	sphere.height = 0.02
+
+	var probes: Array[MeshInstance3D] = []
+	for mat in [opaque, alpha]:
+		var mi := MeshInstance3D.new()
+		mi.mesh = sphere
+		mi.material_override = mat
+		mi.position = Vector3(0.0, 0.0, -0.3)  # 相机正前方、近平面外，确保进视锥才会编译
+		camera.add_child(mi)
+		probes.append(mi)
+
+	# 等几帧让渲染线程真正绘制并编译这两个变体，再清理
+	var tree: SceneTree = camera.get_tree()
+	if tree:
+		for i in 3:
+			await tree.process_frame
+	for mi in probes:
+		if is_instance_valid(mi):
+			mi.queue_free()

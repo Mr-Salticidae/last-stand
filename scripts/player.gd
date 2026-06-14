@@ -191,6 +191,8 @@ func _ready():
 	# 缓存 base FOV，杀戮节拍激活时叠加 _fov_extra
 	if camera_3d:
 		_base_fov = camera_3d.fov
+		# 预热命中/爆炸发光材质的 shader，避免第一次命中即时编译卡一帧（一局一次）
+		Weapon.warmup_hit_vfx(camera_3d)
 
 func _input(event: InputEvent) -> void:
 	# 隐藏调试热键：默认关（DEBUG_HOTKEYS=false），防玩家误触；调试时翻 true 启用。
