@@ -288,7 +288,8 @@ func play_dry_fire() -> void:
 func play_hit() -> void:
 	_play_2d(hit_stream if hit_stream else _fallback["hit"], -4.0, randf_range(0.95, 1.05))
 func play_headshot() -> void:
-	_play_2d(headshot_stream if headshot_stream else _fallback["headshot"], 0.0, randf_range(0.95, 1.05))
+	# +2dB 让爆头 ping 在爆头击杀时盖过 kill 的闷响（玩家反馈"很少听到爆头音"）
+	_play_2d(headshot_stream if headshot_stream else _fallback["headshot"], 2.0, randf_range(0.95, 1.05))
 func play_kill() -> void:
 	_play_2d(kill_stream if kill_stream else _fallback["kill"])
 

@@ -187,8 +187,31 @@ func try_shoot() -> bool:
 	var was_reload_burst: bool = _reload_burst_pending
 	var lr_count: int = int(_buff("last_round_count", 0))
 	var was_last_round: bool = lr_count > 0 and current_ammo < lr_count
+	# 聚合所有弹丸的命中结果，开火后只播一次命中音（散弹不再叠 N 个音 / 不抢爆头音声道）
+	var any_kill: bool = false
+	var any_head_kill: bool = false
+	var any_headshot: bool = false
+	var any_hit: bool = false
 	for p in pellet_count:
-		_fire_pellet(effective_spread)
+		var r: int = _fire_pellet(effective_spread)
+		if r == PELLET_HEADSHOT_KILL:
+			any_kill = true
+			any_head_kill = true
+		elif r == PELLET_KILL:
+			any_kill = true
+		elif r == PELLET_HEADSHOT:
+			any_headshot = true
+		elif r == PELLET_HIT:
+			any_hit = true
+	# 优先级：击杀 > 爆头 > 普通；爆头杀 / 同发还打中头 → kill + headshot 叠播（清脆 ping + 闷响）
+	if any_kill:
+		AudioManager.play_kill()
+		if any_head_kill or any_headshot:
+			AudioManager.play_headshot()
+	elif any_headshot:
+		AudioManager.play_headshot()
+	elif any_hit:
+		AudioManager.play_hit()
 	# 战术换弹 pending flag：一次开火（含散弹多 pellet）算 1 发，开完即消费 + 通知 HUD
 	if was_reload_burst:
 		_reload_burst_pending = false
@@ -207,14 +230,22 @@ func try_shoot() -> bool:
 
 	return true
 
-# 单颗弹丸：独立 raycast + 独立伤害结算
-func _fire_pellet(effective_spread: float) -> void:
+# _fire_pellet 命中结果码：音频不在弹丸内播，由 try_shoot 聚合后统一播一次，
+# 避免散弹多 pellet 各播命中音 → 叠音过重 + 抢占声道把爆头音挤掉（玩家反馈 #2/#3）
+const PELLET_NONE := 0
+const PELLET_HIT := 1
+const PELLET_HEADSHOT := 2
+const PELLET_KILL := 3
+const PELLET_HEADSHOT_KILL := 4
+
+# 单颗弹丸：独立 raycast + 独立伤害结算。返回上面的结果码（不播音频）
+func _fire_pellet(effective_spread: float) -> int:
 	var spread_x := deg_to_rad(randf_range(-effective_spread, effective_spread))
 	var spread_y := deg_to_rad(randf_range(-effective_spread, effective_spread))
 	shoot_raycast.rotation = Vector3(spread_x, spread_y, 0)
 	shoot_raycast.force_raycast_update()
 	if not shoot_raycast.is_colliding():
-		return
+		return PELLET_NONE
 
 	var hit_pos: Vector3 = shoot_raycast.get_collision_point()
 	var collider: Object = shoot_raycast.get_collider()
@@ -229,11 +260,11 @@ func _fire_pellet(effective_spread: float) -> void:
 		_spawn_explosion(hit_pos)
 
 	if not (collider and collider.has_method("take_damage")):
-		return
+		return PELLET_NONE
 	# 只认 Hitbox 触发伤害：命中 enemy CharacterBody3D 物理体（粗矩形 collision）
 	# 视为"未中要害"，避免 mesh 与物理 collision 形状不贴合时误判（胯下/腋下空气等）
 	if collider is Enemy:
-		return
+		return PELLET_NONE
 
 	# 找到承担伤害的 enemy 根节点：hitbox 转发给 parent
 	var target_enemy: Node = collider as Node
@@ -341,11 +372,6 @@ func _fire_pellet(effective_spread: float) -> void:
 		now_dead = target_enemy.is_dead()
 	if not was_dead and now_dead:
 		kill_confirmed.emit()
-		AudioManager.play_kill()
-		# 爆头击杀：kill + headshot 音效叠加（清脆 ping + 闷响 thud）
-		# 视觉只走 kill_confirmed（红色 hit marker），避免和金黄 headshot 帧冲突
-		if is_headshot:
-			AudioManager.play_headshot()
 		_do_hit_pause()
 		# 升级系统：击杀回血 + 杀戮狂热刷新计时（写到 manager，所有武器共享）
 		# 死神之舞羁绊：kill_heal +3
@@ -391,17 +417,19 @@ func _fire_pellet(effective_spread: float) -> void:
 			if _manager.has_method("record_weak_spot_kill"):
 				_manager.record_weak_spot_kill(target_enemy.enemy_id)
 		# v0.3 新卡 kill 触发 ↑
+		return PELLET_HEADSHOT_KILL if is_headshot else PELLET_KILL
 	elif not was_dead:
 		if is_headshot:
 			headshot_confirmed.emit()
-			AudioManager.play_headshot()
+			return PELLET_HEADSHOT
 		elif is_leg_hit:
 			# G18 打腿彩蛋：独立颜色 hit marker（音效仍走普通命中，保持"微妙"）
 			leg_confirmed.emit()
-			AudioManager.play_hit()
+			return PELLET_HIT
 		else:
 			hit_confirmed.emit()
-			AudioManager.play_hit()
+			return PELLET_HIT
+	return PELLET_NONE
 
 # 判断敌人是否是精英或 BOSS（给 elite_hunter 用）
 func _is_special_enemy(enemy: Node) -> bool:
@@ -615,7 +643,7 @@ static func warmup_hit_vfx(camera: Camera3D) -> void:
 	sphere.radius = 0.01
 	sphere.height = 0.02
 
-	var probes: Array[MeshInstance3D] = []
+	var probes: Array[Node3D] = []
 	for mat in [opaque, alpha]:
 		var mi := MeshInstance3D.new()
 		mi.mesh = sphere
@@ -624,7 +652,28 @@ static func warmup_hit_vfx(camera: Camera3D) -> void:
 		camera.add_child(mi)
 		probes.append(mi)
 
-	# 等几帧让渲染线程真正绘制并编译这两个变体，再清理
+	# 变体③：处决迸发粒子（GPUParticles3D + ParticleProcessMaterial + unshaded 发光材质）
+	# 首次处决会即时编译粒子计算 shader + unshaded 发光绘制 shader → 卡一帧（玩家反馈 #1）
+	var part := GPUParticles3D.new()
+	part.amount = 1
+	part.lifetime = 0.2
+	part.process_material = ParticleProcessMaterial.new()
+	var pmesh := SphereMesh.new()
+	pmesh.radius = 0.01
+	pmesh.height = 0.02
+	var psmat := StandardMaterial3D.new()
+	psmat.emission_enabled = true
+	psmat.emission = Color.BLACK
+	psmat.emission_energy_multiplier = 0.0
+	psmat.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+	pmesh.material = psmat
+	part.draw_pass_1 = pmesh
+	part.position = Vector3(0.0, 0.0, -0.3)
+	camera.add_child(part)
+	part.emitting = true
+	probes.append(part)
+
+	# 等几帧让渲染线程真正绘制并编译这些变体，再清理
 	var tree: SceneTree = camera.get_tree()
 	if tree:
 		for i in 3:

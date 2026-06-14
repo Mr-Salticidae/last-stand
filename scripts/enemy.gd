@@ -134,6 +134,10 @@ var _nav_progress_seg: int = 0                # 当前在 path 的第几段，�
 const _NAV_REPATH_INTERVAL: float = 1.5   # repath 间隔拉长，避免 path[1] 波动导致震荡
 const _NAV_REPATH_TARGET_DELTA: float = 3.0  # target 变化超过 3m 才强制 repath
 const _NAV_LOOKAHEAD: float = 1.5
+# 转向低通平滑：近身/拥挤时 nav_dir 易每帧翻向，直接用会"原地抽搐"。
+# 平滑后的朝向用于 velocity + look_at，消除高频抖动（玩家反馈 #4）
+var _nav_smooth_dir: Vector3 = Vector3.ZERO
+const _NAV_STEER_SMOOTH: float = 0.3   # 每物理帧朝目标方向 lerp 的比例（越小越平滑、转向越缓）
 
 # Stuck detection：CHASE/SEARCH 中卡住超过 _STUCK_TIMEOUT 秒就强制 repath + jitter
 var _stuck_timer: float = 0.0
@@ -894,9 +898,18 @@ func _move_along_nav_path(target: Vector3, speed: float) -> void:
 		return
 
 	var nav_dir: Vector3 = nav_vec.normalized()
-	look_at(global_position + nav_dir, Vector3.UP)
-	velocity.x = nav_dir.x * speed
-	velocity.z = nav_dir.z * speed
+	# 转向低通平滑：把每帧目标方向 lerp 进 _nav_smooth_dir，消除近身/拥挤时的方向震荡
+	if _nav_smooth_dir.length_squared() < 0.0001:
+		_nav_smooth_dir = nav_dir
+	else:
+		_nav_smooth_dir = _nav_smooth_dir.lerp(nav_dir, _NAV_STEER_SMOOTH)
+		if _nav_smooth_dir.length_squared() < 0.0001:
+			_nav_smooth_dir = nav_dir
+		else:
+			_nav_smooth_dir = _nav_smooth_dir.normalized()
+	look_at(global_position + _nav_smooth_dir, Vector3.UP)
+	velocity.x = _nav_smooth_dir.x * speed
+	velocity.z = _nav_smooth_dir.z * speed
 
 # Repath 时调：找 path 中离 agent 水平最近的 segment index
 func _find_closest_segment() -> int:
