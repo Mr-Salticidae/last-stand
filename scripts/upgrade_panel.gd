@@ -130,7 +130,14 @@ func _render_card_slot(slot: Control, card_id: String) -> void:
 	name_label.text = card.name
 	rarity_label.text = "%s · %s" % [RARITY_NAMES_CN[rarity], RARITY_NAMES_EN[rarity]]
 	rarity_label.add_theme_color_override("font_color", rarity_color)
-	stack_label.text = "STACK · %d / %d" % [UpgradeManager.stack_count(card_id), int(card.max_stack)]
+	# 永续/服务卡不显示 "n / 9999"（难看且无意义），改显示类型标
+	if UpgradeManager.is_consumable(card_id):
+		if UpgradeManager.kind_of(card_id) == "service":
+			stack_label.text = "服务 · 即时消耗"
+		else:
+			stack_label.text = "永续 · 已叠 %d 层" % UpgradeManager.stack_count(card_id)
+	else:
+		stack_label.text = "STACK · %d / %d" % [UpgradeManager.stack_count(card_id), int(card.max_stack)]
 	desc_label.text = card.desc
 	# 卡片边框：本波已购 → 稀有度色提亮版（让玩家一眼区分"已购买"状态）；否则用稀有度色
 	var bought: bool = UpgradeManager.is_purchased_this_round(card_id)
@@ -140,6 +147,9 @@ func _render_card_slot(slot: Control, card_id: String) -> void:
 	var cost: int = UpgradeManager.get_cost(card_id)
 	var can_afford: bool = _wave_manager and int(_wave_manager.currency) >= cost
 	var maxed: bool = UpgradeManager.is_maxed(card_id)
+	# 服务卡条件不满足（如满血时的回血）→ 灰掉，避免浪费钱
+	var svc_blocked: bool = UpgradeManager.kind_of(card_id) == "service" \
+		and not UpgradeManager.service_available(card_id)
 	if bought:
 		buy_btn.cn_label = "已购买"
 		buy_btn.en_label = "BOUGHT"
@@ -148,12 +158,16 @@ func _render_card_slot(slot: Control, card_id: String) -> void:
 		buy_btn.cn_label = "已满级"
 		buy_btn.en_label = "MAXED"
 		buy_btn.disabled = true
+	elif svc_blocked:
+		buy_btn.cn_label = "无需"
+		buy_btn.en_label = "FULL HP"
+		buy_btn.disabled = true
 	else:
 		buy_btn.cn_label = "购买"
 		buy_btn.en_label = "BUY [%d CR]" % cost
 		buy_btn.disabled = not can_afford
-	# 锁定按钮：满级时禁用（锁了也没意义，下一波该卡不会被 draw）
-	lock_btn.disabled = maxed
+	# 锁定按钮：满级 或 永续/服务卡 时禁用（锁了无意义，它们一直在兜底池）
+	lock_btn.disabled = maxed or UpgradeManager.is_consumable(card_id)
 	if maxed:
 		lock_btn.cn_label = "锁定"
 		lock_btn.en_label = "LOCK"

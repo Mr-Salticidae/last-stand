@@ -25,15 +25,15 @@ const CARDS: Array[Dictionary] = [
 	{"id": "headshot", "name": "头部专精", "desc": "爆头倍率 +0.5",
 		"rarity": Rarity.COMMON, "max_stack": 4, "base_cost": 300},
 	{"id": "reload", "name": "快速装填", "desc": "装填时间 -25%",
-		"rarity": Rarity.COMMON, "max_stack": 3, "base_cost": 300},
+		"rarity": Rarity.COMMON, "max_stack": 4, "base_cost": 300},
 	{"id": "spread", "name": "弹道稳定", "desc": "子弹散布 -20%",
-		"rarity": Rarity.COMMON, "max_stack": 3, "base_cost": 250},
+		"rarity": Rarity.COMMON, "max_stack": 4, "base_cost": 250},
 	{"id": "max_health", "name": "强健体魄", "desc": "最大血量 +20",
 		"rarity": Rarity.COMMON, "max_stack": 5, "base_cost": 250},
 	{"id": "move_speed", "name": "疾风步伐", "desc": "移速 +8%",
 		"rarity": Rarity.COMMON, "max_stack": 4, "base_cost": 250},
 	{"id": "heal_boost", "name": "战地医疗", "desc": "血包治疗量 +40%",
-		"rarity": Rarity.COMMON, "max_stack": 3, "base_cost": 250},
+		"rarity": Rarity.COMMON, "max_stack": 4, "base_cost": 250},
 	# --- 稀有（6） ---
 	{"id": "kill_heal", "name": "杀戮回血", "desc": "击杀敌人恢复 3 点生命",
 		"rarity": Rarity.RARE, "max_stack": 3, "base_cost": 800},
@@ -81,6 +81,16 @@ const CARDS: Array[Dictionary] = [
 		"rarity": Rarity.LEGENDARY, "max_stack": 1, "base_cost": 2500},
 	{"id": "chain_kill", "name": "连锁处决", "desc": "1 秒内连续击杀 → 该击杀回 5 弹药 + 短暂无敌 0.3s",
 		"rarity": Rarity.LEGENDARY, "max_stack": 1, "base_cost": 2500},
+	# --- 永续强化（kind=perpetual，无上限叠加，线性递增成本）---
+	# 后期常规卡池抽空后兜底填充，永远有得买；价格随层线性涨，吃掉后期收入。
+	{"id": "perp_arsenal", "name": "军备扩充", "desc": "武器伤害 +6%（可无限叠加）",
+		"rarity": Rarity.COMMON, "kind": "perpetual", "max_stack": 9999, "base_cost": 450, "cost_step": 150},
+	{"id": "perp_fortify", "name": "永备装甲", "desc": "最大血量 +12（可无限叠加）",
+		"rarity": Rarity.COMMON, "kind": "perpetual", "max_stack": 9999, "base_cost": 400, "cost_step": 130},
+	# --- 服务（kind=service，即时消耗，可反复买）---
+	# 仅在条件满足时可买（回血只在受伤时）；卡池见底兜底填充。弹药波间自动补满，故不设弹药服务。
+	{"id": "svc_medkit", "name": "应急补给", "desc": "立即回满生命",
+		"rarity": Rarity.RARE, "kind": "service", "max_stack": 9999, "base_cost": 600, "cost_step": 0},
 ]
 
 # ========== 运行时状态 ==========
@@ -128,9 +138,28 @@ func is_maxed(id: String) -> bool:
 	var c: Dictionary = get_card(id)
 	return stack_count(id) >= int(c.max_stack)
 
+func kind_of(id: String) -> String:
+	return str(get_card(id).get("kind", "upgrade"))
+
+# 永续 / 服务卡：买完不标"本波已购"、不出池，可反复购买（后期泄洪口）
+func is_consumable(id: String) -> bool:
+	return kind_of(id) in ["perpetual", "service"]
+
+# 服务卡当前是否可买（条件不满足时面板灰掉、抽卡兜底时不计入）
+func service_available(id: String) -> bool:
+	match id:
+		"svc_medkit":
+			var p: Node = get_tree().get_first_node_in_group("player")
+			return p != null and "current_health" in p and "max_health" in p \
+				and float(p.current_health) < float(p.max_health)
+	return true
+
 func get_cost(id: String) -> int:
 	var c: Dictionary = get_card(id)
 	var base: int = int(c.base_cost)
+	if is_consumable(id):
+		# 线性递增：base + 已买层数 * cost_step（服务 cost_step=0 即固定价）
+		return base + stack_count(id) * int(c.get("cost_step", 0))
 	var cost: float = float(base) * pow(1.4, float(stack_count(id)))
 	return int(round(cost))
 
@@ -166,6 +195,8 @@ func draw_cards(wave: int) -> Array[String]:
 	# 步骤 2：剩余空槽从未叠满 && 本波未购 && 已在槽位的卡池里按权重抽
 	var pool: Array = []
 	for c in CARDS:
+		if is_consumable(c.id):
+			continue   # 永续/服务卡不进常规加权池，只做兜底填充（见下）
 		if is_maxed(c.id):
 			continue
 		if is_purchased_this_round(c.id):
@@ -182,6 +213,24 @@ func draw_cards(wave: int) -> Array[String]:
 		var picked: Dictionary = _weighted_pick(pool, weights)
 		slots[i] = picked.id
 		pool.erase(picked)
+	# 兜底填充：常规卡抽空仍有空槽 → 用永续卡 + 可用服务卡填满（卡池见底也不空转）
+	# 只在常规池耗尽时才出现，故前期商店不会被永续/服务卡污染
+	var fallback: Array = []
+	for c in CARDS:
+		if not is_consumable(c.id):
+			continue
+		if c.id in slots:
+			continue
+		if kind_of(c.id) == "service" and not service_available(c.id):
+			continue
+		fallback.append(c.id)
+	fallback.shuffle()
+	for i in 3:
+		if slots[i] != "":
+			continue
+		if fallback.is_empty():
+			break
+		slots[i] = fallback.pop_front()
 	# 紧凑化：pool 不足导致的空槽去掉（render 端按 size() 隐藏多余槽位）
 	var new_draw: Array[String] = []
 	for s in slots:
@@ -242,7 +291,12 @@ func try_reroll(wave: int) -> bool:
 
 # 返回 true=购买成功并已应用效果；false=钱不够 / 已叠满 / 本波已买
 func try_purchase(id: String) -> bool:
-	if is_maxed(id) or is_purchased_this_round(id):
+	var consumable: bool = is_consumable(id)
+	# 常规卡：满级或本波已购 → 不可买；永续/服务卡跳过这两条（可反复买）
+	if not consumable and (is_maxed(id) or is_purchased_this_round(id)):
+		return false
+	# 服务卡条件不满足（如满血时买回血）→ 不可买
+	if kind_of(id) == "service" and not service_available(id):
 		return false
 	var cost: int = get_cost(id)
 	var wm: Node = get_tree().get_first_node_in_group("wave_manager")
@@ -252,9 +306,10 @@ func try_purchase(id: String) -> bool:
 	wm.currency -= cost
 	wm.currency_changed.emit(wm.currency)
 	stacks[id] = stack_count(id) + 1
-	purchased_this_round.append(id)
-	# 买完自动解锁这张（锁定的意义是"没买"保留，买了没必要锁）
-	locked_ids.erase(id)
+	if not consumable:
+		purchased_this_round.append(id)
+		# 买完自动解锁这张（锁定的意义是"没买"保留，买了没必要锁）
+		locked_ids.erase(id)
 	_apply_effect(id)
 	# 羁绊检查：每次卡牌叠层后扫描，新激活的会发 synergy_activated 给 HUD toast
 	if has_node("/root/SynergyManager"):
@@ -376,6 +431,16 @@ func _apply_effect(id: String) -> void:
 				wpm.chain_kill_window = 1.0
 				wpm.chain_kill_ammo_refund = 5
 				wpm.chain_kill_invuln = 0.3
+		# --- 永续（每买一次叠一份，无上限）---
+		"perp_arsenal":
+			if wpm: wpm.damage_mult += 0.06
+		"perp_fortify":
+			_grant_max_health(player, 12.0)
+		# --- 服务（即时消耗）---
+		"svc_medkit":
+			# 回满生命（heal 内部 clamp 到 max_health）
+			if player and player.has_method("heal"):
+				player.heal(player.max_health)
 
 func _grant_max_health(player: Node, delta: float) -> void:
 	if player == null:

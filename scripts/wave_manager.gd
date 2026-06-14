@@ -70,7 +70,10 @@ enum State { IDLE, INTERMISSION, SPAWNING, COMBAT }
 var current_wave: int = 0
 var total_kills: int = 0
 var total_score: int = 0
-# 可花费资金：与 total_score 同步获得，但升级消耗只扣这里，不影响结算得分
+# 货币获取率：currency 每杀 = score × 此值。<1 制造稀缺、逼出 build 取舍
+# （玩家反馈：经济溢出、不用 build 随意购买；极限档 count_mult 1.8 放大了溢出）
+@export var currency_earn_rate: float = 0.7
+# 可花费资金：按 currency_earn_rate 折算获得，但升级消耗只扣这里，不影响结算得分
 var currency: int = 0
 var current_combo: int = 0
 # 精英猎手：elite/boss 击杀得分额外加成（UpgradeManager 改写）
@@ -309,7 +312,8 @@ func _on_enemy_died(enemy) -> void:
 			gained = int(round(float(gained) * (1.0 + elite_score_bonus)))
 	total_score += gained
 	score_changed.emit(total_score)
-	currency += gained
+	# 货币按获取率折算（< 全额），制造稀缺让 build 取舍有意义
+	currency += int(round(float(gained) * currency_earn_rate))
 	currency_changed.emit(currency)
 	current_combo += 1
 	if current_combo > max_combo:
