@@ -235,9 +235,11 @@ const _JUICE_WINDUP_GROW: float = 0.16
 var _walk_phase: float = 0.0          # 步频相位（按移动速度推进）
 var _walk_amt: float = 0.0            # 走路动效混入量 0→1（移动平滑淡入/停止淡出）
 var _juice_strike_timer: float = 0.0  # 攻击 strike 瞬间的前刺 impulse 计时
-const _WALK_BOB: float = 0.08         # 落脚下沉幅度
-const _WALK_SQUASH: float = 0.06      # 落脚横撑纵压
-const _WALK_SWAY: float = 0.03        # 横向摆幅
+const _GAIT_HOP: float = 0.11         # 腾空上跳幅度（蹦跳步态，取代旧的左右摆）
+const _GAIT_PLANT_DIP: float = 0.05   # 落脚下沉幅度（配挤压给重量感）
+const _GAIT_SQUASH: float = 0.11      # 落脚横撑纵压
+const _GAIT_STRETCH: float = 0.06     # 腾空纵向拉伸
+const _GAIT_LURCH: float = 0.10       # 落脚向玩家前冲幅度（本地 -Z，步步紧逼的压迫感）
 const _STRIKE_DURATION: float = 0.22  # 前刺 impulse 时长
 const _STRIKE_LUNGE: float = 0.35     # 前刺朝玩家位移幅度
 
@@ -549,12 +551,18 @@ func _update_sprite_juice(delta: float) -> void:
 	_walk_amt = lerpf(_walk_amt, 1.0 if moving else 0.0, clampf(delta * 9.0, 0.0, 1.0))
 	if _walk_amt > 0.001:
 		_walk_phase += delta * (5.0 + horiz_speed * 1.1)  # 越快步频越急
-		var step: float = absf(sin(_walk_phase))            # 双落脚 bounce
-		offset.y -= step * _WALK_BOB * _walk_amt            # 落脚下沉
-		offset.x += sin(_walk_phase) * _WALK_SWAY * _walk_amt
-		scale_mod *= Vector3(1.0 + step * _WALK_SQUASH * _walk_amt,
-			1.0 - step * _WALK_SQUASH * 0.8 * _walk_amt,
-			1.0 + step * _WALK_SQUASH * _walk_amt)
+		# 蹦跳步态：apex=腾空(1)…plant=落脚(0)。去掉旧的纯横摆，换“跳起→落脚砸”的重量感
+		var apex: float = absf(sin(_walk_phase))
+		var plant: float = 1.0 - apex
+		var amt: float = _walk_amt
+		# 垂直：腾空上跳 + 落脚下沉
+		offset.y += (apex * _GAIT_HOP - plant * _GAIT_PLANT_DIP) * amt
+		# 落脚瞬间向玩家(本地 -Z)前冲一下，读作步步紧逼
+		offset.z -= plant * _GAIT_LURCH * amt
+		# 挤压拉伸：落脚横撑纵压、腾空纵拉，给“肉感”和重量
+		var sx: float = 1.0 + plant * _GAIT_SQUASH * amt - apex * _GAIT_STRETCH * 0.4 * amt
+		var sy: float = 1.0 - plant * _GAIT_SQUASH * 0.8 * amt + apex * _GAIT_STRETCH * amt
+		scale_mod *= Vector3(sx, sy, sx)
 	# 受击挤压：横撑纵压，快速衰减（被打"咯噔"一下）
 	if _juice_hit_timer > 0.0:
 		var k: float = _juice_hit_timer / _JUICE_HIT_DURATION
