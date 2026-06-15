@@ -2,18 +2,12 @@
 
 # LastStand · 死守
 
-一款用 Godot 4 做的波次生存 FPS。守住阵地，杀掉来犯的敌人，每波之间抽卡升级。
+一款用 Godot 4 做的波次生存 FPS。守住阵地，杀掉来犯的敌人，每波之间抽卡升级。最新版本 [**v0.7.0**](https://github.com/Mr-Salticidae/last-stand/releases/tag/v0.7.0) 已发布。
 
 [![Play on itch.io](https://img.shields.io/badge/itch.io-Play_Now-fa5c5c?logo=itchdotio&logoColor=white)](https://mr-salticidae.itch.io/last-stand)
 [![Engine](https://img.shields.io/badge/Engine-Godot_4.6-478cbf?logo=godotengine&logoColor=white)](https://godotengine.org/)
 
 ---
-
-## 截图（旧版）
-
-![战斗](assets/screenshots/上传itch/02_combat.png)
-![连击](assets/screenshots/上传itch/03_combo.png)
-![升级](assets/screenshots/上传itch/04_update.png)
 
 ## 核心玩法
 
