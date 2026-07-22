@@ -13,6 +13,9 @@ private/
 # Claude Code 本地配置
 .claude/
 
+# VSCode 本地配置（含本机 Godot 编辑器绝对路径，因人而异）
+.vscode/
+
 # OS junk
 Thumbs.db
 .DS_Store
