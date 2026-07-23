@@ -6,8 +6,7 @@
 
 ![主菜单](../assets/screenshots/上传itch/01_menu.png)
 
-> 📷 **待补拍 S6（成品展示 · 战斗画面）** → `assets/screenshots/combat_v0.7.png`
-> 旧战斗图已过时（早期版本画面），需补一张当前 v0.7 的战斗截图。详见 [截图交接单](screenshot_handoff.md)。
+![战斗](../assets/screenshots/combat_v0.7.png)
 
 ![升级三选一](../assets/screenshots/上传itch/04_update.png)
 
