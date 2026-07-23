@@ -284,8 +284,7 @@ embed_pck = false
 
 打包产物传 GitHub Release，文案贴进去：
 
-> 📷 **待补截图 S5** → `assets/screenshots/tutorial/s5_github_release.png`
-> 内容：仓库 Releases 页的 v0.7.0 条目，tag、更新日志正文与附件 zip 可见。详见 [截图交接单](screenshot_handoff.md)。
+![GitHub Release 页面](../assets/screenshots/tutorial/s5_github_release.png)
 
 同一批内容再发一份到 itch.io，这边面向玩家、带评论区：
 
