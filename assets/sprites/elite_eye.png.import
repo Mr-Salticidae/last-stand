@@ -4,16 +4,15 @@ importer="texture"
 type="CompressedTexture2D"
 uid="uid://c3vgylra77bqk"
 path.s3tc="res://.godot/imported/elite_eye.png-206c74c1b8703a8bc1d0678236bb6cfc.s3tc.ctex"
-path.etc2="res://.godot/imported/elite_eye.png-206c74c1b8703a8bc1d0678236bb6cfc.etc2.ctex"
 metadata={
-"imported_formats": ["s3tc_bptc", "etc2_astc"],
+"imported_formats": ["s3tc_bptc"],
 "vram_texture": true
 }
 
 [deps]
 
 source_file="res://assets/sprites/elite_eye.png"
-dest_files=["res://.godot/imported/elite_eye.png-206c74c1b8703a8bc1d0678236bb6cfc.s3tc.ctex", "res://.godot/imported/elite_eye.png-206c74c1b8703a8bc1d0678236bb6cfc.etc2.ctex"]
+dest_files=["res://.godot/imported/elite_eye.png-206c74c1b8703a8bc1d0678236bb6cfc.s3tc.ctex"]
 
 [params]
 
