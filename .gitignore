@@ -6,6 +6,9 @@
 *.exe
 *.pck
 
+# 文档导出产物（PDF 等生成物放仓库外 ../last-stand-build/，不入库占体积）
+*.pdf
+
 # Private / 运营素材 / 设计稿原始资料
 # 后续转公开仓库前请确认这些目录不会被推送
 private/
