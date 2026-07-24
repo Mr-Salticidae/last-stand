@@ -1,9 +1,11 @@
-[gd_resource type="FontVariation" load_steps=2 format=3]
+[gd_resource type="FontVariation" load_steps=3 format=3]
 
 [ext_resource type="FontFile" path="res://assets/fonts/JetBrainsMono-VF.ttf" id="1_ttf"]
+[ext_resource type="FontFile" path="res://assets/fonts/NotoSansSC-VF.ttf" id="2_noto"]
 
 [resource]
 base_font = ExtResource("1_ttf")
+fallbacks = Array[Font]([ExtResource("2_noto")])
 variation_opentype = {
 "wght": 400
 }
