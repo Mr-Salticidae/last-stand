@@ -2,10 +2,10 @@
 
 # LastStand · 死守
 
-一款用 Godot 4 做的波次生存 FPS。守住阵地，杀掉来犯的敌人，每波之间抽卡升级。最新版本 [**v0.7.0**](https://github.com/Mr-Salticidae/last-stand/releases/tag/v0.7.0) 已发布。
+一款用 Godot 4 做的波次生存 FPS。守住阵地，杀掉来犯的敌人，每波之间抽卡升级。最新版本 [**v0.7.1**](https://github.com/Mr-Salticidae/last-stand/releases/tag/v0.7.1) 已发布。
 
 [![Play on itch.io](https://img.shields.io/badge/itch.io-Play_Now-fa5c5c?logo=itchdotio&logoColor=white)](https://mr-salticidae.itch.io/last-stand)
-[![Engine](https://img.shields.io/badge/Engine-Godot_4.6-478cbf?logo=godotengine&logoColor=white)](https://godotengine.org/)
+[![Engine](https://img.shields.io/badge/Engine-Godot_4.7-478cbf?logo=godotengine&logoColor=white)](https://godotengine.org/)
 
 ---
 
@@ -40,19 +40,19 @@
 git clone https://github.com/Mr-Salticidae/last-stand.git
 ```
 
-用 Godot 4.6+ 打开 `project.godot`，F5 启动。
+用 Godot 4.7+ 打开 `project.godot`，F5 启动。
 
 打包二进制：Project → Export，选目标平台（Windows / Linux / Web）。
 
 ## 技术栈
 
-- **引擎**：Godot 4.6
+- **引擎**：Godot 4.7
 - **语言**：GDScript
 - **资源**：武器 CC0/CC-BY（Quaternius / r2detta）；敌人精灵、BGM、音效为自制 AI 生成（Midjourney / GPT Image 2 / Suno / ElevenLabs，均订阅版商用授权）
 
 ## 开发状态
 
-当前版本 **v0.7.0** — 局内经济改造（永续强化卡 + 货币稀缺化，后期不再空转）+ 敌人步态动效重写 + 首次命中/处决卡顿修复 + 霰弹叠音 / 爆头音 / 寻路抖动批修 + 仓库瘦身  
+当前版本 **v0.7.1** — 修复向：波次剩余数显示错误 + 提前清波竞态 + 弹药节省在霰弹枪上多倍生效 + 切枪打断换弹的计时器串扰 + 后期 grunt 绝迹  
 完整更新日志：[GitHub Releases](https://github.com/Mr-Salticidae/last-stand/releases) · [itch.io devlog](https://mr-salticidae.itch.io/last-stand/devlog)
 
 下一版计划：根据玩家反馈持续调优经济 / 难度曲线 + 武器 2D 持枪视图 + HUD 重绘。
