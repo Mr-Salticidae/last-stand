@@ -65,6 +65,9 @@ var _shoot_cooldown: float = 0.0
 var _dry_fire_played_this_press: bool = false
 # 战术换弹 v0.3：换弹完成后置 true，下一发开火消费（每 weapon 自有，不跨武器共享）
 var _reload_burst_pending: bool = false
+# 换弹代次。切枪会取消换弹，但已经排下去的 create_timer 仍会到点——切回来重新换弹时，
+# 那个旧回调会把新的这次提前结算掉。每次换弹自增，回调只认自己那一代
+var _reload_token: int = 0
 
 # ========== 信号 ==========
 # ammo_changed 三参版：current / reserve / 最终 mag 容量（受 mag_size_mult 影响）
@@ -212,6 +215,13 @@ func try_shoot() -> bool:
 		AudioManager.play_headshot()
 	elif any_hit:
 		AudioManager.play_hit()
+	# 弹药节省：整枪只 roll 一次。原本写在 _fire_pellet 内 → 霰弹枪 8 颗弹丸各 roll 一次，
+	# 一枪扣 1 发却能回补最多 8 发（8 颗全中时期望 +2.0），弹匣越打越满。
+	# 与"战术换弹一次开火算 1 发"同理：多 pellet 逻辑上仍是一枪
+	if any_kill or any_headshot or any_hit:
+		var ammo_save_chance: float = _buff("ammo_save_chance", 0.0)
+		if ammo_save_chance > 0.0 and randf() < ammo_save_chance:
+			current_ammo = mini(current_ammo + 1, max_ammo())
 	# 战术换弹 pending flag：一次开火（含散弹多 pellet）算 1 发，开完即消费 + 通知 HUD
 	if was_reload_burst:
 		_reload_burst_pending = false
@@ -274,10 +284,8 @@ func _fire_pellet(effective_spread: float) -> int:
 	if target_enemy and target_enemy.has_method("is_dead"):
 		was_dead = target_enemy.is_dead()
 
-	# 弹药节省：命中生效时按概率回补 1 发（仍显示发射动画/特效）
-	var ammo_save_chance: float = _buff("ammo_save_chance", 0.0)
-	if ammo_save_chance > 0.0 and randf() < ammo_save_chance:
-		current_ammo = mini(current_ammo + 1, max_ammo())
+	# 注：弹药节省的回补不在这里做。这个函数按弹丸调用，霰弹枪一枪 8 颗就会 roll 8 次，
+	# 一发的消耗最多能回补 8 发。改到 try_shoot 里整枪只 roll 一次（卡面"命中时"的主语是这一枪）
 
 	# 伤害计算：base * damage_mult × (各种 mult)
 	var damage_mult: float = _buff("damage_mult", 1.0)
@@ -454,16 +462,22 @@ func try_reload() -> bool:
 	if reserve_ammo <= 0:
 		return false  # 备弹空：装不进去
 	is_reloading = true
+	_reload_token += 1
+	var token: int = _reload_token
 	var reload_time_mult: float = _buff("reload_time_mult", 1.0)
 	var actual_time: float = reload_time * reload_time_mult
 	reload_started.emit(actual_time)
 	AudioManager.play_reload()
-	get_tree().create_timer(actual_time).timeout.connect(_finish_reload)
+	get_tree().create_timer(actual_time).timeout.connect(_finish_reload.bind(token))
 	return true
 
-func _finish_reload() -> void:
+func _finish_reload(token: int) -> void:
 	# 装填中被切走（on_unequipped 把 is_reloading 清了）→ 这次回调作废
 	if not is_reloading:
+		return
+	# 代次不符 = 这是"被切枪取消掉的那次换弹"排下的旧 timer。不拦的话它会把
+	# 切回来后重新开始的换弹提前结算（切枪时机凑巧就能压掉整段换弹时间）
+	if token != _reload_token:
 		return
 	# 从备弹扣需要的量；备弹不足时按剩余量装填
 	var needed: int = max_ammo() - current_ammo
