@@ -60,7 +60,11 @@ signal game_completed(wave: int)                             # 通关：到达 v
 @export var runner_chance_max: float = 0.55
 @export var brute_chance_base: float = 0.10
 @export var brute_chance_per_wave: float = 0.02
-@export var brute_chance_max: float = 1.0
+# 上限必须满足 brute_max + runner_max < 1.0：_pick_enemy_scene 用一次 randf 分区间，
+# 两者之和超过 1 时 grunt 拿不到任何区间（后期彻底不再出现，包抄 AI 随之消失），
+# 且 runner 会被静默截断到 1.0-brute_max、拿不满自己的 runner_chance_max。
+# 0.30 + 0.55 = 0.85 → 后期稳定在 brute 30% / runner 55% / grunt 15%
+@export var brute_chance_max: float = 0.30
 # 精英 / Boss 波次周期
 @export var elite_wave_period: int = 5
 @export var boss_wave_period: int = 15
@@ -89,6 +93,15 @@ var _state: State = State.IDLE
 var _intermission_timer: float = 0.0
 var _spawn_points: Array = []
 var _alive_enemies: Array = []
+# 生成阶段 _alive_enemies.size() 的语义是"已落地数"而不是"剩余数"——每只敌人要等完
+# 自己的生成烟才 append，所以直接拿它发 wave_progress 会让 HUD 的"剩 N 只"从 1 往上爬。
+# 剩余数改由 总数 - 已击杀 推导，全程语义一致。
+var _wave_total: int = 0        # 本波计划敌人总数（boss 召唤会追加）
+var _wave_killed: int = 0       # 本波已击杀数（含异常消失的补偿）
+# 仍在播生成烟、尚未落地的敌人数。_spawn_at 是协程但不被 await，循环只等 spawn_stagger
+# 就置 COMBAT，此时最后几只还没出现——不挡住清波判定的话，玩家清光已落地的敌人就会
+# 提前通关，剩下的敌人生成到下一波里。
+var _spawns_pending: int = 0
 
 func _ready() -> void:
 	add_to_group("wave_manager")
@@ -132,10 +145,17 @@ func reset() -> void:
 	total_score = 0
 	currency = 0
 	_state = State.IDLE
+	_wave_total = 0
+	_wave_killed = 0
+	_spawns_pending = 0
 	for e in _alive_enemies:
 		if is_instance_valid(e):
 			e.queue_free()
 	_alive_enemies.clear()
+
+# 本波剩余敌人数 = 计划总数 - 已击杀。生成阶段也成立（未落地的仍计入剩余）
+func _remaining() -> int:
+	return maxi(_wave_total - _wave_killed, 0)
 
 # ---------- 内部循环 ----------
 func _process(delta: float) -> void:
@@ -155,7 +175,10 @@ func _process(delta: float) -> void:
 		var prev_size: int = _alive_enemies.size()
 		_alive_enemies = _alive_enemies.filter(func(e): return is_instance_valid(e))
 		if _alive_enemies.size() < prev_size:
-			wave_progress.emit(_alive_enemies.size())
+			# 这些敌人没走 died 信号，_wave_killed 不会自增；这里补上，
+			# 否则"剩 N 只"会永远停在一个不为 0 的数
+			_wave_killed += prev_size - _alive_enemies.size()
+			wave_progress.emit(_remaining())
 			_check_wave_cleared()
 
 func _spawn_current_wave() -> void:
@@ -170,6 +193,9 @@ func _spawn_current_wave() -> void:
 	var count_mult: float = float(Settings.get_difficulty_param("enemy_count_mult", 1.0))
 	var count_raw: float = float(base_enemy_count + (current_wave - 1) * enemy_count_per_wave) * count_mult
 	var count: int = min(int(round(count_raw)), max_enemies_per_wave)
+	_wave_total = count
+	_wave_killed = 0
+	_spawns_pending = 0
 	# v0.4-A：极限档可 override 节奏；其他档位用 @export 默认值（5 / 0.35）
 	var hb_every: int = int(Settings.get_difficulty_param("health_boost_every_n_waves_override", health_boost_every_n_waves))
 	var hb_per: float = float(Settings.get_difficulty_param("health_boost_per_tier_override", health_boost_per_tier))
@@ -202,6 +228,7 @@ func _spawn_current_wave() -> void:
 			sp_shuffled.shuffle()
 			sp_idx = 0
 		# 第一只生成精英 / boss，其他按常规随机
+		_spawns_pending += 1
 		if i == 0 and is_boss_wave:
 			_spawn_at(sp, health_mult, boss_scene)
 		elif i == 0 and is_elite_wave:
@@ -213,7 +240,7 @@ func _spawn_current_wave() -> void:
 			# stagger 期间 _state 还是 SPAWNING；_process 的 INTERMISSION 分支不会干扰
 
 	_state = State.COMBAT
-	wave_progress.emit(_alive_enemies.size())
+	wave_progress.emit(_remaining())
 
 # 每只敌人独立 await 自己的 spawn_effect，互相不阻塞
 # forced_scene 指定时用该 scene（精英/boss 固定生成），否则按随机混合
@@ -221,10 +248,21 @@ func _spawn_at(sp: SpawnPoint, health_mult: float, forced_scene: PackedScene = n
 	var smoke_dur: float = spawn_effect_duration * (1.6 if forced_scene else 1.0)
 	await sp.play_smoke_effect(smoke_dur)
 	if not is_inside_tree():
-		return  # WaveManager 被销毁（场景重载等）
+		# WaveManager 被销毁（场景重载等）。这只不会落地，从本波总数里剔除，
+		# 否则"剩 N 只"会永远多算一只、清波判定也永远等不到它
+		_wave_total -= 1
+		_spawns_pending -= 1
+		return
 
 	var scene_to_spawn: PackedScene = forced_scene if forced_scene else _pick_enemy_scene()
-	var enemy: Enemy = scene_to_spawn.instantiate()
+	var enemy: Enemy = scene_to_spawn.instantiate() as Enemy
+	if enemy == null:
+		# 实例化失败 / 场景根不是 Enemy：同样要还回名额，不然本波永远清不掉
+		push_error("WaveManager: 敌人场景实例化失败，跳过这只")
+		_wave_total -= 1
+		_spawns_pending -= 1
+		_check_wave_cleared()
+		return
 	# 难度系数：health 在波次 health_mult 之上再乘 difficulty health_mult
 	var diff_health_mult: float = float(Settings.get_difficulty_param("enemy_health_mult", 1.0))
 	enemy.max_health *= health_mult * diff_health_mult
@@ -263,7 +301,8 @@ func _spawn_at(sp: SpawnPoint, health_mult: float, forced_scene: PackedScene = n
 		enemy._receive_alert(player.global_position)
 	enemy.died.connect(_on_enemy_died.bind(enemy))
 	_alive_enemies.append(enemy)
-	wave_progress.emit(_alive_enemies.size())
+	# 落地不改变"剩余数"（未落地的本来就计入剩余），所以这里不再 emit wave_progress
+	_spawns_pending -= 1
 
 # 按当前波次选敌人类型。runner 从 runner_unlock_wave 波起解锁，brute 从 brute_unlock_wave 波起解锁；
 # 解锁后每波 chance 轻微递增直到 cap。
@@ -298,10 +337,13 @@ func register_summoned_enemy(enemy: Enemy) -> void:
 		return
 	enemy.died.connect(_on_enemy_died.bind(enemy))
 	_alive_enemies.append(enemy)
-	wave_progress.emit(_alive_enemies.size())
+	# 召唤的小弟计入本波总数，玩家必须一并杀完才过波
+	_wave_total += 1
+	wave_progress.emit(_remaining())
 
 func _on_enemy_died(enemy) -> void:
 	_alive_enemies.erase(enemy)
+	_wave_killed += 1
 	total_kills += 1
 	kill_count_changed.emit(total_kills)
 	var gained: int = int(enemy.score_value) if "score_value" in enemy else 100
@@ -320,7 +362,7 @@ func _on_enemy_died(enemy) -> void:
 		max_combo = current_combo
 	_combo_timer = COMBO_WINDOW
 	combo_changed.emit(current_combo, false)
-	wave_progress.emit(_alive_enemies.size())
+	wave_progress.emit(_remaining())
 
 	# 仅在 COMBAT 态下才检查清空（SPAWNING 途中有敌人被秒也不该推进）
 	_check_wave_cleared()
@@ -328,6 +370,10 @@ func _on_enemy_died(enemy) -> void:
 # 抽出 wave 清空判定 + 推波 / 通关分流（_on_enemy_died 和 _process 兜底共用）
 func _check_wave_cleared() -> void:
 	if _state != State.COMBAT or not _alive_enemies.is_empty():
+		return
+	# 还有敌人在播生成烟没落地：此刻 _alive_enemies 为空只代表"已落地的都清了"，
+	# 不代表本波打完。不挡住的话会提前通关，未落地的敌人生成到下一波里
+	if _spawns_pending > 0:
 		return
 	_state = State.IDLE
 	wave_completed.emit(current_wave)
