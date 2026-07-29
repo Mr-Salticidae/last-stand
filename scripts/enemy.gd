@@ -89,6 +89,13 @@ var LEGENDARY_POOL: Array[PackedScene] = [
 const MAX_CONCURRENT_ATTACKERS_FALLBACK: int = 2  # Settings 不可用时兜底（开发期/测试场景）
 static var _active_attackers: Array[Enemy] = []
 
+# 每物理帧只取一次 "enemy" 组快照，全场敌人共用。
+# 互推每帧每只都要遍历全体，get_nodes_in_group 每次都新分配一个数组——
+# 后期同场 20 只（max_enemies_per_wave）+ boss 召唤时，光这一项每帧就 20+ 次分配。
+# 按物理帧号失效，同帧内语义与实时取一致；帧内新增的敌人延后一帧纳入（互推/告警无感）。
+static var _enemies_snapshot: Array = []
+static var _enemies_snapshot_frame: int = -1
+
 # ========== 节点引用 ==========
 @onready var collision: CollisionShape3D = $CollisionShape3D
 @onready var _nav_agent: NavigationAgent3D = $NavigationAgent3D
@@ -737,14 +744,25 @@ func _tick_search(delta: float) -> void:
 				_initial_forward = cur_forward.normalized()
 			_state = State.IDLE
 
+# 取本帧的敌人组快照（见 _enemies_snapshot 注释）。互推 / 告警 / 同步 windup 共用。
+func _enemies_this_frame() -> Array:
+	var f: int = Engine.get_physics_frames()
+	if f != _enemies_snapshot_frame:
+		_enemies_snapshot = get_tree().get_nodes_in_group("enemy")
+		_enemies_snapshot_frame = f
+	return _enemies_snapshot
+
 # 敌人互推：扫邻近敌人，水平距离 < _SEPARATION_RADIUS 时给一个横向推力
 # 只让活敌人之间排斥，避免多只叠在同一格（enemy 之间不互相碰撞，必须手动做）
 func _apply_enemy_separation() -> void:
 	var push: Vector3 = Vector3.ZERO
-	for other in get_tree().get_nodes_in_group("enemy"):
+	for other in _enemies_this_frame():
 		if other == self or not is_instance_valid(other):
 			continue
-		if (other as Enemy)._is_dead:
+		# 与 _alert_nearby_enemies / _broadcast_sync_windup 对齐：非 Enemy 节点混进
+		# "enemy" 组时，(other as Enemy) 得到 null，直接取 _is_dead 会崩
+		var oe: Enemy = other as Enemy
+		if oe == null or oe._is_dead:
 			continue
 		var diff: Vector3 = global_position - (other as Node3D).global_position
 		diff.y = 0.0
@@ -1084,7 +1102,7 @@ func _alert_nearby_enemies() -> void:
 	if _player == null:
 		return
 	var pos: Vector3 = _player.global_position
-	for e in get_tree().get_nodes_in_group("enemy"):
+	for e in _enemies_this_frame():
 		if e == self or e == null or not (e is Enemy):
 			continue
 		var other: Enemy = e
@@ -1228,7 +1246,7 @@ func _enter_windup(from_sync: bool = false) -> void:
 func _broadcast_sync_windup() -> void:
 	if _player == null:
 		return
-	for e in get_tree().get_nodes_in_group("enemy"):
+	for e in _enemies_this_frame():
 		if e == self or not (e is Enemy):
 			continue
 		var other: Enemy = e
