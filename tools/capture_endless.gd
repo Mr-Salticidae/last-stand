@@ -1,11 +1,14 @@
 # 无尽模式配图截取工具
 #
 # 用法（**不能加 --headless**，需要真实渲染管线才有画面可抓）：
-#   godot --path . --script res://tools/capture_endless.gd
+#   godot --path . --script res://tools/capture_endless.gd              # 局内两张
+#   godot --path . --script res://tools/capture_endless.gd -- menus     # 关卡选择页（模式开关）
 #
-# 产出两张 1920×1080 PNG 到 assets/screenshots/：
-#   endless_hud.png      波内中段：右上角「第 N 波 / M:SS」+ 时间条（未转红）+ 场上若干敌人
-#   endless_lastten.png  波末最后十秒：倒计时与时间条转红 + 明显的怪潮
+# 产出 1920×1080 PNG（与仓库现有截图同尺寸）：
+#   assets/screenshots/endless_hud.png       波内中段：「第 N 波 / M:SS」+ 时间条（未转红）+ 若干敌人
+#   assets/screenshots/endless_lastten.png   波末最后几秒：倒计时与时间条转红 + 怪潮
+#   assets/screenshots/上传itch/06_level_select.png
+#                                            关卡选择页，含 v0.8.0 新增的模式开关（覆盖旧图）
 #
 # 这是真实游戏状态的真实截图：模式、波次、倒计时、敌人全部由 WaveManager 正常驱动，
 # 脚本只做三件事——快进到目标波次、把相机摆向敌人、在恰当时刻抓帧。
@@ -18,6 +21,8 @@ extends SceneTree
 # 观感统一。训练场是灰地板 + 重雾，拍出来整片发白，不适合做宣传配图。
 const WORLD: String = "res://scenes/world_outpost.tscn"
 const OUT_DIR: String = "res://assets/screenshots/"
+const LEVEL_SELECT: String = "res://scenes/level_select.tscn"
+const MODE_CYCLE_PATH: String = "ModeRow/Cycle"   # 与 level_select.gd 的 $ModeRow/Cycle 对齐
 
 # 抓帧分辨率，与仓库现有截图一致（screenshot_handoff.md 第 3 节：宽 1920）
 const SHOT_SIZE: Vector2i = Vector2i(1920, 1080)
@@ -65,7 +70,14 @@ func _initialize() -> void:
 		_done = true
 		return
 	_start_msec = Time.get_ticks_msec()
-	_run()
+	var want_menus: bool = false
+	for a in OS.get_cmdline_user_args():
+		if a == "menus":
+			want_menus = true
+	if want_menus:
+		_run_menus()
+	else:
+		_run()
 
 func _process(_delta: float) -> bool:
 	# 每帧续无敌。放在这里是因为 _run() 的各个 await 循环都会经过 _process，
@@ -114,6 +126,39 @@ func _run() -> void:
 	await _shoot(wm, player, SHOT_A_WAVE, SHOT_A_MIN_ALIVE, SHOT_A_CAPTURE_AT, "endless_hud.png")
 	await _shoot(wm, player, SHOT_B_WAVE, SHOT_B_MIN_ALIVE, SHOT_B_CAPTURE_AT, "endless_lastten.png")
 
+	_finish()
+
+# ---------- 菜单页 ----------
+# 拍关卡选择页：v0.8.0 在这里加了模式开关，itch 商店页上那张 06_level_select.png
+# 已经不含它，需要重拍覆盖。
+func _run_menus() -> void:
+	await process_frame
+	var settings: Node = root.get_node_or_null("/root/Settings")
+	if settings == null:
+		_fail("找不到 Settings autoload")
+		_finish()
+		return
+	# 开关拨到「无尽」再拍，让新功能在图里就是选中态
+	settings.set("game_mode_idx", 1)
+
+	change_scene_to_file(LEVEL_SELECT)
+	# 等 _build_cards() 把三张关卡卡片建完 + 氛围背景动效稳定
+	for _i in 60:
+		await process_frame
+
+	_setup_window()
+	# 改窗口尺寸后布局要重排，再等一会儿
+	for _i in 30:
+		await process_frame
+
+	# 自检：模式开关真的在场景里，且显示的是无尽
+	var cycle: Node = current_scene.get_node_or_null(MODE_CYCLE_PATH)
+	if cycle == null:
+		_fail("关卡选择页里找不到模式开关（%s），图拍出来没有意义" % MODE_CYCLE_PATH)
+	elif int(cycle.get("current_index")) != 1:
+		_fail("模式开关不是「无尽」（current_index=%d）" % int(cycle.get("current_index")))
+
+	await _capture("上传itch/06_level_select.png")
 	_finish()
 
 # 无边框 1920×1080：Settings.apply_graphics() 默认会开全屏并跟随显示器分辨率，
@@ -301,10 +346,12 @@ func _capture(filename: String) -> void:
 	if img == null or img.is_empty():
 		_fail("%s：抓到的图像为空" % filename)
 		return
-	var abs_dir: String = ProjectSettings.globalize_path(OUT_DIR)
+	# filename 可以带子目录（如 "上传itch/06_level_select.png"），所以按实际文件的
+	# 父目录建，而不是只保证 OUT_DIR 存在
+	var abs_path: String = ProjectSettings.globalize_path(OUT_DIR + filename)
+	var abs_dir: String = abs_path.get_base_dir()
 	if not DirAccess.dir_exists_absolute(abs_dir):
 		DirAccess.make_dir_recursive_absolute(abs_dir)
-	var abs_path: String = ProjectSettings.globalize_path(OUT_DIR + filename)
 	var err: int = img.save_png(abs_path)
 	if err != OK:
 		_fail("%s：save_png 失败 err=%d" % [filename, err])
