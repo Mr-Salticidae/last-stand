@@ -281,6 +281,42 @@ theme_override_fonts/font = ExtResource("8_n8")
 theme_override_font_sizes/font_size = 20
 theme_override_colors/font_color = Color(1, 0.918, 0.851, 1)
 
+[node name="L11" type="Label" parent="PageBody/LeftCol"]
+custom_minimum_size = Vector2(240, 0)
+layout_mode = 2
+text = "MODE  ·  游戏模式"
+horizontal_alignment = 2
+vertical_alignment = 1
+theme_override_fonts/font = ExtResource("6_jb5")
+theme_override_font_sizes/font_size = 12
+theme_override_colors/font_color = Color(0.961, 0.69, 0.26, 1)
+
+[node name="V11" type="Label" parent="PageBody/LeftCol"]
+layout_mode = 2
+text = "标准 30 波 / 无尽 · 定时波"
+vertical_alignment = 1
+theme_override_fonts/font = ExtResource("8_n8")
+theme_override_font_sizes/font_size = 20
+theme_override_colors/font_color = Color(0.961, 0.69, 0.26, 1)
+
+[node name="L12" type="Label" parent="PageBody/LeftCol"]
+custom_minimum_size = Vector2(240, 0)
+layout_mode = 2
+text = "ENDLESS  ·  无尽"
+horizontal_alignment = 2
+vertical_alignment = 1
+theme_override_fonts/font = ExtResource("6_jb5")
+theme_override_font_sizes/font_size = 12
+theme_override_colors/font_color = Color(0.961, 0.69, 0.26, 1)
+
+[node name="V12" type="Label" parent="PageBody/LeftCol"]
+layout_mode = 2
+text = "每波倒计时，怪物不断刷新；撑到 0:00 即过波"
+vertical_alignment = 1
+theme_override_fonts/font = ExtResource("8_n8")
+theme_override_font_sizes/font_size = 18
+theme_override_colors/font_color = Color(1, 0.918, 0.851, 1)
+
 [node name="NoteCard" type="Control" parent="PageBody"]
 custom_minimum_size = Vector2(600, 470)
 layout_mode = 2

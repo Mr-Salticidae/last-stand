@@ -91,7 +91,8 @@ func show_panel(wave_num: int) -> void:
 	visible = true
 
 func _refresh_all() -> void:
-	title_label.text = "第 %d 波已清 · 升级备战" % _current_wave
+	# 无尽模式是"熬过了这一波"而不是"清空了这一波"
+	title_label.text = ("第 %d 波 · 时间到 · 升级备战" if Settings.is_endless() else "第 %d 波已清 · 升级备战") % _current_wave
 	var currency: int = int(_wave_manager.currency) if _wave_manager else 0
 	score_label.text = "// RESERVE FUNDS · %d CR" % currency
 	var draw: Array[String] = UpgradeManager.current_draw

@@ -21,6 +21,8 @@ var _picked: bool = false
 var _bob_tween: Tween
 
 func _ready() -> void:
+	# 入组供 enemy._drop_loot 做场上数量上限判断（无尽模式的击杀速率会在地上堆满血包）
+	add_to_group("health_pack")
 	body_entered.connect(_on_body_entered)
 	_lifetime = float(Settings.get_difficulty_param("health_pack_lifetime", DEFAULT_LIFETIME))
 	_start_bob(bob_period)

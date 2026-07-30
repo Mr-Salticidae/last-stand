@@ -278,6 +278,29 @@ theme_override_fonts/font = ExtResource("8_o5")
 theme_override_font_sizes/font_size = 20
 theme_override_colors/font_color = Color(0.855, 0.18, 0.2, 1)
 
+[node name="ModeRow" type="HBoxContainer" parent="PageBody/LeftCol/GameplayGroup"]
+custom_minimum_size = Vector2(0, 56)
+layout_mode = 2
+theme_override_constants/separation = 16
+
+[node name="LeftLabel" type="Label" parent="PageBody/LeftCol/GameplayGroup/ModeRow"]
+custom_minimum_size = Vector2(240, 0)
+layout_mode = 2
+text = "模式  /  GAME MODE"
+vertical_alignment = 1
+theme_override_fonts/font = ExtResource("10_n7")
+theme_override_font_sizes/font_size = 14
+theme_override_colors/font_color = Color(0.788, 0.718, 0.643, 1)
+
+[node name="Cycle" type="Control" parent="PageBody/LeftCol/GameplayGroup/ModeRow"]
+custom_minimum_size = Vector2(140, 32)
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 4
+focus_mode = 2
+mouse_default_cursor_shape = 2
+script = ExtResource("4b_cyc")
+
 [node name="DifficultyRow" type="HBoxContainer" parent="PageBody/LeftCol/GameplayGroup"]
 custom_minimum_size = Vector2(0, 56)
 layout_mode = 2

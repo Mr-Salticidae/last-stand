@@ -333,6 +333,13 @@ func refill_all_reserves() -> void:
 		if w.unlocked and not w.is_legendary:
 			w.refill_reserve()
 
+# 波内空投补给（无尽模式定时调）：按比例补备弹，不上膛、不打断玩家节奏。
+# 无尽的一波长达 60 秒，只靠开波那次 refill_all_reserves 打不完一个弹药基数。
+func refill_partial(ratio: float) -> void:
+	for w in weapons:
+		if w.unlocked and not w.is_legendary:
+			w.add_reserve_ratio(ratio)
+
 # 近战处决奖励：当前武器满弹匣 + 备弹补满（应急回弹，解决后期弹尽待毙）
 func execute_ammo_refill() -> void:
 	if current_weapon:

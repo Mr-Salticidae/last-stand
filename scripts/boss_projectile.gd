@@ -25,6 +25,8 @@ var _pulse_time: float = 0.0
 var _pulse_mat: BaseMaterial3D = null   # 独立 material 副本（每个投射物独立闪烁相位）
 
 func _ready() -> void:
+	# 入组供无尽模式波末清场用：只清敌人不清在飞的弹，玩家会在被锁输入的商店界面里挨打
+	add_to_group("boss_projectile")
 	collision_layer = 0   # 不被武器 raycast 击中
 	collision_mask = 1    # 检测 layer 1（玩家 + 世界几何）
 	monitorable = false

@@ -2,7 +2,7 @@
 
 # LastStand · 死守
 
-一款用 Godot 4 做的波次生存 FPS。守住阵地，杀掉来犯的敌人，每波之间抽卡升级。最新版本 [**v0.7.1**](https://github.com/Mr-Salticidae/last-stand/releases/tag/v0.7.1) 已发布。
+一款用 Godot 4 做的波次生存 FPS。守住阵地，杀掉来犯的敌人，每波之间抽卡升级。最新版本 [**v0.8.0**](https://github.com/Mr-Salticidae/last-stand/releases/tag/v0.8.0) 已发布。
 
 [![Play on itch.io](https://img.shields.io/badge/itch.io-Play_Now-fa5c5c?logo=itchdotio&logoColor=white)](https://mr-salticidae.itch.io/last-stand)
 [![Engine](https://img.shields.io/badge/Engine-Godot_4.7-478cbf?logo=godotengine&logoColor=white)](https://godotengine.org/)
@@ -11,7 +11,9 @@
 
 ## 核心玩法
 
-- **30 波生存通关**：每波杀光自动推进，活到第 30 波触发凯旋结局
+- **两种模式**
+  - **标准 · 30 波**：每波杀光自动推进，活到第 30 波触发凯旋结局
+  - **无尽 · 定时波**：每波只有倒计时（20s 起、每波 +2s、封顶 60s），怪物按威胁预算持续刷新，撑到 0:00 就过波——没有终点，只有纪录
 - **三档难度**：新兵报到 / 日常训练 / 极限突破，10 项子参数差异化（敌人血量、移速、攻击欲望、刷新节奏等）
 - **武器系统**：4 把基础（手枪 / 突击步枪 / 霰弹枪 / 左轮）+ 2 把传说（重机枪 / 电磁炮，敌人掉落解锁）
 - **敌人种类**：grunt / runner / brute / elite (飞行) / boss，分波次解锁
@@ -52,10 +54,10 @@ git clone https://github.com/Mr-Salticidae/last-stand.git
 
 ## 开发状态
 
-当前版本 **v0.7.1** — 修复向：波次剩余数显示错误 + 提前清波竞态 + 弹药节省在霰弹枪上多倍生效 + 切枪打断换弹的计时器串扰 + 后期 grunt 绝迹  
+当前版本 **v0.8.0** — 新增「无尽模式」：每波定时倒计时 + 威胁预算持续刷怪（土豆兄弟式），标准 30 波模式行为不变  
 完整更新日志：[GitHub Releases](https://github.com/Mr-Salticidae/last-stand/releases) · [itch.io devlog](https://mr-salticidae.itch.io/last-stand/devlog)
 
-下一版计划：根据玩家反馈持续调优经济 / 难度曲线 + 武器 2D 持枪视图 + HUD 重绘。
+下一版计划：按实际试玩反馈调无尽模式的预算 / 时长 / 并发曲线 + 武器 2D 持枪视图 + HUD 重绘。
 
 ## 反馈
 

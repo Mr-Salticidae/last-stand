@@ -17,6 +17,7 @@ const MAIN_MENU_SCENE: String = "res://scenes/main_menu.tscn"
 @onready var sens_slider: CustomSlider = $PageBody/LeftCol/ControlsGroup/SensRow/Slider
 @onready var sens_value: Label = $PageBody/LeftCol/ControlsGroup/SensRow/Value
 
+@onready var mode_cycle: CustomCycleButton = $PageBody/LeftCol/GameplayGroup/ModeRow/Cycle
 @onready var difficulty_cycle: CustomCycleButton = $PageBody/LeftCol/GameplayGroup/DifficultyRow/Cycle
 @onready var gameplay_group: VBoxContainer = $PageBody/LeftCol/GameplayGroup
 
@@ -53,12 +54,15 @@ func _ready() -> void:
 	sens_slider.value = Settings.mouse_sensitivity
 	sens_slider.value_changed.connect(_on_sens_changed)
 
-	# Gameplay: difficulty cycle
-	# 战斗中（pause→settings 路径）隐藏难度选项，避免单局内数值跳变（已生成敌人不会刷新）
-	# 玩家想换难度需先退到主菜单，再进 settings 改
+	# Gameplay: 模式 + 难度 cycle
+	# 战斗中（pause→settings 路径）隐藏整组，避免单局内数值跳变（已生成敌人不会刷新）。
+	# 模式放在同一组里是刻意的：切模式要重开一局才有意义，白送这道保护。
 	var in_combat: bool = get_tree().get_first_node_in_group("wave_manager") != null
 	gameplay_group.visible = not in_combat
 	if not in_combat:
+		mode_cycle.options = PackedStringArray(Settings.GAME_MODE_NAMES_CN)
+		mode_cycle.current_index = Settings.game_mode_idx
+		mode_cycle.value_changed.connect(_on_mode_changed)
 		difficulty_cycle.options = PackedStringArray(Settings.DIFFICULTY_NAMES_CN)
 		difficulty_cycle.current_index = Settings.difficulty_idx
 		difficulty_cycle.value_changed.connect(_on_difficulty_changed)
@@ -107,6 +111,9 @@ func _on_music_changed(v: float) -> void:
 func _on_sens_changed(v: float) -> void:
 	Settings.set_mouse_sensitivity(v)
 	_refresh_all_values()
+
+func _on_mode_changed(idx: int, _option: String) -> void:
+	Settings.set_game_mode_idx(idx)
 
 func _on_difficulty_changed(idx: int, _option: String) -> void:
 	Settings.set_difficulty_idx(idx)

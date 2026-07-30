@@ -8,6 +8,7 @@
 [ext_resource type="FontVariation" path="res://assets/fonts/font_jbmono_400.tres" id="6_jb4"]
 [ext_resource type="FontVariation" path="res://assets/fonts/font_jbmono_500.tres" id="7_jb5"]
 [ext_resource type="FontVariation" path="res://assets/fonts/font_notosc_900.tres" id="8_n9"]
+[ext_resource type="Script" uid="uid://bf1y683arggka" path="res://scripts/ui/custom_cycle_button.gd" id="9_cyc"]
 
 [node name="HighScoresMenu" type="Control"]
 layout_mode = 3
@@ -97,6 +98,43 @@ theme_override_font_sizes/font_size = 22
 text = " RESTRICTED "
 horizontal_alignment = 1
 vertical_alignment = 1
+
+[node name="ModeRow" type="Control" parent="."]
+layout_mode = 1
+anchors_preset = 10
+anchor_right = 1.0
+offset_top = 312.0
+offset_bottom = 348.0
+grow_horizontal = 2
+mouse_filter = 2
+
+[node name="ModeLabel" type="Label" parent="ModeRow"]
+layout_mode = 1
+anchors_preset = 5
+anchor_left = 0.5
+anchor_right = 0.5
+offset_left = -320.0
+offset_right = -100.0
+offset_bottom = 32.0
+theme_override_colors/font_color = Color(0.788, 0.718, 0.643, 1)
+theme_override_fonts/font = ExtResource("7_jb5")
+theme_override_font_sizes/font_size = 13
+text = "榜单  /  LEADERBOARD"
+horizontal_alignment = 2
+vertical_alignment = 1
+
+[node name="Cycle" type="Control" parent="ModeRow"]
+custom_minimum_size = Vector2(180, 32)
+layout_mode = 1
+anchors_preset = 5
+anchor_left = 0.5
+anchor_right = 0.5
+offset_left = -80.0
+offset_right = 100.0
+offset_bottom = 32.0
+focus_mode = 2
+mouse_default_cursor_shape = 2
+script = ExtResource("9_cyc")
 
 [node name="PageBody" type="Control" parent="."]
 layout_mode = 1

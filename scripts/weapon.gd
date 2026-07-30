@@ -121,6 +121,15 @@ func refill_reserve() -> void:
 	current_ammo = max_ammo()
 	ammo_changed.emit(current_ammo, reserve_ammo, max_ammo())
 
+# 波内空投补给（无尽模式用）：只按比例补备弹，**不动弹匣**——
+# 上满膛会在战斗中途凭空取消玩家正在打的这一梭，比"缺弹"更破坏手感
+func add_reserve_ratio(ratio: float) -> void:
+	var gain: int = int(round(float(reserve_max) * clampf(ratio, 0.0, 1.0)))
+	if gain <= 0 or reserve_ammo >= reserve_max:
+		return
+	reserve_ammo = mini(reserve_ammo + gain, reserve_max)
+	ammo_changed.emit(current_ammo, reserve_ammo, max_ammo())
+
 # 武器被切走：取消装填、清开火 cd
 func on_unequipped() -> void:
 	is_reloading = false

@@ -89,8 +89,10 @@ const CARDS: Array[Dictionary] = [
 		"rarity": Rarity.COMMON, "kind": "perpetual", "max_stack": 9999, "base_cost": 400, "cost_step": 130},
 	# --- 服务（kind=service，即时消耗，可反复买）---
 	# 仅在条件满足时可买（回血只在受伤时）；卡池见底兜底填充。弹药波间自动补满，故不设弹药服务。
+	# cost_step 400：恒价 600 的"立即回满"在后期收入面前等于取消了生存压力
+	# （无尽模式中期每波 6000+ CR）。递增价让它保持"应急"而不是"常备"。
 	{"id": "svc_medkit", "name": "应急补给", "desc": "立即回满生命",
-		"rarity": Rarity.RARE, "kind": "service", "max_stack": 9999, "base_cost": 600, "cost_step": 0},
+		"rarity": Rarity.RARE, "kind": "service", "max_stack": 9999, "base_cost": 600, "cost_step": 400},
 ]
 
 # ========== 运行时状态 ==========
@@ -259,13 +261,21 @@ func _weighted_pick(pool: Array, rarity_weights: Dictionary) -> Dictionary:
 	return pool.back()
 
 # 当前刷新成本：100 * 2^reroll_count → 100 / 200 / 400 / 800 / 1600 …
+# 位移次数封顶 30：1<<63 会让 int64 溢出成负数，进而 currency < cost 判定失效、
+# 「currency -= 负数」变成无限刷钱。现实中够不到，但无尽模式的波次没有上界。
+const _REROLL_SHIFT_MAX: int = 30
 func get_reroll_cost() -> int:
-	return REROLL_BASE_COST * (1 << reroll_count)
+	return REROLL_BASE_COST * (1 << mini(reroll_count, _REROLL_SHIFT_MAX))
 
 # 卡池是否还有可换出的新卡（pool 空 → 刷新无意义，按钮应禁用）
 # 与 draw_cards 的 pool 构造规则保持一致：未叠满 + 本波未购 + 不在当前面板
+# 永续/服务卡不算"可换出的新卡"——它们只做兜底填充，不进加权池（见 draw_cards）。
+# 漏掉这一条的症状：常规卡买空后 REROLL 按钮永久可点，点了只是把两张永续卡换个顺序，
+# 玩家白烧钱。经典模式第 28 波后才碰到，无尽模式第 15 波左右就常驻。
 func can_reroll() -> bool:
 	for c in CARDS:
+		if is_consumable(c.id):
+			continue
 		if is_maxed(c.id):
 			continue
 		if is_purchased_this_round(c.id):

@@ -50,6 +50,11 @@ const DIFFICULTY_PROFILES: Array[Dictionary] = [
 		"elite_wave_period": 5,
 		"boss_wave_period": 15,
 		"health_pack_lifetime": 90.0,      # 血包寿命（秒），过期前 5s bob 颤抖警告 + 0.4s scale fade
+		# 无尽模式：威胁预算 / 同屏并发 / 每波时长各打折，压力整体降一档
+		# （刻意不复用 enemy_count_mult——那条乘的是"本波计划总数"，语义完全不同）
+		"endless_budget_mult": 0.75,
+		"endless_concurrent_mult": 0.75,
+		"endless_duration_mult": 0.9,
 	},
 	{  # 1 日常训练（默认 = v0.1 + 25-30% 综合压力，回应 itch.io"难度过低"反馈）
 		"key": "standard",
@@ -99,9 +104,29 @@ const DIFFICULTY_PROFILES: Array[Dictionary] = [
 		# v0.4-B 方案1.5：极限档非 boss 敌人 attack_range +0.7m（grunt/runner/brute 1.6 → 2.3）
 		# 0.4 测下来玩家仍能溜怪，加大到 0.7 让"挥拳够 2.3m"形成真威胁
 		"attack_range_bonus": 0.7,
+		# 无尽模式：预算与并发都上调，boss 更早更密、每波多一只精英
+		"endless_budget_mult": 1.45,
+		"endless_concurrent_mult": 1.25,
+		"endless_boss_start_override": 5,
+		"endless_boss_period_override": 4,
+		"endless_elite_bonus": 1,
 	},
 ]
 const DIFFICULTY_NAMES_CN: Array[String] = ["新兵报到", "日常训练", "极限突破"]
+
+# ========== 游戏模式 ==========
+# classic = 原本的 30 波战役（杀光过波、第 30 波通关）
+# endless = 无尽模式（每波固定时长倒计时、怪物按威胁预算持续刷新、时间到清场进商店）
+# change_scene_to_file 不能传参，所以模式必须落在 Settings 上，关卡进场后由 wave_manager 自己 pull。
+# record_section：两个模式的最高纪录分开存，否则无尽的存活时长会永久霸榜、经典的波数也没法比。
+const GAME_MODES: Array[Dictionary] = [
+	{"key": "classic", "name_cn": "标准 · 30 波", "name_en": "CAMPAIGN", "record_section": "record"},
+	{"key": "endless", "name_cn": "无尽 · 定时波", "name_en": "ENDLESS", "record_section": "record_endless"},
+]
+const GAME_MODE_NAMES_CN: Array[String] = ["标准 · 30 波", "无尽 · 定时波"]
+
+# 本地最高纪录存档路径：death_screen / high_scores_menu 共用的单一真源
+const RECORD_PATH: String = "user://laststand_record.cfg"
 
 # ========== 关卡（地图）==========
 # key → 场景路径；level_select 和 main_menu 都从这里取
@@ -132,6 +157,9 @@ var last_arena: String = "training"
 
 # 难度索引（DIFFICULTY_PROFILES 下标），默认 1=标准
 var difficulty_idx: int = 1
+
+# 游戏模式索引（GAME_MODES 下标），默认 0=标准 30 波
+var game_mode_idx: int = 0
 
 signal settings_changed   # 任何字段变更时 emit，UI / player 等可订阅同步
 
@@ -171,6 +199,7 @@ func load_settings() -> void:
 	locale = String(cfg.get_value("language", "locale", locale))
 	last_arena = String(cfg.get_value("arena", "last_arena", last_arena))
 	difficulty_idx = int(cfg.get_value("gameplay", "difficulty_idx", difficulty_idx))
+	game_mode_idx = int(cfg.get_value("gameplay", "game_mode_idx", game_mode_idx))
 	_load_keybinds(cfg)
 
 func save_settings() -> void:
@@ -186,6 +215,8 @@ func save_settings() -> void:
 	cfg.set_value("language", "locale", locale)
 	cfg.set_value("arena", "last_arena", last_arena)
 	cfg.set_value("gameplay", "difficulty_idx", difficulty_idx)
+	# save_settings 是全量重写 ConfigFile：漏了这行的症状是"改了模式，重启就回到标准"且无报错
+	cfg.set_value("gameplay", "game_mode_idx", game_mode_idx)
 	_save_keybinds(cfg)
 	cfg.save(CONFIG_PATH)
 
@@ -389,6 +420,26 @@ func get_difficulty_profile() -> Dictionary:
 # 读取当前难度的子参数；未配置的子参数返回 default
 func get_difficulty_param(key: String, default = null):
 	return get_difficulty_profile().get(key, default)
+
+# ========== 游戏模式 ==========
+func set_game_mode_idx(idx: int) -> void:
+	game_mode_idx = clampi(idx, 0, GAME_MODES.size() - 1)
+	save_settings()
+	settings_changed.emit()
+
+func get_game_mode() -> Dictionary:
+	return GAME_MODES[clampi(game_mode_idx, 0, GAME_MODES.size() - 1)]
+
+func is_endless() -> bool:
+	return String(get_game_mode()["key"]) == "endless"
+
+# 当前模式的纪录存档分段。classic 沿用老的 "record"，老玩家存档零迁移。
+func record_section() -> String:
+	return String(get_game_mode()["record_section"])
+
+# 指定模式下标的纪录分段（高分页要同时读两个模式）
+func record_section_for(idx: int) -> String:
+	return String(GAME_MODES[clampi(idx, 0, GAME_MODES.size() - 1)]["record_section"])
 
 # 取当前 last_arena 的场景路径（如果 last_arena 因故无效，回退到第一个可用关卡）
 func get_current_arena_scene() -> String:

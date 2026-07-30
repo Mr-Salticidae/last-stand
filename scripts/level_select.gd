@@ -16,12 +16,22 @@ const LEVEL_DETAILS: Dictionary = {
 
 @onready var cards_hbox: HBoxContainer = $PageBody/CardsHBox
 @onready var back_btn: Control = $Footer/BackButton
+@onready var mode_cycle: CustomCycleButton = $ModeRow/Cycle
 
 func _ready() -> void:
 	Input.set_mouse_mode(Input.MOUSE_MODE_VISIBLE)
 	AudioManager.play_main_bgm()
 	_build_cards()
+	# 模式选择：只写 Settings，不参与切场景。change_scene_to_file 不能传参，
+	# 进关后由 wave_manager 自己 pull（_on_card_selected 因此一个字都不用改）
+	mode_cycle.options = PackedStringArray(Settings.GAME_MODE_NAMES_CN)
+	mode_cycle.current_index = Settings.game_mode_idx
+	mode_cycle.value_changed.connect(_on_mode_changed)
 	back_btn.pressed.connect(_on_back)
+
+func _on_mode_changed(idx: int, _option: String) -> void:
+	AudioManager.play_ui_click()
+	Settings.set_game_mode_idx(idx)
 
 func _unhandled_input(event: InputEvent) -> void:
 	if event.is_action_pressed("ui_cancel"):

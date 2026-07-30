@@ -25,9 +25,10 @@ const FADE_GRAY_DURATION: float = 1.0
 const EYELID_CLOSE_DURATION: float = 0.6
 const UI_FADE_DURATION: float = 0.5
 
-# 本地最高纪录存档
-const RECORD_PATH: String = "user://laststand_record.cfg"
-const RECORD_SECTION: String = "record"
+# 本地最高纪录存档：路径与分段的真源在 Settings（high_scores_menu 读同一份）。
+# 两个模式分段存：无尽的单局时长远超经典，混在一起会让 time 字段被无尽永久霸榜，
+# 反过来 wave 字段又会被经典 30 波霸榜，两边的纪录都失去意义。
+# （Settings 是 autoload 实例，不能写进 const——const 需要编译期常量。）
 
 func _ready() -> void:
 	_desaturate_mat = desaturate_rect.material as ShaderMaterial
@@ -98,6 +99,8 @@ func _on_player_died() -> void:
 	if _active:
 		return
 	_active = true
+	if Settings.is_endless():
+		eyebrow_label.text = "// RUN TERMINATED  ·  ENDLESS"
 	# 死亡瞬间从 WaveManager 拉数据填统计（先填好，稍后随 UI 一起淡入）
 	_fill_stats()
 	_play_sequence()
@@ -173,12 +176,21 @@ func _fill_stats() -> void:
 	var score_suffix: String = _new_record_tag() if is_score_new else _best_tag("最高 %d" % best_score)
 	var time_suffix: String = _new_record_tag() if is_time_new else _best_tag("最长 %s" % best_time_text)
 	var combo_suffix: String = _new_record_tag() if is_combo_new else _best_tag("最高 ×%d" % best_combo)
-	stats_label.text = "[center]存活至  第 %d 波%s\n得分     %d%s\n用时     %s%s\n连击     ×%d%s[/center]" % [
-		wave_reached, wave_suffix,
-		score, score_suffix,
-		time_text, time_suffix,
-		combo, combo_suffix
-	]
+	if Settings.is_endless():
+		# 无尽模式的主指标是"守了多久"，波数退居其次
+		stats_label.text = "[center]坚守     %s%s\n抵达     第 %d 波%s\n得分     %d%s\n连击     ×%d%s[/center]" % [
+			time_text, time_suffix,
+			wave_reached, wave_suffix,
+			score, score_suffix,
+			combo, combo_suffix
+		]
+	else:
+		stats_label.text = "[center]存活至  第 %d 波%s\n得分     %d%s\n用时     %s%s\n连击     ×%d%s[/center]" % [
+			wave_reached, wave_suffix,
+			score, score_suffix,
+			time_text, time_suffix,
+			combo, combo_suffix
+		]
 
 # 金色 + 加粗 + 强描边的"★新纪录"，让 captain 一眼能看到破纪录
 func _new_record_tag() -> String:
@@ -187,33 +199,40 @@ func _new_record_tag() -> String:
 func _best_tag(text: String) -> String:
 	return "  [color=#888888](%s)[/color]" % text
 
+# 超过 1 小时才切三段。无尽模式跑得久，只用 mm:ss 会显示成 78:12
 func _format_time(sec: float) -> String:
 	var total: int = int(sec)
+	if total >= 3600:
+		return "%02d:%02d:%02d" % [total / 3600, (total % 3600) / 60, total % 60]
 	return "%02d:%02d" % [total / 60, total % 60]
 
 func _load_record() -> Dictionary:
 	var cfg := ConfigFile.new()
-	var err: int = cfg.load(RECORD_PATH)
+	var err: int = cfg.load(Settings.RECORD_PATH)
 	if err == ERR_FILE_NOT_FOUND:
 		return {"wave": 0, "score": 0, "time": 0.0, "combo": 0}
 	if err != OK:
 		# 文件损坏：备份原文件让玩家有机会找回，避免下次 save 覆盖
-		Settings.backup_corrupt_config(RECORD_PATH, err)
+		Settings.backup_corrupt_config(Settings.RECORD_PATH, err)
 		return {"wave": 0, "score": 0, "time": 0.0, "combo": 0}
+	var sec: String = Settings.record_section()
 	return {
-		"wave": int(cfg.get_value(RECORD_SECTION, "wave", 0)),
-		"score": int(cfg.get_value(RECORD_SECTION, "score", 0)),
-		"time": float(cfg.get_value(RECORD_SECTION, "time", 0.0)),
-		"combo": int(cfg.get_value(RECORD_SECTION, "combo", 0)),
+		"wave": int(cfg.get_value(sec, "wave", 0)),
+		"score": int(cfg.get_value(sec, "score", 0)),
+		"time": float(cfg.get_value(sec, "time", 0.0)),
+		"combo": int(cfg.get_value(sec, "combo", 0)),
 	}
 
+# 保存时先 load 一次再写：ConfigFile.save 是全量覆盖，不先读回来会把另一个模式的分段抹掉
 func _save_record(wave: int, score: int, time: float, combo: int) -> void:
 	var cfg := ConfigFile.new()
-	cfg.set_value(RECORD_SECTION, "wave", wave)
-	cfg.set_value(RECORD_SECTION, "score", score)
-	cfg.set_value(RECORD_SECTION, "time", time)
-	cfg.set_value(RECORD_SECTION, "combo", combo)
-	cfg.save(RECORD_PATH)
+	cfg.load(Settings.RECORD_PATH)   # 失败无妨（首次运行/损坏），下面照写
+	var sec: String = Settings.record_section()
+	cfg.set_value(sec, "wave", wave)
+	cfg.set_value(sec, "score", score)
+	cfg.set_value(sec, "time", time)
+	cfg.set_value(sec, "combo", combo)
+	cfg.save(Settings.RECORD_PATH)
 
 func _play_sequence() -> void:
 	# 胜利：wave_start 凯旋音（不黑白化，保留场景颜色）；死亡：倒地+耳鸣 + 黑白化

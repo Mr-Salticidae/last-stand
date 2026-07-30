@@ -755,6 +755,10 @@ func _enemies_this_frame() -> Array:
 # 敌人互推：扫邻近敌人，水平距离 < _SEPARATION_RADIUS 时给一个横向推力
 # 只让活敌人之间排斥，避免多只叠在同一格（enemy 之间不互相碰撞，必须手动做）
 func _apply_enemy_separation() -> void:
+	# 这是全场唯一真正的 O(N²)：40 只 = 1600 次/帧。按 instance_id 奇偶分片成隔帧计算，
+	# 开销减半；推力本来就是连续累积的，隔帧算肉眼看不出差别。
+	if (get_instance_id() + Engine.get_physics_frames()) % 2 != 0:
+		return
 	var push: Vector3 = Vector3.ZERO
 	for other in _enemies_this_frame():
 		if other == self or not is_instance_valid(other):
@@ -1091,6 +1095,11 @@ func _can_see_player(ignore_angle: bool = false) -> bool:
 	var query := PhysicsRayQueryParameters3D.create(from, to)
 	query.exclude = [get_rid()]
 	query.collide_with_areas = false
+	# 只看世界几何与玩家（layer 1），忽略其他敌人（layer 2）。
+	# 不设 mask 的话默认扫全部 32 层：密集怪潮里后排敌人的视线会被前排身体挡住
+	# （brute/boss 尤其高），于是掉进 SEARCH 龟速晃悠、永远进不了攻击前摇。
+	# 20 只时只是偶发，40 只时会变成常态。
+	query.collision_mask = 1
 	var hit := space.intersect_ray(query)
 	if hit.is_empty():
 		return true
@@ -1427,9 +1436,50 @@ func _restore_colors() -> void:
 	for s in _flash_sprites:
 		s[0].modulate = s[1]
 
+# 无尽模式波末清场：淡出后销毁，**不掉落、不发 died、不计击杀、不播 1.4s 倒地序列**。
+# 返回 0..1 的已受伤比例，供 WaveManager 按比例结算得分与货币（partial credit）。
+#
+# 为什么不能直接 queue_free：那样不会发 died，但会被 WaveManager._process 的幽灵引用
+# 兜底 filter 当成"异常消失"补计数、账目错乱。
+# 为什么不能走 _die()：会连带触发 _drop_loot（几十只同时爆血包/传说武器）和
+# _play_death_sequence（每只 await 1.4 秒），造成掉落洪水 + 视觉堆积。
+func despawn(fade: float = 0.35) -> float:
+	var ratio: float = 0.0
+	if max_health > 0.0:
+		ratio = clampf(1.0 - current_health / max_health, 0.0, 1.0)
+	if _is_dead:
+		return ratio
+	_is_dead = true
+	if collision:
+		collision.disabled = true
+	for child in get_children():
+		if child is Area3D:
+			var area: Area3D = child
+			area.monitorable = false
+			area.collision_layer = 0
+			for shape_child in area.get_children():
+				if shape_child is CollisionShape3D:
+					(shape_child as CollisionShape3D).set_deferred("disabled", true)
+	# 释放攻击互锁槽位（_active_attackers 是 static，漏放会累积垃圾）
+	_release_attack_lock()
+	# 立刻摘出 enemy 组：所有 O(n) 的全量组扫描（互推 / 告警 / HUD / 威胁指示器）
+	# 当帧起就不再迭代到它
+	remove_from_group("enemy")
+	var tween: Tween = create_tween()
+	tween.set_parallel(true)
+	tween.tween_property(self, "scale", scale * 0.1, fade).set_ease(Tween.EASE_IN)
+	if _juice_sprite != null:
+		tween.tween_property(_juice_sprite, "modulate:a", 0.0, fade)
+	tween.chain().tween_callback(queue_free)
+	return ratio
+
 func _die() -> void:
 	_is_dead = true
 	collision.disabled = true
+	# 尸体立刻出组：死亡序列要等 1.4s 才 queue_free，这段时间里它仍会被所有
+	# 全量组扫描迭代（威胁指示器每渲染帧 / HUD 每帧 / 武器 AOE 每次）。
+	# 高刷怪率下稳态会多挂几十具尸体。视觉 tween 不受影响。
+	remove_from_group("enemy")
 	# 禁用 hitbox 避免 weapon 打到尸体触发额外 kill/hit 反馈
 	# 双保险让 weapon raycast (collide_with_areas=true) 真正穿透尸体：
 	# (1) area.collision_layer=0 让 raycast.mask=1 不再命中此 area
@@ -1473,17 +1523,24 @@ func _play_death_sequence() -> void:
 	if is_instance_valid(self):
 		queue_free()
 
+# 场上同类拾取物上限：无尽模式的击杀速率不设限会在地面堆出几十个（寿命最长 90s）
+const _MAX_HEALTH_PACKS_ON_FIELD: int = 12
+const _MAX_LEGENDARY_ON_FIELD: int = 4
+
 func _drop_loot() -> void:
 	# 升级系统"战场拾荒"给所有敌人叠全局 drop 加成
 	var bonus: float = UpgradeManager.drop_chance_bonus if UpgradeManager else 0.0
-	if randf() < health_pack_drop_chance + bonus:
+	if randf() < health_pack_drop_chance + bonus \
+			and get_tree().get_nodes_in_group("health_pack").size() < _MAX_HEALTH_PACKS_ON_FIELD:
 		var pack: Node3D = HEALTH_PACK_SCENE.instantiate()
 		get_tree().current_scene.add_child(pack)
 		pack.global_position = global_position + Vector3.UP * 0.1
 
 	# 传说武器掉落：按敌人 tier 配置概率（Brute 2% / Elite 30% / Boss 100%）
 	# 抽 LEGENDARY_POOL 一把，instantiate pickup 并指向该武器场景
-	if legendary_drop_chance > 0.0 and randf() < legendary_drop_chance and not LEGENDARY_POOL.is_empty():
+	if legendary_drop_chance > 0.0 and not LEGENDARY_POOL.is_empty() \
+			and get_tree().get_nodes_in_group("legendary_pickup").size() < _MAX_LEGENDARY_ON_FIELD \
+			and randf() < legendary_drop_chance:
 		var pickup: Node3D = LEGENDARY_PICKUP_SCENE.instantiate()
 		pickup.set("weapon_scene", LEGENDARY_POOL[randi() % LEGENDARY_POOL.size()])
 		get_tree().current_scene.add_child(pickup)

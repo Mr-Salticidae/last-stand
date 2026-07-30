@@ -23,6 +23,23 @@ var _player: Node
 var _wave_manager: Node
 var _intermission_remaining: float = 0.0
 var _intermission_next_wave: int = 0
+
+# wave_label 的单一写入方状态机。
+# 之前有 6 处直接写 wave_label.text，靠 "_intermission_remaining > 0" 做脆弱互斥；
+# 无尽模式的波内倒计时是第 7 个写入方，直接加会让两个倒计时逐帧互相覆盖闪烁。
+# 现在所有事件只改 _label_mode + 各自的数据字段，_process 里由 _render_wave_label() 统一出字。
+enum LabelMode { IDLE, INTERMISSION, WAVE_COUNT, WAVE_TIMER, BANNER }
+var _label_mode: int = LabelMode.IDLE
+var _label_idle_text: String = ""      # IDLE / BANNER 模式下要显示的整句
+var _label_wave_num: int = 0
+var _label_wave_count: int = 0
+
+# 无尽模式：波内倒计时
+var _endless: bool = false
+var _wave_time_left: float = 0.0
+var _wave_time_total: float = 0.0
+var _wave_timer_bar: DeployingProgressBar
+const WAVE_TIMER_HOT_SECONDS: float = 10.0   # 最后 N 秒转红 + 闪烁
 var _total_score: int = 0
 var _currency: int = 0
 # 武器解锁弹出公告：独立 label，滑入 + 淡入 → 停留 → 淡出，不劫持 wave_label
@@ -62,6 +79,8 @@ var _reload_prompt_pulse_timer: float = 0.0
 # 时弹一次，用 user:// ConfigFile 记录已见，永不再弹（老玩家不被打扰）。
 const TIPS_CFG_PATH: String = "user://laststand_tips.cfg"
 const MELEE_TIP_NEAR_DIST: float = 5.0
+const MELEE_TIP_SCAN_INTERVAL: float = 0.25
+var _melee_tip_scan_timer: float = 0.0
 var _melee_tip_label: Label
 var _melee_tip_seen: bool = false
 var _melee_tip_active: bool = false
@@ -161,10 +180,27 @@ func _ready() -> void:
 	_reload_indicator.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	add_child(_reload_indicator)
 
+	# 无尽模式波内倒计时条：右上角 wave_label 与 score_label 之间的细长条
+	# 复用 DeployingOverlay 那根现成的进度条控件；HUD 是 CanvasLayer 没有布局容器，
+	# 与 _reload_indicator 一样走"代码 new + 手写 anchor/offset"
+	_wave_timer_bar = DeployingProgressBar.new()
+	_wave_timer_bar.anchor_left = 1.0
+	_wave_timer_bar.anchor_right = 1.0
+	_wave_timer_bar.offset_left = -360
+	_wave_timer_bar.offset_right = -24
+	# 夹在 WaveLabel（20..106，两行 32px 文字实测约 84px 高）与 ScoreLabel（132..182）之间
+	_wave_timer_bar.offset_top = 112
+	_wave_timer_bar.offset_bottom = 124
+	_wave_timer_bar.visible = false
+	_wave_timer_bar.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	add_child(_wave_timer_bar)
+
 	# 波次管理器
+	_endless = Settings.is_endless()
 	_wave_manager = get_tree().get_first_node_in_group("wave_manager")
 	if _wave_manager == null:
-		wave_label.text = ""
+		_label_mode = LabelMode.IDLE
+		_label_idle_text = ""
 	else:
 		_wave_manager.wave_started.connect(_on_wave_started)
 		_wave_manager.wave_progress.connect(_on_wave_progress)
@@ -173,7 +209,11 @@ func _ready() -> void:
 		_wave_manager.score_changed.connect(_on_score_changed)
 		_wave_manager.currency_changed.connect(_on_currency_changed)
 		_wave_manager.combo_changed.connect(_on_combo_changed)
-		wave_label.text = "待命中"
+		if _wave_manager.has_signal("wave_timer_started"):
+			_wave_manager.wave_timer_started.connect(_on_wave_timer_started)
+		_label_mode = LabelMode.IDLE
+		_label_idle_text = "待命中"
+	_render_wave_label()
 
 	# v0.3 PR-B 羁绊系统：监听激活信号 → 屏幕中央漂浮 toast
 	if has_node("/root/SynergyManager"):
@@ -200,22 +240,82 @@ func _process(delta: float) -> void:
 	# v0.3 视觉提示：每帧根据 weapon / wm 状态驱动准心红环 / ammo 脉冲 / 速度线
 	_update_v03_overlays(delta)
 
-	# 近战处决一次性教学提示
-	_check_melee_tip()
+	# 近战处决一次性教学提示。它要全量遍历 enemy 组，同屏 40 只时每帧扫太贵，
+	# 而这只是个教学提示，0.25s 一次完全够用
+	_melee_tip_scan_timer -= delta
+	if _melee_tip_scan_timer <= 0.0:
+		_melee_tip_scan_timer = MELEE_TIP_SCAN_INTERVAL
+		_check_melee_tip()
 
-	# 波间倒计时文本更新
-	if _intermission_remaining > 0.0:
-		_intermission_remaining = max(0.0, _intermission_remaining - delta)
-		wave_label.text = "第 %d 波\n%.1fs 后开始" % [_intermission_next_wave, _intermission_remaining]
-		# 最后 1 秒切红色闪烁警告，提示玩家准备迎敌
-		if _intermission_remaining <= 1.0:
-			var t_sec: float = Time.get_ticks_msec() / 1000.0
-			var pulse: float = 0.5 + 0.5 * sin(t_sec * 6.0 * TAU)   # 6Hz 闪烁
-			var base: Color = Color(1.0, 0.25, 0.25)
-			var bright: Color = Color(1.0, 0.9, 0.6)
-			wave_label.modulate = base.lerp(bright, pulse)
-		else:
-			wave_label.modulate = Color.WHITE
+	# 波次标签：推进各模式的计时，然后由唯一的 _render_wave_label 出字
+	_tick_wave_label(delta)
+
+# ---------- 波次标签：唯一写入方 ----------
+func _tick_wave_label(delta: float) -> void:
+	match _label_mode:
+		LabelMode.INTERMISSION:
+			_intermission_remaining = max(0.0, _intermission_remaining - delta)
+		LabelMode.WAVE_TIMER:
+			# 每帧读 WaveManager 的权威值，绝不本地 -= delta。本地递减在 3 秒休整里
+			# 看不出漂移，60 秒的波内会明显表现成"进度条走完了怪还在刷"。
+			if _wave_manager:
+				_wave_time_left = float(_wave_manager.wave_time_left)
+				_wave_time_total = float(_wave_manager.wave_duration)
+	_render_wave_label()
+
+func _render_wave_label() -> void:
+	var show_bar: bool = false
+	match _label_mode:
+		LabelMode.INTERMISSION:
+			wave_label.text = "第 %d 波\n%.1fs 后开始" % [_intermission_next_wave, _intermission_remaining]
+			# 最后 1 秒切红色闪烁警告，提示玩家准备迎敌
+			_pulse_wave_label(_intermission_remaining <= 1.0)
+		LabelMode.WAVE_COUNT:
+			wave_label.text = "第 %d 波\n剩 %d 只" % [_label_wave_num, _label_wave_count]
+			_pulse_wave_label(false)
+		LabelMode.WAVE_TIMER:
+			show_bar = _wave_time_total > 0.0
+			var alive: int = 0
+			if _wave_manager and _wave_manager.has_method("alive_enemy_count"):
+				alive = int(_wave_manager.alive_enemy_count())
+			wave_label.text = "第 %d 波\n%s   ☠ %d" % [
+				_label_wave_num, _format_mmss(_wave_time_left), alive
+			]
+			# 波末 10 秒进入与"休整最后 1 秒"同款的红闪，紧迫感直接复用
+			_pulse_wave_label(_wave_time_left <= WAVE_TIMER_HOT_SECONDS)
+		_:
+			wave_label.text = _label_idle_text
+			_pulse_wave_label(false)
+
+	_wave_timer_bar.visible = show_bar
+	if show_bar:
+		_wave_timer_bar.progress = clampf(_wave_time_left / _wave_time_total, 0.0, 1.0)
+		# 平时危险黄（和血条的红拉开距离），最后 10 秒渐变成红
+		var hot: float = 1.0 - clampf(_wave_time_left / WAVE_TIMER_HOT_SECONDS, 0.0, 1.0)
+		_wave_timer_bar.fill_color = UiPalette.HAZARD_Y.lerp(UiPalette.RED, hot)
+
+# 6Hz 红色脉冲警告。hot=false 时复位成白色——所有复位路径统一走这里，
+# 避免"某条分支忘了复位、标签一直红着"
+func _pulse_wave_label(hot: bool) -> void:
+	if not hot:
+		wave_label.modulate = Color.WHITE
+		return
+	var t_sec: float = Time.get_ticks_msec() / 1000.0
+	var pulse: float = 0.5 + 0.5 * sin(t_sec * 6.0 * TAU)
+	wave_label.modulate = Color(1.0, 0.25, 0.25).lerp(Color(1.0, 0.9, 0.6), pulse)
+
+# 波内倒计时用 M:SS。向上取整，让最后一秒显示 0:01 而不是提前跳 0:00
+func _format_mmss(sec: float) -> String:
+	var total: int = int(ceil(maxf(sec, 0.0)))
+	return "%d:%02d" % [total / 60, total % 60]
+
+# 无尽模式：本波倒计时开始
+func _on_wave_timer_started(wave_num: int, duration: float) -> void:
+	_label_wave_num = wave_num
+	_wave_time_total = duration
+	_wave_time_left = duration
+	_label_mode = LabelMode.WAVE_TIMER
+	_render_wave_label()
 
 # 武器解锁：独立 label 滑入 + 淡入 → 停留 1.7s → 淡出，不影响 wave_label / 玩家操作
 # 总时长 ~2.65s。多次解锁连续触发：kill 旧 tween 重新启动，最新一条覆盖
@@ -358,25 +458,40 @@ func _on_execute_charges_changed(current: int, maximum: int) -> void:
 
 func _on_wave_started(wave_num: int, count: int) -> void:
 	_intermission_remaining = 0.0
-	wave_label.modulate = Color.WHITE
-	wave_label.text = "第 %d 波\n剩 %d 只" % [wave_num, count]
+	_label_wave_num = wave_num
+	if _endless:
+		# count 在无尽模式恒为 0（没有"计划总数"）。文本交给 wave_timer_started 接管。
+		return
+	_label_wave_count = count
+	_label_mode = LabelMode.WAVE_COUNT
+	_render_wave_label()
 
 func _on_wave_progress(remaining: int) -> void:
+	# 无尽模式没有"剩余数"，且高频击杀会把倒计时文本冲掉。
+	# WaveManager 在无尽下本就不 emit 这条，这里是双保险。
+	if _endless:
+		return
 	# intermission 期间不覆盖倒计时文本
-	if _intermission_remaining > 0.0:
+	if _label_mode == LabelMode.INTERMISSION:
 		return
 	if _wave_manager:
-		wave_label.text = "第 %d 波\n剩 %d 只" % [_wave_manager.current_wave, remaining]
+		_label_wave_num = int(_wave_manager.current_wave)
+		_label_wave_count = remaining
+		_label_mode = LabelMode.WAVE_COUNT
+		_render_wave_label()
 
 func _on_wave_completed(wave_num: int) -> void:
-	wave_label.text = "第 %d 波已清" % wave_num
+	# 无尽模式是"时间到"而不是"清空"——收场文案与感觉都不同
+	_label_idle_text = ("第 %d 波 · 时间到" % wave_num) if _endless else ("第 %d 波已清" % wave_num)
+	_label_mode = LabelMode.BANNER
+	_render_wave_label()
 	_show_wave_cleared_toast(wave_num)
 
 # 顶部居中漂浮"区域肃清"toast：上滑入 0.2s + 停留 0.3s + 上飘淡出 0.5s
 # 总时长 1s 对齐 wave_manager.WAVE_END_DELAY，toast 淡出末尾接升级面板弹出
 func _show_wave_cleared_toast(wave_num: int) -> void:
 	var toast := Label.new()
-	toast.text = "区  域  肃  清    WAVE %02d" % wave_num
+	toast.text = ("时  间  到    WAVE %02d" if _endless else "区  域  肃  清    WAVE %02d") % wave_num
 	toast.add_theme_font_size_override("font_size", 56)  # 40 → 56 加大
 	toast.add_theme_color_override("font_color", Color(1.0, 0.95, 0.55, 1))  # 更亮的暖金
 	toast.add_theme_color_override("font_outline_color", Color(0.35, 0.18, 0.04, 0.95))  # 深金 outline
@@ -523,7 +638,8 @@ func _show_synergy_toast(id: String) -> void:
 func _on_intermission_started(wave_num: int, seconds: float) -> void:
 	_intermission_next_wave = wave_num
 	_intermission_remaining = seconds
-	wave_label.text = "第 %d 波\n%.1fs 后开始" % [wave_num, seconds]
+	_label_mode = LabelMode.INTERMISSION
+	_render_wave_label()
 
 func _on_hit_confirmed() -> void:
 	if crosshair and crosshair.has_method("flash_hit"):

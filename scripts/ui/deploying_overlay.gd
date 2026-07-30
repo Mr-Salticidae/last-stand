@@ -36,7 +36,7 @@ func show_for_scene(path: String) -> void:
 	_scene_path = path
 	var key: String = Settings.last_arena
 	_sector_label.text = SECTOR_TEXT.get(key, "SECTOR ?? · UNKNOWN")
-	_pct_label.text = "0% · WAVE 01 INBOUND"
+	_pct_label.text = "0%" + _wave_tag()
 	_bar.progress = 0.0
 	_elapsed = 0.0
 	_running = true
@@ -52,10 +52,14 @@ func _process(dt: float) -> void:
 	_elapsed += dt
 	var t: float = clampf(_elapsed / fake_duration, 0.0, 1.0)
 	_bar.progress = t
-	_pct_label.text = "%d%% · WAVE 01 INBOUND" % int(t * 100.0)
+	_pct_label.text = "%d%%" % int(t * 100.0) + _wave_tag()
 	if t >= 1.0:
 		_running = false
 		_finish()
+
+# 进关提示带上模式，让玩家在读条时就知道自己开的是哪一局
+func _wave_tag() -> String:
+	return " · ENDLESS · WAVE 01 INBOUND" if Settings.is_endless() else " · WAVE 01 INBOUND"
 
 func _finish() -> void:
 	await get_tree().create_timer(0.4).timeout
