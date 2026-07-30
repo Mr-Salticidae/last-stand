@@ -9,6 +9,9 @@ extends Control
 #
 # 全屏 shader 特效（搜索灯/灰尘/噪点/扫描线）放 Phase 5 加。
 
+# 版本号单一真源。用 preload 而不是 class_name / autoload：见 game_version.gd 的注释
+const GameVersion = preload("res://scripts/game_version.gd")
+
 @export_group("HUD Top")
 @export var hud_top_left: String = "SECTOR 07 · UNDER SIEGE":
 	set(value):
@@ -29,7 +32,8 @@ extends Control
 	set(value):
 		hud_bot_left = value
 		_refresh_hud()
-@export var hud_bot_right: String = "v0.8.0 DEMO BUILD":
+# 版本号走 GameVersion 单一真源，别在这里写字面量（原因见 scripts/game_version.gd）
+@export var hud_bot_right: String = GameVersion.BUILD_LABEL:
 	set(value):
 		hud_bot_right = value
 		_refresh_hud()

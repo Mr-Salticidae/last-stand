@@ -6,6 +6,8 @@ extends Control
 signal closed
 
 const MAIN_MENU_SCENE: String = "res://scenes/main_menu.tscn"
+# 版本号单一真源（见 scripts/game_version.gd）
+const GameVersion = preload("res://scripts/game_version.gd")
 
 @onready var master_slider: CustomSlider = $PageBody/LeftCol/AudioGroup/MasterRow/Slider
 @onready var master_value: Label = $PageBody/LeftCol/AudioGroup/MasterRow/Value
@@ -28,8 +30,14 @@ const MAIN_MENU_SCENE: String = "res://scenes/main_menu.tscn"
 
 @onready var back_btn: Control = $Footer/BackButton
 
+# ProfileCard 的版本行。tscn 里不再写版本字面量，运行时从 GameVersion 单一真源填
+@onready var version_label: Label = $PageBody/RightCol/ProfileCard/ProfileGrid/V2
+
 func _ready() -> void:
 	Input.set_mouse_mode(Input.MOUSE_MODE_VISIBLE)
+
+	if version_label:
+		version_label.text = GameVersion.PROFILE_LABEL
 
 	# Audio sliders
 	master_slider.min_value = 0.0

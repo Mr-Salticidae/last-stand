@@ -2,7 +2,7 @@
 
 # LastStand · 死守
 
-一款用 Godot 4 做的波次生存 FPS。守住阵地，杀掉来犯的敌人，每波之间抽卡升级。最新版本 [**v0.8.0**](https://github.com/Mr-Salticidae/last-stand/releases/tag/v0.8.0) 已发布。
+一款用 Godot 4 做的波次生存 FPS。守住阵地，杀掉来犯的敌人，每波之间抽卡升级。最新版本 [**v0.8.1**](https://github.com/Mr-Salticidae/last-stand/releases/tag/v0.8.1) 已发布。
 
 [![Play on itch.io](https://img.shields.io/badge/itch.io-Play_Now-fa5c5c?logo=itchdotio&logoColor=white)](https://mr-salticidae.itch.io/last-stand)
 [![Engine](https://img.shields.io/badge/Engine-Godot_4.7-478cbf?logo=godotengine&logoColor=white)](https://godotengine.org/)
@@ -54,7 +54,7 @@ git clone https://github.com/Mr-Salticidae/last-stand.git
 
 ## 开发状态
 
-当前版本 **v0.8.0** — 新增「无尽模式」：每波定时倒计时 + 威胁预算持续刷怪（土豆兄弟式），标准 30 波模式行为不变  
+当前版本 **v0.8.1** — 修 v0.8.0 菜单里印错的版本号（写死在三处、bump 时全漏），版本号收敛到单一真源；玩法与 v0.8.0 一致：新增「无尽模式」，每波定时倒计时 + 威胁预算持续刷怪（土豆兄弟式），标准 30 波模式行为不变  
 完整更新日志：[GitHub Releases](https://github.com/Mr-Salticidae/last-stand/releases) · [itch.io devlog](https://mr-salticidae.itch.io/last-stand/devlog)
 
 下一版计划：按实际试玩反馈调无尽模式的预算 / 时长 / 并发曲线 + 武器 2D 持枪视图 + HUD 重绘。

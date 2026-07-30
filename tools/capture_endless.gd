@@ -147,6 +147,9 @@ func _run_menus() -> void:
 		await process_frame
 
 	_setup_window()
+	# 把光标挪到角落：否则鼠标恰好停在哪张关卡卡片上，那张就会是 hover 高亮态，
+	# 截出来的图随手不同、还容易被误读成"已选中"
+	Input.warp_mouse(Vector2(6.0, float(SHOT_SIZE.y) - 6.0))
 	# 改窗口尺寸后布局要重排，再等一会儿
 	for _i in 30:
 		await process_frame
