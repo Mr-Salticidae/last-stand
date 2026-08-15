@@ -1,10 +1,10 @@
 # LastStand — Asset Credits
 
-> Last updated: 2026-05-18 (v0.5.0)
+> Last updated: 2026-08-16 (v1.0.0)
 
 ## Engine
 
-- **Godot Engine 4.6** (MIT) — https://godotengine.org
+- **Godot Engine 4.7** (MIT) — https://godotengine.org
 
 ## Music (BGM)
 

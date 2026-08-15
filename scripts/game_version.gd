@@ -19,10 +19,10 @@ extends RefCounted
 #     「Identifier "GameVersion" not declared」。
 # 所以消费方一律用 const GameVersion = preload("res://scripts/game_version.gd")，
 # 不依赖任何缓存或单例。
-const STRING: String = "0.8.1"
-const DATE: String = "2026.07"
+const STRING: String = "1.0.0"
+const DATE: String = "2026.08"
 
 # 菜单页右下角角标
-const BUILD_LABEL: String = "v" + STRING + " DEMO BUILD"
+const BUILD_LABEL: String = "v" + STRING + " RELEASE"
 # 设置页 ProfileCard 的版本行
 const PROFILE_LABEL: String = "v" + STRING + " / " + DATE
