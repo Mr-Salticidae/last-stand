@@ -19,10 +19,3 @@ AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
 LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
-
----
-
-Note on assets: This MIT license covers the source code only. Game assets
-(3D models, textures, audio, fonts) are mostly under CC0 license (Quaternius,
-Kenney, Mech Pack, etc.). Each asset retains its original license — see asset
-folders or upstream sources for individual terms.

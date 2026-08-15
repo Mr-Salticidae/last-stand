@@ -2,6 +2,10 @@
 
 > Last updated: 2026-08-16 (v1.0.0)
 
+> License note: the MIT license in `LICENSE` covers the source code only.
+> Game assets (3D models, textures, audio, fonts) each retain their original
+> license — the authoritative per-asset list is this file.
+
 ## Engine
 
 - **Godot Engine 4.7** (MIT) — https://godotengine.org
